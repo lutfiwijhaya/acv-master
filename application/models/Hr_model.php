@@ -137,6 +137,8 @@ public function get_all_candidates($search_term = null)
          $this->db->where('deleted', 0);
         // Mengurutkan berdasarkan ID terbaru (paling baru di atas)
         $this->db->order_by('_id', 'DESC'); 
+        // untuk memfinter saat star empoyeee
+         $this->db->where('candidate_status !=', 'Employee');
 
        //buat pencarian apa saja
     if (!empty($search_term)) {
@@ -231,7 +233,6 @@ public function get_all_candidates($search_term = null)
     return $this->db->get()->result_array();
     }
 // end ngambil data untuk certification
-
 
 // star ngambil data untuk careerv 
     public function get_careers_by_user_id($user_id, $search_term = null)
@@ -549,6 +550,7 @@ public function get_all_summaries($search_term = null)
         'left'
     );
     $this->db->where('u.deleted', 0);
+    $this->db->where('u.candidate_status', 'Employee');
     $this->db->where_not_in('u.posisi', $excluded_positions);
 
     if (!empty($search_term)) {
@@ -566,6 +568,240 @@ public function get_all_summaries($search_term = null)
 }
 //
 
+//bismilah
+public function get_absensi_recap_harian($filters = [], $limit = null, $offset = null)
+{
+    // UBAH SELECT: Gabungkan kolom 'indirect' dan 'work_location'
+    $this->db->select("
+        ha.tgl_masuk,
+        tp.indirect,
+        h_loc.value as work_location, 
+        SUM(CASE WHEN LOWER(ha.kehadiran) = 'hadir' THEN 1 ELSE 0 END) as total_hadir,
+        SUM(CASE WHEN LOWER(ha.kehadiran) != 'hadir' THEN 1 ELSE 0 END) as total_tidak_hadir,
+        COUNT(ha.id) as total_keseluruhan,
+        MIN(ha.status) as status_level
+    ", FALSE);
+
+    $this->db->from('hr_absen ha');
+    $this->db->join('tbl_user tu', 'ha.nik = tu.nik', 'left');
+    $this->db->join('tbl_posisi tp', 'tu.posisi = tp._id', 'left');
+    $this->db->join('hr_hired h_loc', "h_loc.user_id = tu._id AND h_loc.intial = 'Work Location'", 'left');
+    
+    $this->db->where('ha.deleted', 0);
+
+    // Terapkan filter
+    if (!empty($filters['year'])) {
+        $this->db->where('YEAR(ha.tgl_masuk)', $filters['year']);
+    }
+    if (!empty($filters['month'])) {
+        $this->db->where('MONTH(ha.tgl_masuk)', $filters['month']);
+    }
+    // UBAH FILTER LOKASI: Sekarang bisa mencari di kedua kolom
+    if (!empty($filters['location'])) {
+        $this->db->group_start();
+        $this->db->where('tp.indirect', $filters['location']);
+        $this->db->or_where('h_loc.value', $filters['location']);
+        $this->db->group_end();
+    }
+
+    // UBAH GROUP BY: Kelompokkan berdasarkan ketiganya
+    $this->db->group_by(['ha.tgl_masuk', 'tp.indirect', 'h_loc.value']);
+    $this->db->order_by('ha.tgl_masuk', 'DESC');
+    
+    if ($limit !== null && $offset !== null) {
+        $this->db->limit($limit, $offset);
+    }
+    
+    $results = $this->db->get()->result_array();
+    
+     $status_map = [1 => 'Nothing', 2 => 'Prepared', 3 => 'Reviewed', 4 => 'Reviewed 2', 5 => 'Approved'];
+    foreach ($results as &$row) {
+        $row['status'] = $status_map[$row['status_level']] ?? 'Nothing';
+    }
+    
+    return $results;
+}
+
+public function count_absensi_recap_harian($filters = [])
+{
+    // Query ini juga diubah agar lebih sederhana dan benar
+    $this->db->select('ha.tgl_masuk, tp.indirect, h_loc.value');
+    $this->db->from('hr_absen ha');
+    $this->db->join('tbl_user tu', 'ha.nik = tu.nik', 'left');
+    $this->db->join('tbl_posisi tp', 'tu.posisi = tp._id', 'left');
+    $this->db->join('hr_hired h_loc', "h_loc.user_id = tu._id AND h_loc.intial = 'Work Location'", 'left');
+    $this->db->where('ha.deleted', 0);
+
+   if (!empty($filters['year'])) {
+        $this->db->where('YEAR(ha.tgl_masuk)', $filters['year']);
+    }
+    if (!empty($filters['month'])) {
+        $this->db->where('MONTH(ha.tgl_masuk)', $filters['month']);
+    }
+    if (!empty($filters['location'])) {
+        $this->db->group_start();
+        $this->db->where('tp.indirect', $filters['location']);
+        $this->db->or_where('h_loc.value', $filters['location']);
+        $this->db->group_end();
+    }
+    
+    $this->db->group_by(['ha.tgl_masuk', 'tp.indirect', 'h_loc.value']);
+    
+    // Hitung jumlah baris dari query yang sudah di-group
+    return $this->db->get()->num_rows();
+}
+
+public function promote_daily_status($tanggal, $lokasi,  $user_id)
+{
+    // 1. Dapatkan semua ID dan status yang cocok
+    $this->db->select('ha.id, ha.status');
+    $this->db->from('hr_absen ha');
+    $this->db->join('tbl_user tu', 'ha.nik = tu.nik', 'left');
+    $this->db->join('tbl_posisi tp', 'tu.posisi = tp._id', 'left');
+    // PERBAIKAN: Gunakan JOIN ke hr_hired untuk filter lokasi yang benar
+    $this->db->join('hr_hired h_loc', "h_loc.user_id = tu._id AND h_loc.intial = 'Work Location'", 'left');
+    
+    $this->db->where('ha.tgl_masuk', $tanggal);
+    // Filter berdasarkan h_loc.value
+    $this->db->where('h_loc.value', $lokasi); 
+    $this->db->where('ha.deleted', 0);
+    $results = $this->db->get()->result_array();
+
+    if (empty($results)) {
+        return ['success' => false, 'message' => 'Tidak ada data absensi untuk diperbarui pada tanggal dan lokasi ini.'];
+    }
+
+    $ids_to_update = array_column($results, 'id');
+    $statuses_numeric = array_column($results, 'status');
+    // 2. Dapatkan status numerik terendah
+    $min_status_level = min($statuses_numeric);
+
+    // 3. Tentukan status berikutnya
+    if ($min_status_level >= 5) { // 5 adalah status final (Approved)
+        return ['success' => false, 'message' => 'Semua data pada tanggal ini sudah berstatus final (Approved).'];
+    }
+    $new_status_level = $min_status_level + 1;
+
+    $update_data = ['status' => $new_status_level];
+    $now = date('Y-m-d H:i:s');
+
+   if ($new_status_level == 2) { // Prepared
+        $update_data['prepared_at'] = $now;
+        $update_data['prepared_by'] = $user_id; // Simpan ID user
+    } elseif ($new_status_level == 3) { // Reviewed
+        $update_data['reviewed_at'] = $now;
+        $update_data['reviewed_by'] = $user_id; // Simpan ID user
+    } elseif ($new_status_level == 4) { // Reviewed 2
+        $update_data['reviewed_2_at'] = $now;
+        $update_data['reviewed_2_by'] = $user_id; // Simpan ID user
+    } elseif ($new_status_level == 5) { // Approved
+        $update_data['approved_at'] = $now;
+        $update_data['approved_by'] = $user_id; // Simpan ID user
+    }
+
+    // 4. Update semua baris yang cocok ke status baru
+    $this->db->where_in('id', $ids_to_update);
+    $this->db->update('hr_absen', $update_data);
+    
+    if ($this->db->affected_rows() > 0) {
+        $status_map = [1 => 'Nothing', 2 => 'Prepared', 3 => 'Reviewed', 4 => 'Reviewed 2', 5 => 'Approved'];
+        return ['success' => true, 'new_status' => $status_map[$new_status_level]];
+    } else {
+        return ['success' => false, 'message' => 'Gagal memperbarui status di database.'];
+    }
+}
+//
+
+//
+public function get_user_details_by_ids($user_ids)
+{
+    if (empty($user_ids)) {
+        return [];
+    }
+    $clean_ids = array_filter($user_ids);
+    if (empty($clean_ids)) {
+        return [];
+    }
+
+    // Ambil _id, nama, dan path_ttd
+    $this->db->select('_id, nama, path_ttd');
+    $this->db->where_in('_id', $clean_ids);
+    $users = $this->db->get('tbl_user')->result_array();
+
+    // Kembalikan dalam format [id => [ 'nama' => '...', 'path_ttd' => '...' ]]
+    $result = [];
+    foreach ($users as $user) {
+        $result[$user['_id']] = $user;
+    }
+    return $result;
+}
+//
+
+// buat update status tapi gajadii
+// public function get_user_names_by_ids($user_ids)
+// {
+//     if (empty($user_ids)) {
+//         return [];
+//     }
+//     $clean_ids = array_filter($user_ids); // Hapus nilai null atau kosong
+//     if (empty($clean_ids)) {
+//         return [];
+//     }
+
+//     $this->db->select('_id, nama'); // Asumsi primary key di tbl_user adalah '_id'
+//     $this->db->where_in('_id', $clean_ids);
+//     $users = $this->db->get('tbl_user')->result_array();
+
+//     // Kembalikan dalam format [id => nama] agar mudah dicari
+//     return array_column($users, 'nama', '_id');
+// }
+//
+//
+
+
+//
+// buat update status tapi gajadii
+// public function promote_daily_status($tanggal, $lokasi)
+// {
+//     // 1. Dapatkan status terendah saat ini untuk grup tersebut
+//     $this->db->select("MIN(CASE WHEN ha.status = 'Nothing' THEN 0 WHEN ha.status = 'Prepared' THEN 1 WHEN ha.status = 'Reviewed' THEN 2 WHEN ha.status = 'Reviewed 2' THEN 3 WHEN ha.status = 'Approved' THEN 4 ELSE 0 END) as status_level");
+//     $this->db->from('hr_absen ha');
+//     $this->db->join('tbl_user tu', 'ha.nik = tu.nik', 'left');
+//     $this->db->join('tbl_posisi tp', 'tu.posisi = tp._id', 'left');
+//     $this->db->where('ha.tgl_masuk', $tanggal);
+//     $this->db->where('tp.indirect', $lokasi);
+//     $this->db->where('ha.deleted', 0);
+//     $current_status_level = $this->db->get()->row()->status_level;
+
+//     // 2. Tentukan status berikutnya
+//     $flow = ['Nothing', 'Prepared', 'Reviewed', 'Reviewed 2', 'Approved'];
+//     if ($current_status_level >= count($flow) - 1) {
+//         return false; // Sudah di status final
+//     }
+//     $new_status = $flow[$current_status_level + 1];
+
+//     // 3. Dapatkan semua ID yang cocok untuk diupdate
+//     $this->db->select('ha.id');
+//     $this->db->from('hr_absen ha');
+//     $this->db->join('tbl_user tu', 'ha.nik = tu.nik', 'left');
+//     $this->db->join('tbl_posisi tp', 'tu.posisi = tp._id', 'left');
+//     $this->db->where('ha.tgl_masuk', $tanggal);
+//     $this->db->where('tp.indirect', $lokasi);
+//     $this->db->where('ha.deleted', 0);
+//     $ids_to_update = $this->db->get()->result_array();
+//     $ids = array_column($ids_to_update, 'id');
+
+//     if (empty($ids)) {
+//         return false;
+//     }
+
+//     // 4. Update semua baris yang cocok
+//     $this->db->where_in('id', $ids);
+//     $this->db->update('hr_absen', ['status' => $new_status]);
+    
+//     return $new_status; // Kembalikan status baru agar bisa ditampilkan di notifikasi
+// }
+//
 
 //
 public function get_all_candidate_details()
@@ -620,44 +856,123 @@ public function update_active_status($id, $status)
 }
 //
 
-
 //
-public function get_all_absensi($search = null)
+private function _get_absensi_query($search = null, $filters = [])
 {
-    $this->db->select([
-        'ha.*', 
-        'tu.nama',
-        'tp.posisi as position',
-        'h_team.value as team', // Ambil 'value' dari join 'h_team'
-        'h_loc.value as work_location' // Ambil 'value' dari join 'h_loc'
-    ]);
+    $this->db->select("ha.*, tu.nama, tp.posisi as position,tp.indirect, h_team.value as team, h_loc.value as work_location, ha.status,
+    
+      
+       (SELECT COUNT(*) FROM hr_absen ha2 
+            LEFT JOIN tbl_user tu2 ON ha2.nik = tu2.nik
+            LEFT JOIN hr_hired h_loc2 ON h_loc2.user_id = tu2._id AND h_loc2.intial = 'Work Location'
+            WHERE ha2.tgl_masuk = ha.tgl_masuk AND LOWER(ha2.kehadiran) = 'hadir' AND ha2.deleted = 0 AND h_loc2.value = h_loc.value) as total_hadir,
+            
+        (SELECT COUNT(*) FROM hr_absen ha2
+            LEFT JOIN tbl_user tu2 ON ha2.nik = tu2.nik
+            LEFT JOIN hr_hired h_loc2 ON h_loc2.user_id = tu2._id AND h_loc2.intial = 'Work Location'
+            WHERE ha2.tgl_masuk = ha.tgl_masuk AND LOWER(ha2.kehadiran) != 'hadir' AND ha2.deleted = 0 AND h_loc2.value = h_loc.value) as total_tidak_hadir,
+            
+        (SELECT COUNT(*) FROM hr_absen ha2
+            LEFT JOIN tbl_user tu2 ON ha2.nik = tu2.nik
+            LEFT JOIN hr_hired h_loc2 ON h_loc2.user_id = tu2._id AND h_loc2.intial = 'Work Location'
+            WHERE ha2.tgl_masuk = ha.tgl_masuk AND ha2.deleted = 0 AND h_loc2.value = h_loc.value) as total_keseluruhan
+    ");
     $this->db->from('hr_absen ha');
-    
-    
-    // Join utama
-     $this->db->where('ha.deleted', 0);
     $this->db->join('tbl_user tu', 'ha.nik = tu.nik', 'left');
     $this->db->join('tbl_posisi tp', 'tu.posisi = tp._id', 'left');
 
-    // JOIN khusus untuk mengambil data 'Team' dari hr_hired
+    // PERBAIKAN DI SINI: Kembalikan join ke tu._id
     $this->db->join('hr_hired h_team', "h_team.user_id = tu._id AND h_team.intial = 'Team'", 'left');
-    
-    // JOIN khusus untuk mengambil data 'Work Location' dari hr_hired
     $this->db->join('hr_hired h_loc', "h_loc.user_id = tu._id AND h_loc.intial = 'Work Location'", 'left');
 
+    $this->db->where('ha.deleted', 0);
+
+    // Filter Pencarian
     if ($search) {
         $this->db->group_start();
         $this->db->like('ha.nik', $search);
         $this->db->or_like('tu.nama', $search);
         $this->db->or_like('tp.posisi', $search);
-        // Tambahkan pencarian untuk team dan lokasi
         $this->db->or_like('h_team.value', $search);
         $this->db->or_like('h_loc.value', $search);
         $this->db->group_end();
     }
+
+    // Filter Tambahan untuk Laporan
+    if (!empty($filters['start_date'])) {
+        $this->db->where('ha.tgl_masuk >=', $filters['start_date']);
+    }
+    if (!empty($filters['end_date'])) {
+        $this->db->where('ha.tgl_masuk <=', $filters['end_date']);
+    }
+    if (!empty($filters['location'])) {
+        $this->db->where('h_loc.value', $filters['location']);
+    }
+    //
+    // NEW FILTERS
+   if (!empty($filters['year'])) {
+    $this->db->where('YEAR(ha.tgl_masuk)', $filters['year']);
+}
+if (!empty($filters['month'])) {
+    $this->db->where('MONTH(ha.tgl_masuk)', $filters['month']);
+}
+if (!empty($filters['location'])) {
+    // Pastikan ini sesuai dengan JOIN Anda (h_loc.value atau tp.indirect)
+    $this->db->where('tp.indirect', $filters['location']); 
+}
+}
+//
+
+
+//
+public function get_all_absensi($search = null, $filters = [], $limit = null, $offset = null)
+{
+    $this->_get_absensi_query($search, $filters);
     
-    $this->db->order_by('ha.tgl_masuk', 'DESC');
+    if ($limit !== null && $offset !== null) {
+        $this->db->limit($limit, $offset);
+    }
+    
+    // Urutkan berdasarkan tanggal (naik) untuk laporan, atau ID (turun) untuk tabel utama
+    if (isset($filters['start_date']) || isset($filters['location'])) {
+        $this->db->order_by('ha.tgl_masuk', 'ASC'); 
+    } else {
+        $this->db->order_by('ha.id', 'DESC');
+    }
+    
     return $this->db->get()->result_array();
+}
+//
+
+//
+public function get_absensi_by_id($id)
+{
+    return $this->db->get_where('hr_absen', ['id' => $id])->row_array();
+}
+//
+
+//start buat bagian update status absensi
+public function update_absensi_status($id, $new_status)
+{
+    $this->db->where('id', $id);
+    return $this->db->update('hr_absen', ['status' => $new_status]);
+}
+//end buat bagian status update status absensi
+
+// Fungsi untuk update status satu baris data
+public function update_single_status($id, $newStatus)
+{
+    $this->db->where('id', $id);
+    $this->db->update('hr_absen', ['status' => $newStatus]);
+    return $this->db->affected_rows() > 0;
+}
+//
+
+//
+public function count_all_absensi($search = null, $filters = [])
+{
+    $this->_get_absensi_query($search, $filters);
+    return $this->db->count_all_results();
 }
 
 //
@@ -951,6 +1266,91 @@ public function update_status($id, $new_status)
     return $this->db->update('tbl_user', ['candidate_status' => $new_status]);
 }
 //
+
+//
+public function get_user_by_id($id)
+{
+    // Asumsi tabel user Anda adalah tbl_user dan primary key adalah _id
+    return $this->db->get_where('tbl_user', ['_id' => $id])->row_array();
+}
+//
+
+//buat hak akses status absen
+public function get_all_posisi_with_akses()
+{
+    $this->db->select("p._id, p.posisi, GROUP_CONCAT(sr.name SEPARATOR ', ') as hak_akses_str");
+    $this->db->from('tbl_posisi p');
+    $this->db->join('hr_akses_status_report asr', 'p._id = asr.id_posisi', 'left');
+    $this->db->join('hr_status_report sr', 'asr.id_status = sr.id', 'left');
+    $this->db->group_by('p._id, p.posisi');
+    $this->db->order_by('p.posisi', 'ASC');
+    return $this->db->get()->result_array();
+}
+
+public function get_akses_by_posisi_id($posisi_id)
+{
+    // Ambil semua kemungkinan status
+    $all_status = $this->db->get('hr_status_report')->result_array();
+    
+    // Ambil status yang sudah dicentang untuk posisi ini
+    $this->db->select('id_status');
+    $this->db->where('id_posisi', $posisi_id);
+    $checked = $this->db->get('hr_akses_status_report')->result_array();
+    $checked_ids = array_column($checked, 'id_status');
+
+    return [
+        'all_status' => $all_status,
+        'checked_status' => $checked_ids
+    ];
+}
+
+public function save_hak_akses($posisi_id, $akses_ids)
+{
+    // 1. Hapus semua hak akses lama untuk posisi ini
+    $this->db->where('id_posisi', $posisi_id);
+    $this->db->delete('hr_akses_status_report');
+
+    // 2. Masukkan hak akses yang baru
+    if (!empty($akses_ids)) {
+        $batch_data = [];
+        foreach ($akses_ids as $status_id) {
+            $batch_data[] = [
+                'id_posisi' => $posisi_id,
+                'id_status' => $status_id
+            ];
+        }
+        return $this->db->insert_batch('hr_akses_status_report', $batch_data);
+    }
+    
+    return true; // Berhasil meskipun tidak ada yang disimpan
+}
+
+//
+public function insert_posisi($data)
+{
+    // Asumsi nama tabel Anda adalah 'tbl_posisi'
+    $this->db->insert('tbl_posisi', $data);
+    return $this->db->affected_rows() > 0;
+}
+
+public function update_posisi($id, $data)
+{
+    // Asumsi nama primary key adalah '_id'
+    $this->db->where('_id', $id);
+    $this->db->update('tbl_posisi', $data);
+    return $this->db->affected_rows() >= 0; // Return true bahkan jika tidak ada perubahan
+}
+
+public function delete_posisi($id)
+{
+    $this->db->where('_id', $id);
+    $this->db->delete('tbl_posisi');
+    return $this->db->affected_rows() > 0;
+}
+//
+
+//
+
 
 }
 

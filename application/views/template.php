@@ -27,14 +27,16 @@
 	<!-- jQuery UI (baru setelah jQuery) -->
 	<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 	<script type="text/javascript" src="<?php echo base_url(); ?>assets/admin/js/jquery.min.js"></script>
-	<?php
-	foreach ($css_files as $file) { ?>
-		<link type="text/css" rel="stylesheet" href="<?php echo $file; ?>" />
-	<?php } ?>
+	<!--  -->
 
-	<?php foreach ($js_files as $file) { ?>
+	<!-- <?php
+	foreach ($css_files as $file) { ?> -->
+		<link type="text/css" rel="stylesheet" href="<?php echo $file; ?>" />
+	<!-- <?php } ?> -->
+
+	<!-- <?php foreach ($js_files as $file) { ?> -->
 		<script src="<?php echo $file; ?>"></script>
-	<?php } ?>
+	<!-- <?php } ?> -->
 	<style type="text/css">
 		.textbox-label {
 			width: 120px;
@@ -43,6 +45,8 @@
 		.datagrid-cell {
 			font-size: 12x;
 		}
+
+		
 
 		#resizable-sidebar {
 			resize: horizontal;
@@ -53,26 +57,15 @@
 			top: 0;
 			left: 0;
 			height: 100vh;
-			background-color: #f4f6f9;
 			z-index: 1030;
-			transition: width 0.2s ease;
-		}
-
-		#sidebar-resizer {
-			position: fixed;
-			top: 0;
-			width: 5px;
-			height: 100vh;
-			cursor: ew-resize;
-			z-index: 1040;
-			left: 250px;
-			background-color: transparent;
+			overflow: auto;
+			/* tetap di atas konten */
 		}
 
 		.content-wrapper {
-			transition: margin-left 0.2s ease;
 			margin-left: 250px;
-			/* default */
+			/* default sesuai sidebar awal */
+			transition: margin-left 0.2s ease;
 		}
 
 
@@ -129,9 +122,7 @@
 			<!-- Left navbar links -->
 			<ul class="navbar-nav">
 				<li class="nav-item">
-					<a class="nav-link" data-widget="pushmenu" href="#" role="button">
-						<i class="fas fa-bars"></i>
-					</a>
+					<a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
 				</li>
 			</ul>
 
@@ -165,7 +156,11 @@
 			</div>
 		</footer>
 
-
+		<!-- Control Sidebar -->
+		<aside class="control-sidebar control-sidebar-dark">
+			<!-- Control sidebar content goes here -->
+		</aside>
+		<!-- /.control-sidebar -->
 	</div>
 	<!-- ./wrapper -->
 
@@ -185,83 +180,50 @@
 			toast: true,
 			position: 'top-end',
 			showConfirmButton: false,
-			timer: 3000,
-			timerProgressBar: true,
-			didOpen: (toast) => {
-				toast.onmouseenter = Swal.stopTimer
-				toast.onmouseleave = Swal.resumeTimer
-			}
+			timer: 3000
 		});
 	</script>
 
 	<script type="text/javascript">
 		$(document).ready(function() {
+			let lastSelectedId = localStorage.getItem("last_selected_node");
 
-
-			const sidebar = document.getElementById('resizable-sidebar');
-			const contentWrapper = document.querySelector('.content-wrapper');
-
-			// Ambil lebar terakhir dari localStorage (jika ada)
-			const savedWidth = localStorage.getItem('sidebar_width');
-			if (savedWidth) {
-				sidebar.style.width = savedWidth + 'px';
-				contentWrapper.style.marginLeft = savedWidth + 'px';
-			}
-
-			// Fungsi untuk simpan dan terapkan lebar baru saat resize
-			let resizeObserver = new ResizeObserver(entries => {
-				for (let entry of entries) {
-					const newWidth = entry.contentRect.width;
-					localStorage.setItem('sidebar_width', newWidth);
-					contentWrapper.style.marginLeft = newWidth + 'px';
-				}
-			});
-			resizeObserver.observe(sidebar);
-
-
-
-		});
-
-
-		$(function() {
-			const sidebar = document.getElementById('resizable-sidebar');
-			const resizer = document.getElementById('sidebar-resizer');
-			const content = document.querySelector('.content-wrapper');
-
-			let isResizing = false;
-
-			resizer.addEventListener('mousedown', function(e) {
-				isResizing = true;
-				document.body.style.cursor = 'ew-resize';
-			});
-
-			document.addEventListener('mousemove', function(e) {
-				if (!isResizing) return;
-
-				let newWidth = e.clientX;
-				if (newWidth < 200) newWidth = 200;
-				if (newWidth > 500) newWidth = 500;
-
-				sidebar.style.width = newWidth + 'px';
-				resizer.style.left = newWidth + 'px';
-				content.style.marginLeft = newWidth + 'px';
-			});
-
-			document.addEventListener('mouseup', function() {
-				isResizing = false;
-				document.body.style.cursor = 'default';
-			});
-		});
-
-		$(function() {
-			const observer = new ResizeObserver(entries => {
-				for (let entry of entries) {
-					const newWidth = entry.contentRect.width;
-					$('.content-wrapper').css('margin-left', newWidth + 'px');
+			$('#tree-explorer').jstree({
+				'core': {
+					'data': {
+						"url": "<?= site_url('explorer/get_tree') ?>",
+						"dataType": "json"
+					}
+				},
+				"plugins": ["state", "wholerow"], // tambahkan wholerow agar highlight full baris
+				"state": {
+					"key": "tree_state_<?= $this->session->userdata('user_id') ?>"
 				}
 			});
 
-			observer.observe(document.getElementById('resizable-sidebar'));
+			// Aktifkan kembali node terakhir setelah jsTree selesai load
+			$('#tree-explorer').on('loaded.jstree', function(e, data) {
+				if (lastSelectedId) {
+					const tree = $('#tree-explorer').jstree(true);
+					tree.deselect_all();
+					tree.select_node(lastSelectedId);
+					tree.open_node(lastSelectedId); // buka node
+				}
+			});
+
+			// Simpan node terakhir yang diklik
+			$('#tree-explorer').on('activate_node.jstree', function(e, data) {
+				var node_id = data.node.id;
+				var href = data.node.a_attr.href;
+
+				// Simpan ke localStorage
+				localStorage.setItem("last_selected_node", node_id);
+
+				// Redirect
+				if (href && href !== '#') {
+					window.location.href = href;
+				}
+			});
 		});
 	</script>
 

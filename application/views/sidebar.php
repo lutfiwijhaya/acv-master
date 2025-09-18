@@ -14,70 +14,87 @@
 		</div>
 
 		<!-- Sidebar Menu -->
-		<nav class="mt-2">
-			<ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-				<!--<li class="nav-item">-->
-				<!--	<a href="<?= base_url('admin'); ?>" class="nav-link <?= ($this->uri->segment(1) == 'admin' && $this->uri->segment(2) == '') ? 'active' : '' ?>">-->
-				<!--		<i class="nav-icon fas fa-tachometer-alt"></i>-->
-				<!--		<p>Dashboard</p>-->
-				<!--	</a>-->
-				<!--</li>-->
-				<?php
-				$menu = $this->menu_model->getMenus($this->session->userdata('posisi'));
-				foreach ($menu->result() as $row) :
-					$submenu = $this->menu_model->getSubMenus($this->session->userdata('posisi'), $row->_id);
-					if ($submenu->num_rows() > 0) { ?>
-						<li class="nav-item has-treeview">
-							<a href="#" class="nav-link">
-								<i class="nav-icon <?= $row->icon; ?>"></i>
-								<p>
-									<?= $row->title; ?>
-									<i class="fas fa-angle-left right"></i>
-								</p>
-							</a>
-							<ul class="nav nav-treeview">
-								<?php foreach ($submenu->result() as $sub) :
-									$submenu2 = $this->menu_model->getSubMenus($this->session->userdata('posisi'), $sub->menu_id);
-									if ($submenu2->num_rows() > 0) { ?>
-										<li class="nav-item">
-											<a href="#" class="nav-link">
-												<i class="<?= $sub->icon; ?> nav-icon"></i>
-												<p><?= $sub->title; ?></p>
-												<i class="fas fa-angle-left right"></i>
-											</a>
-											<ul class="nav nav-treeview">
-												<?php foreach ($submenu2->result() as $sub2) : ?>
-													<li class="nav-item">
-														<a href="<?= base_url($sub2->uri); ?>" class="nav-link">
-															<i class="<?= $sub2->icon; ?> nav-icon"></i>
-															<p><?= $sub2->title; ?></p>
-														</a>
-													</li>
-												<?php endforeach; ?>
-											</ul>
-										</li>
-									<?php } else { ?>
-										<li class="nav-item">
-											<a href="<?= base_url($sub->uri); ?>" class="nav-link">
-												<i class="<?= $sub->icon; ?> nav-icon"></i>
-												<p><?= $sub->title; ?></p>
-											</a>
-										</li>
-								<?php }
-								endforeach; ?>
-							</ul>
-						</li>
-					<?php } else { ?>
-						<li class="nav-item">
-							<a href="<?= base_url($row->uri); ?>" class="nav-link">
-							<!-- <a href="<?= base_url('admin/#'); ?>" class="nav-link"> -->
-								<i class="nav-icon <?= $row->icon; ?>"></i>
-								<p><?= $row->title; ?></p>
-							</a>
-						</li>
-				<?php }
-				endforeach; ?>
-				<li class="nav-header">USER</li>
+	<nav class="mt-2">
+    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+        
+        <?php
+        // Ambil instance CodeIgniter untuk bisa memanggil model di dalam fungsi
+        $CI = &get_instance();
+
+        // INI ADALAH FUNGSI REKURSIF
+        function build_menu($user_position, $parent_id) {
+            $CI = &get_instance(); // Panggil instance lagi di dalam fungsi
+
+            // Ambil semua menu anak dari parent_id ini
+            $submenus = $CI->menu_model->getSubMenus($user_position, $parent_id);
+
+            // Jika ada anak, looping
+            if ($submenus->num_rows() > 0) {
+                foreach ($submenus->result() as $menu) {
+                    // Cek lagi, apakah menu ini punya anak?
+                    $has_children = $CI->menu_model->getSubMenus($user_position, $menu->_id)->num_rows() > 0;
+
+                    if ($has_children) {
+                        // JIKA PUNYA ANAK, buat dropdown
+                        echo '<li class="nav-item has-treeview">';
+                        echo '<a href="#" class="nav-link">';
+                        echo '<i class="nav-icon ' . $menu->icon . '"></i>';
+                        echo '<p>' . $menu->title . '<i class="fas fa-angle-left right"></i></p>';
+                        echo '</a>';
+                        echo '<ul class="nav nav-treeview">';
+                        
+                        // Panggil fungsi ini lagi untuk membangun cucu-cucunya
+                        build_menu($user_position, $menu->_id);
+
+                        echo '</ul>';
+                        echo '</li>';
+                    } else {
+                        // JIKA TIDAK PUNYA ANAK, buat link biasa
+                        echo '<li class="nav-item">';
+                        echo '<a href="' . base_url($menu->uri) . '" class="nav-link">';
+                        echo '<i class="nav-icon ' . $menu->icon . '"></i>';
+                        echo '<p>' . $menu->title . '</p>';
+                        echo '</a>';
+                        echo '</li>';
+                    }
+                }
+            }
+        }
+
+        // PANGGILAN AWAL: Ambil menu level 1
+        $main_menus = $CI->menu_model->getMainMenu($this->session->userdata('posisi'));
+        foreach ($main_menus->result() as $main) {
+            // Cek apakah menu utama ini punya anak?
+            $has_children = $CI->menu_model->getSubMenus($this->session->userdata('posisi'), $main->_id)->num_rows() > 0;
+
+            if ($has_children) {
+                // JIKA PUNYA ANAK, buat dropdown
+                echo '<li class="nav-item has-treeview">';
+                echo '<a href="#" class="nav-link">';
+                echo '<i class="nav-icon ' . $main->icon . '"></i>';
+                echo '<p>' . $main->title . '<i class="fas fa-angle-left right"></i></p>';
+                echo '</a>';
+                echo '<ul class="nav nav-treeview">';
+                
+                // Panggil fungsi rekursif untuk membangun anak-anaknya
+                build_menu($this->session->userdata('posisi'), $main->_id);
+
+                echo '</ul>';
+                echo '</li>';
+            } else {
+                // JIKA TIDAK PUNYA ANAK, buat link biasa
+                echo '<li class="nav-item">';
+                echo '<a href="' . base_url($main->uri) . '" class="nav-link">';
+                echo '<i class="nav-icon ' . $main->icon . '"></i>';
+                echo '<p>' . $main->title . '</p>';
+                echo '</a>';
+                echo '</li>';
+            }
+        }
+
+        ?>
+
+       <li class="nav-header">USER</li>
 				<li class="nav-item">
 					<a href="javascript:void(0);" class="nav-link" onclick="openChangePasswordModal()">
 						<i class="nav-icon fa fa-key"></i>
@@ -92,15 +109,15 @@
 						</p>
 					</a>
 				</li>
-			</ul>
-		</nav>
+        </ul>
+</nav>
 		<!-- /.sidebar-menu -->
 	</div>
 	<!-- /.sidebar -->
 </aside>
 
 
-<div id="dlgChangePassword" class="easyui-dialog" title="Change Password" closed="true" modal="true" buttons="#dlg-buttons" style="width: 400px; padding: 15px;">
+<!-- <div id="dlgChangePassword" class="easyui-dialog" title="Change Password" closed="true" modal="true" buttons="#dlg-buttons" style="width: 400px; padding: 15px;">
     <form id="frmChangePassword">
         <div class="input-group mb-3">
             <label style="width: 100%;">Old Password:</label>
@@ -132,12 +149,12 @@
             </div>
         </div>
     </form>
-</div>
+</div> -->
 
-<div id="dlg-buttons">
+<!-- <div id="dlg-buttons">
     <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-ok" onclick="submitChangePassword()">Save</a>
     <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="$('#dlgChangePassword').dialog('close')">Cancel</a>
-</div>
+</div> -->
 
 <script type="text/javascript">
     $(document).ready(function() {

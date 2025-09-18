@@ -16,7 +16,7 @@
                     <th data-options="field:'certificate',width:450">Name of The Certificate</th>
                     <th data-options="field:'authority',width:250">Issue Authority Name</th>
                     <th data-options="field:'issue_location',width:450">Issue Location</th>
-                    <th data-options="field:'certificate_no',width:250">Certificate No.</th>
+                    <th data-options="field:'certificate_no',width:200">Certificate No.</th>
                 </tr>
             </thead>
         </table>

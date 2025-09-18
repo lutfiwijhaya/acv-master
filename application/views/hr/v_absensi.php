@@ -1,10 +1,27 @@
 <style>
 /* Perbaikan untuk teks tombol Export Data di toolbar EasyUI */
-#toolbarAbsensi .easyui-menubutton .l-btn-text {
-    color: #444 !important;
-    /* Ubah warna teks menjadi abu-abu gelap */
+
+
+
+
+/* Tambahkan ini ke CSS Anda */
+.icon-h-office::before {
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    content: "\f1ad";
+    /* Ikon gedung */
+    font-size: 16px;
+    color: #007BFF;
 }
 
+.icon-kn-project::before {
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    content: "\f085";
+    /* Ikon cogs/gears */
+    font-size: 16px;
+    color: #6c757d;
+}
 
 .icon-excel {
     background: url('path/to/your/excel_icon.png') no-repeat center center;
@@ -104,53 +121,106 @@
     </div>
 
     <div class="card mt-4">
+
         <div class="card-header bg-light">
             <h4 class="card-title mb-0"><i class="fas fa-list-alt me-2"></i>Attendance Data</h4>
         </div>
-        <div class="card-body">
-            <div id="toolbarAbsensi" style="padding:5px;">
-                <input class="easyui-searchbox" data-options="prompt:'Search...', searcher:doSearchAbsensi"
-                    style="width:250px">
 
-                <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-edit', plain:false"
-                    onclick="editAbsensi()">Edit</a>
-                <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-remove', plain:false"
-                    onclick="deleteAbsensi()">Delete</a>
+        <div id="toolbarAbsensi" style="padding:5px; display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
 
+    <!-- Searchbox -->
+    <input class="easyui-searchbox" 
+           data-options="prompt:'Search...', searcher:doSearchAbsensi" 
+           style="width:250px">
 
-                <a href="javascript:void(0)" class="easyui-menubutton"
-                    data-options="menu:'#menu-export', iconCls:'icon-save', plain:false">Export Data</a>
-                <div id="menu-export" style="width:150px;" data-options="hideOnUnhover:true">
-                    <div data-options="iconCls:'icon-excel'" onclick="exportData('excel')">Export to Excel</div>
-                    <div data-options="iconCls:'icon-pdf'" onclick="exportData('pdf')">Export to PDF</div>
+    <!-- Aksi edit/hapus -->
+    <!-- <a href="javascript:void(0)" class="easyui-linkbutton" 
+       data-options="iconCls:'icon-edit', plain:false" 
+       onclick="editAbsensi()">Edit</a> -->
 
+    <a href="javascript:void(0)" class="easyui-linkbutton" 
+       data-options="iconCls:'icon-remove', plain:false" 
+       onclick="deleteAbsensi()">Delete</a>
 
-                </div>
-            </div>
-            <table id="absensi-table" class="easyui-datagrid" style="width:100%;height:450px" data-options="
-                        url:'<?= site_url('hr/get_absensi_json'); ?>',
+    <!-- Export -->
+    <!-- <a href="javascript:void(0)" class="easyui-menubutton"
+       data-options="menu:'#menu-export', iconCls:'icon-save', plain:false">Export Data</a>
+    <div id="menu-export" style="width:150px;" data-options="hideOnUnhover:true">
+        <div data-options="iconCls:'icon-excel'" onclick="exportData('excel')">Export to Excel</div>
+        <div data-options="iconCls:'icon-pdf'" onclick="exportData('pdf')">Export to PDF</div>
+    </div> -->
+
+    <!-- Report -->
+    <a href="javascript:void(0)" class="easyui-menubutton"
+       data-options="menu:'#menu-report', iconCls:'icon-print', plain:false">Report</a>
+    <div id="menu-report" style="width:160px;">
+        <div data-options="iconCls:'icon-h-office'" 
+             onclick="window.location.href='<?= site_url('hr/report_ho') ?>'">Report HO</div>
+        <div data-options="iconCls:'icon-kn-project'" 
+             onclick="window.location.href='<?= site_url('hr/report_kn_project') ?>'">Report KN Project</div>
+    </div>
+
+    <!-- Tombol Naikkan Status -->
+   <a href="javascript:void(0)" id="btn-promote-status" class="easyui-linkbutton" 
+   data-options="iconCls:'icon-ok', plain:false, disabled:true" onclick="promoteDailyStatus()">Update Status</a>
+
+    <!-- Filter Tahun -->
+    <label for="filter-tahun">Tahun:</label>
+    <input id="filter-tahun" class="easyui-combobox" style="width:100px;">
+
+    <!-- Filter Bulan -->
+    <label for="filter-bulan">Bulan:</label>
+    <input id="filter-bulan" class="easyui-combobox" style="width:120px;">
+
+    <!-- Filter Lokasi -->
+    <label for="filter-lokasi">Lokasi:</label>
+    <input id="filter-lokasi" class="easyui-combobox" style="width:120px;"
+           data-options="
+                valueField: 'value', textField: 'text', panelHeight: 'auto', required: true,
+                data: [{value: 'HO', text: 'HO'}, {value: 'KN Project', text: 'KN Project'}]
+           ">
+
+    <!-- Tombol filter -->
+    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-filter" onclick="applyFilters()">Filter</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-reload" onclick="resetFilters()">Reset</a>
+</div>
+
+        <table id="absensi-table" class="easyui-datagrid" style="width:100%;height:450px" data-options="
+                         url:'<?= site_url('hr/get_absensi_json'); ?>',
                         method:'get',
                         pagination:true,
                         rownumbers:true,
                         singleSelect:true,
                         fitColumns:true,
-                        toolbar:'#toolbarAbsensi'">
-                <thead>
+                        toolbar:'#toolbarAbsensi',
+                         onSelect: function(index, row){
+                        // Aktifkan tombol hanya jika statusnya BUKAN 'Approved'
+                        if(row.status !== 'Approved'){
+                            $('#btn-promote-absen').linkbutton('enable');
+                        } else {
+                            $('#btn-promote-absen').linkbutton('disable');
+                        }
+                    },
+                    onUnselect: function(){
+                        $('#btn-promote-absen').linkbutton('disable');
+                    }
+                        ">
+            <thead>
 
-                    <tr>
-                        <th data-options="field:'nik',width:150">NIK</th>
-                        <th data-options="field:'nama',width:200">Nama</th>
-                        <th data-options="field:'tgl_masuk',width:100">Date</th>
-                        <th data-options="field:'position',width:120">Position</th>
-                        <th data-options="field:'team',width:110">Team</th>
-                        <th data-options="field:'work_location',width:150">Work Location</th>
-                        <th data-options="field:'keterangan',width:200">Explanation</th>
-                        <th data-options="field:'kehadiran',width:100">Presence</th>
-                    </tr>
-                </thead>
-            </table>
-        </div>
+                <tr>
+                    <th data-options="field:'tgl_masuk',width:100">Date</th>
+                    <th data-options="field:'indirect',width:150">Work Location</th>
+                     <th data-options="field:'total_hadir',width:120,align:'center'">present today</th>
+                     <th data-options="field:'total_tidak_hadir',width:120,align:'center'">not present</th>
+                     <th data-options="field:'total_keseluruhan',width:120,align:'center'">total present</th>
+                    <th data-options="field:'status',width:120,align:'center',formatter:formatAbsenStatus">Status</th>
+                    <th data-options="field:'action_report', width:120, align:'center',  formatter:formatReportHarianAction">Daily Report</th>
+
+                </tr>
+            </thead>
+        </table>
     </div>
+</div>
 </div>
 <!-- end -->
 
@@ -205,7 +275,171 @@
 // Deklarasikan variabel global untuk URL
 var url_absensi;
 
-// Fungsi untuk format tanggal (jika belum ada)
+//
+$(function() {
+    // Inisialisasi dropdown Tahun
+    $('#filter-tahun').combobox({
+        valueField: 'year',
+        textField: 'year',
+        panelHeight: 'auto',
+        data: (function() {
+            var years = [];
+            var currentYear = new Date().getFullYear();
+            for (var i = currentYear; i >= 2020; i--) {
+                years.push({
+                    year: i
+                });
+            }
+            return years;
+        })()
+    });
+
+    // Inisialisasi dropdown Bulan
+    $('#filter-bulan').combobox({
+        valueField: 'value',
+        textField: 'text',
+        panelHeight: 'auto',
+        data: [{
+                value: '01',
+                text: 'Januari'
+            }, {
+                value: '02',
+                text: 'Februari'
+            },
+            {
+                value: '03',
+                text: 'Maret'
+            }, {
+                value: '04',
+                text: 'April'
+            },
+            {
+                value: '05',
+                text: 'Mei'
+            }, {
+                value: '06',
+                text: 'Juni'
+            },
+            {
+                value: '07',
+                text: 'Juli'
+            }, {
+                value: '08',
+                text: 'Agustus'
+            },
+            {
+                value: '09',
+                text: 'September'
+            }, {
+                value: '10',
+                text: 'Oktober'
+            },
+            {
+                value: '11',
+                text: 'November'
+            }, {
+                value: '12',
+                text: 'Desember'
+            }
+        ]
+    });
+});
+
+// Fungsi untuk menerapkan semua filter
+function applyFilters() {
+    $('#absensi-table').datagrid('load', {
+        search_data: $('#search_absensi').val(),
+        year: $('#filter-tahun').combobox('getValue'),
+        month: $('#filter-bulan').combobox('getValue'),
+        location: $('#filter-lokasi').combobox('getValue')
+    });
+}
+
+// Fungsi untuk mereset filter
+function resetFilters() {
+    $('#search_absensi').searchbox('clear');
+    $('#filter-tahun').combobox('clear');
+    $('#filter-bulan').combobox('clear');
+    $('#filter-lokasi').combobox('clear');
+    applyFilters();
+}
+//
+
+//
+ function formatAbsenStatus(value, row, index) {
+    // 'value' sekarang berisi teks status (Nothing, Prepared, dll)
+    let color = 'secondary';
+    if (value === 'Prepared') color = 'warning text-dark';
+    if (value === 'Reviewed') color = 'info';
+    if (value === 'Reviewed 2') color = 'primary';
+    if (value === 'Approved') color = 'success';
+    
+    if (!value) return '<span class="badge bg-secondary">Nothing</span>';
+    return `<span class="badge bg-${color}">${value}</span>`;
+}
+
+// FUNGSI BARU UNTUK TOMBOL NAIKKAN STATUS
+function promoteAbsenStatus() {
+    var row = $('#absensi-table').datagrid('getSelected');
+    if (row) {
+        $.post('<?= site_url('hr/update_absensi_status') ?>', {
+            id: row.id,
+            current_status: row.status
+        }, function(result) {
+            if (result.success) {
+                $('#absensi-table').datagrid('reload');
+            } else {
+                $.messager.show({
+                    title: 'Error',
+                    msg: result.errorMsg
+                });
+            }
+        }, 'json');
+    }
+}
+
+function filterDataAbsensi() {
+     var isValid = $('#filter-tahun').combobox('validate') && 
+                      $('#filter-bulan').combobox('validate') && 
+                      $('#filter-lokasi').combobox('validate');
+        
+        if (!isValid) {
+            $.messager.alert('Peringatan', 'Harap isi semua filter (Tahun, Bulan, dan Lokasi).', 'warning');
+            return;
+        }
+
+        // Kumpulkan parameter
+        var params = {
+            year: $('#filter-tahun').combobox('getValue'),
+            month: $('#filter-bulan').combobox('getValue'),
+            location: $('#filter-lokasi').combobox('getValue')
+        };
+
+        // Atur URL dan muat data ke datagrid
+        $('#absensi-table').datagrid({
+            url: '<?= site_url('hr/get_absensi_json') ?>',
+            queryParams: params
+        });
+}
+//
+
+//
+// FUNGSI BARU: Untuk membuat tombol "Cetak PDF" di setiap baris
+    function formatReportHarianAction(value, row, index) {
+        // Tombol ini akan memanggil fungsi cetakLaporanHarian dengan tanggal dari baris tersebut
+        return `<a href="javascript:void(0)" class="cetak-harian-btn" 
+                   onclick="cetakLaporanHarian('${row.tgl_masuk}')">Print PDF</a>`;
+    }
+
+    // FUNGSI BARU: Untuk membuka halaman cetak PDF harian
+    function cetakLaporanHarian(tanggal) {
+        if (tanggal) {
+            let url = "<?= site_url('hr/cetak_laporan_harian') ?>?tanggal=" + encodeURIComponent(tanggal);
+            window.open(url, '_blank');
+        }
+    }
+//
+
 function myformatter(date) {
     var y = date.getFullYear();
     var m = date.getMonth() + 1;
@@ -247,41 +481,45 @@ function deleteAbsensi() {
     // 2. Periksa apakah ada baris yang dipilih
     if (row) {
         // 3. Tampilkan dialog konfirmasi bawaan EasyUI
-        $.messager.confirm('Confirm Delete', 'Are you sure you want to delete the attendance data for:' + row.nama + '?', function(r) {
-            
-            // 4. Jika pengguna menekan tombol "OK" (r akan bernilai true)
-            if (r) {
-                // Tampilkan loading progress
-                $.messager.progress({
-                    title: 'Please wait',
-                    msg: 'Deleting data...'
-                });
+        $.messager.confirm('Confirm Delete', 'Are you sure you want to delete the attendance data for:' + row.nama +
+            '?',
+            function(r) {
 
-                // 5. Kirim request hapus ke server
-                $.post('<?= site_url('hr/delete_absensi') ?>', { id: row.id }, function(response) {
-                    $.messager.progress('close'); // Tutup loading
+                // 4. Jika pengguna menekan tombol "OK" (r akan bernilai true)
+                if (r) {
+                    // Tampilkan loading progress
+                    $.messager.progress({
+                        title: 'Please wait',
+                        msg: 'Deleting data...'
+                    });
 
-                    // 6. Tangani respons dari server
-                    if (response.status === 'success') {
-                        $('#absensi-table').datagrid('reload'); // Muat ulang tabel
-                        
-                        // Tampilkan notifikasi sukses di pojok kanan bawah
-                        $.messager.show({
-                            title: 'Sukses',
-                            msg: response.message,
-                            timeout: 300,
-                            showType: 'slide'
-                        });
-                    } else {
-                        // Tampilkan pesan error jika gagal
-                        $.messager.alert('Error', response.message, 'error');
-                    }
-                }, 'json').fail(function() {
-                    $.messager.progress('close');
-                    $.messager.alert('Error', 'Cannot connect to the server.', 'error');
-                });
-            }
-        });
+                    // 5. Kirim request hapus ke server
+                    $.post('<?= site_url('hr/delete_absensi') ?>', {
+                        id: row.id
+                    }, function(response) {
+                        $.messager.progress('close'); // Tutup loading
+
+                        // 6. Tangani respons dari server
+                        if (response.status === 'success') {
+                            $('#absensi-table').datagrid('reload'); // Muat ulang tabel
+
+                            // Tampilkan notifikasi sukses di pojok kanan bawah
+                            $.messager.show({
+                                title: 'Sukses',
+                                msg: response.message,
+                                timeout: 300,
+                                showType: 'slide'
+                            });
+                        } else {
+                            // Tampilkan pesan error jika gagal
+                            $.messager.alert('Error', response.message, 'error');
+                        }
+                    }, 'json').fail(function() {
+                        $.messager.progress('close');
+                        $.messager.alert('Error', 'Cannot connect to the server.', 'error');
+                    });
+                }
+            });
     } else {
         // Jika tidak ada baris yang dipilih, tampilkan peringatan
         $.messager.alert('Warning', 'Select the data row you want to delete.', 'warning');
@@ -321,21 +559,21 @@ function doSearchAbsensi(value) {
 }
 //
 
-function exportData(format) {
-    // Gunakan selector yang lebih spesifik untuk menargetkan searchbox di dalam toolbar
-    const searchValue = $('#toolbarAbsensi .easyui-searchbox').searchbox('getValue');
+// function exportData(format) {
+//     // Gunakan selector yang lebih spesifik untuk menargetkan searchbox di dalam toolbar
+//     const searchValue = $('#toolbarAbsensi .easyui-searchbox').searchbox('getValue');
 
-    // Buat URL untuk ekspor
-    let url = "<?= site_url('hr/export_absensi') ?>/" + format;
+//     // Buat URL untuk ekspor
+//     let url = "<?= site_url('hr/export_absensi') ?>/" + format;
 
-    // Tambahkan parameter pencarian jika ada
-    if (searchValue) {
-        url += "?search_data=" + encodeURIComponent(searchValue);
-    }
+//     // Tambahkan parameter pencarian jika ada
+//     if (searchValue) {
+//         url += "?search_data=" + encodeURIComponent(searchValue);
+//     }
 
-    // Buka URL di tab baru untuk memulai download
-    window.open(url, '_blank');
-}
+//     // Buka URL di tab baru untuk memulai download
+//     window.open(url, '_blank');
+// }
 
 // Fungsi BARU untuk download template
 function downloadTemplate() {
@@ -470,9 +708,8 @@ $(document).ready(function() {
                     $('#form-import')[0].reset();
                     $('#absensi-table').datagrid('load', {});
 
-                    // ======================================================
-                    // NOTIFIKASI SUKSES (TOAST) YANG ANDA INGINKAN
-                    // ======================================================
+                    // NOTIFIKASI SUKSES (TOAST) 
+
                     Toast.fire({
                         icon: 'success',
                         title: response.message
@@ -504,4 +741,115 @@ $(document).ready(function() {
     });
 });
 //
+// --- INISIALISASI ---
+// $(function() {
+//         // ... (inisialisasi filter Anda tetap sama)
+
+//         $('#absensi-table').datagrid({
+//             // ... (konfigurasi Anda)
+//             singleSelect: true,
+//             onSelect: function(index, row) {
+//                 if (row.status !== 'Approved') {
+//                     $('#btn-promote-status').linkbutton('enable');
+//                 } else {
+//                     $('#btn-promote-status').linkbutton('disable');
+//                 }
+//             },
+//             onUnselect: function(index, row) {
+//                 $('#btn-promote-status').linkbutton('disable');
+//             },
+//             onLoadSuccess: function() {
+//                 $('#btn-promote-status').linkbutton('disable');
+//             }
+//         });
+//     });
+// //
+
+//
+function promoteDailyStatus() {
+    var row = $('#absensi-table').datagrid('getSelected');
+    if (row) {
+        $.messager.confirm('Konfirmasi', 'Naikkan status untuk tanggal ' + row.tgl_masuk + ' di lokasi ' + row.work_location + '?', function(r) {
+            if (r) {
+                // 1. Tampilkan loading progress SEBELUM request dikirim
+                $.messager.progress({
+                    title: 'Mohon Tunggu',
+                    msg: 'Memperbarui status dan mengirim notifikasi email...'
+                });
+
+                // Gunakan $.ajax agar kita bisa menangani 'error' dengan lebih baik
+                $.ajax({
+                    url: '<?= site_url('hr/promote_daily_status') ?>',
+                    type: 'POST',
+                    data: { 
+                        tgl_masuk: row.tgl_masuk,
+                        work_location: row.work_location
+                    },
+                    dataType: 'json',
+                    success: function(result) {
+                        // 2. Tutup loading jika berhasil
+                        $.messager.progress('close');
+                        if (result.status === 'success') {
+                            $('#absensi-table').datagrid('reload');
+                            $.messager.show({ title: 'Sukses', msg: result.message });
+                        } else {
+                            $.messager.alert('Error', result.message, 'error');
+                        }
+                    },
+                    error: function() {
+                        // 3. Tutup loading jika terjadi error koneksi
+                        $.messager.progress('close');
+                        $.messager.alert('Error', 'Gagal terhubung ke server.', 'error');
+                    }
+                });
+            }
+        });
+    }
+}
+//
+
+// --- INISIALISASI SAAT HALAMAN SIAP ---
+   $(function() {
+        // Atur nilai default untuk filter
+        $('#filter-tahun').combobox('setValue', '<?= date('Y') ?>');
+        $('#filter-bulan').combobox('setValue', '<?= date('m') ?>');
+
+        // Inisialisasi datagrid SATU KALI dengan semua properti
+        $('#absensi-table').datagrid({
+            // Tidak ada 'url' di sini agar tidak loading otomatis
+            title: 'Data Absensi',
+            toolbar: '#toolbarAbsensi',
+            pagination: true,
+            rownumbers: true,
+            singleSelect: true,
+            fitColumns: false, // Diubah agar bisa scroll jika banyak kolom
+            
+            onSelect: function(index, row) {
+                if (row.status !== 'Approved') {
+                    $('#btn-promote-status').linkbutton('enable');
+                } else {
+                    $('#btn-promote-status').linkbutton('disable');
+                }
+            },
+            onUnselect: function(index, row) {
+                $('#btn-promote-status').linkbutton('disable');
+            },
+            onLoadSuccess: function() {
+                // Inisialisasi tombol "Cetak PDF" yang baru dibuat di dalam tabel
+                $('.cetak-harian-btn').linkbutton({
+                    plain: false,
+                    iconCls: 'icon-print'
+                });
+                // Selalu nonaktifkan tombol promote status setelah data dimuat
+                $('#btn-promote-status').linkbutton('enable');
+                // Hapus pilihan setelah memuat ulang
+                $(this).datagrid('clearSelections');
+            }
+        });
+
+        // Kosongkan datagrid saat pertama kali dimuat
+        $('#absensi-table').datagrid('loadData', {"total":0,"rows":[]});
+    });
+//
+
 </script>

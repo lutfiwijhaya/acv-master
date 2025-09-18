@@ -15,6 +15,43 @@
         line-height: 1.2;
     }
     
+    .image-upload-container {
+        position: relative;
+        cursor: pointer;
+        display: inline-block;
+        overflow: hidden; /* Penting untuk border-radius jika ada */
+    }
+    .image-upload-container .border {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 0.8rem;
+        color: #6c757d;
+        background-color: #f8f9fa;
+    }
+    .image-upload-container .overlay {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        width: 100%;
+        opacity: 0;
+        transition: .3s ease;
+        background-color: rgba(0,0,0,0.5);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-size: 0.8rem;
+        text-align: center;
+    }
+    .image-upload-container:hover .overlay {
+        opacity: 1;
+    }
+
     /* Compact table styles */
     .table-bordered td,
     .table-bordered th {
@@ -212,36 +249,92 @@
 
                 
                     <!-- tabel masuk -->
-                    <table class="table table-bordered">
-                        <tr>
-                            <td colspan="4" class="fw-bold ">A. CANDIDATE INFORMATION</td>
-                            <td colspan="2">
-                                (Religion:
-                                <input type="text" class="form-control form-control-sm d-inline-block" name="religion"
-                                    style="width: 70%;" value="<?= htmlspecialchars($candidate['religion'] ?? '') ?>">)
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="width:15%;">Name</td>
-                            <td colspan="2" style="width:35%;"><b><?= htmlspecialchars($candidate['nama']) ?></b>
-                                (<?= $candidate['jk'] == 'L' ? 'male' : 'female' ?>)</td>
-                            <td style="width:15%;">Discipline</td>
-                            <td colspan="2" style="width:35%;">
-                                <input type="text" class="form-control form-control-sm" name="summary_discipline"
-                                    value="<?= htmlspecialchars($candidate['summary_discipline'] ?? '') ?>">
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Birthday</td>
-                            <td colspan="2">
-                                <b><?= date('d F Y', strtotime($candidate['tgl_lahir'])) ?></b>
-                                (Age:
-                                <input type="number" class="form-control form-control-sm d-inline-block"
-                                    name="summary_age_years" style="width: 60px;"> years
-                                <input type="number" class="form-control form-control-sm d-inline-block"
-                                    name="summary_age_months" style="width: 60px;"> month)
-                            </td>
-                            <td>Position <br>
+                    <table class="table table-bordered mt-4">
+    <tr>
+        <th colspan="4" class="fw-bold bg-light">A. CANDIDATE INFORMATION</th>
+        <td colspan="2" class="bg-light">
+            (Religion:
+            <input type="text" class="form-control form-control-sm d-inline-block" name="religion"
+                   style="width: 70%;" value="<?= htmlspecialchars($candidate['religion'] ?? '') ?>">)
+        </td>
+    </tr>
+
+    <tr>
+        <td colspan="4" class="p-2">
+            <table class="table table-borderless mb-0">
+                <tr>
+                    <td style="width:25%;">Name</td>
+                    <td style="width:75%;"><b><?= htmlspecialchars($candidate['nama']) ?></b> (<?= $candidate['jk'] == 'L' ? 'Male' : 'Female' ?>)</td>
+                </tr>
+                <tr>
+                    <td>Birthday</td>
+                    <td><b><?= date('d F Y', strtotime($candidate['tgl_lahir'])) ?></b>
+                        (Age:
+                        <input type="number" class="form-control form-control-sm d-inline-block" name="summary_age_years" style="width: 60px;"> years
+                        <input type="number" class="form-control form-control-sm d-inline-block" name="summary_age_months" style="width: 60px;"> months)
+                    </td>
+                </tr>
+                 <tr>
+                    <td>KTP No.</td>
+                    <td><b><?= htmlspecialchars($candidate['nik']) ?></b></td>
+                </tr>
+                <tr>
+                    <td>Last Education</td>
+                    <td>
+                        Name: <input type="text" class="form-control form-control-sm" name="summary_education_name" value="<?= isset($last_education) ? htmlspecialchars($last_education['registered_school_name']) : '' ?>"><br>
+                        Location: <input type="text" class="form-control form-control-sm mt-1" name="summary_education_location" value="<?= isset($last_education) ? htmlspecialchars($last_education['location']) : '' ?>">
+                    </td>
+                </tr>
+                 <tr>
+                    <td>Mobile No.</td>
+                    <td><b><?= htmlspecialchars($candidate['no_hp']) ?></b></td>
+                </tr>
+                 <tr>
+                    <td>Expected Salary</td>
+                    <td>
+                        IDR <input type="number" class="form-control form-control-sm d-inline-block" name="summary_expected_salary" style="width: 80%;" value="<?= $candidate['desired_salary'] ?>">
+                    </td>
+                </tr>
+            </table>
+        </td>
+       <td class="text-center align-middle p-2">
+    <div id="photo-upload-container" class="image-upload-container">
+        <img id="photo-preview" src="<?= !empty($candidate['path_foto']) ? base_url('uploads/hr_file/' . $candidate['path_foto']) : '' ?>" alt="Photo Preview" class="border" style="width: 120px; height: 150px; object-fit: cover; <?= empty($candidate['path_foto']) ? 'display:none;' : '' ?>">
+        <div id="photo-placeholder" class="border" style="width: 120px; height: 150px; display: <?= empty($candidate['path_foto']) ? 'flex;' : 'none;' ?>;">
+            <span>Photo</span>
+        </div>
+        <div class="overlay">
+            <i class="fas fa-camera"></i><br>
+            Change Photo
+        </div>
+    </div>
+    <input type="file" class="form-control" name="photo" id="photo-input" accept="image/*" style="display: none;">
+</td>
+<td class="text-center align-middle p-2">
+    <div id="signature-upload-container" class="image-upload-container">
+        <img id="signature-preview" src="<?= !empty($candidate['path_ttd']) ? base_url('uploads/signatures/' . $candidate['path_ttd']) : '' ?>" alt="Signature Preview" class="border" style="width: 120px; height: 80px; object-fit: contain; <?= empty($candidate['path_ttd']) ? 'display:none;' : '' ?>">
+        <div id="signature-placeholder" class="border" style="width: 120px; height: 80px; display: <?= empty($candidate['path_ttd']) ? 'flex;' : 'none;' ?>;">
+            <span>Signature</span>
+        </div>
+        <div class="overlay">
+            <i class="fas fa-edit"></i><br>
+            Change
+        </div>
+    </div>
+    <input type="file" class="form-control" name="signature" id="signature-input" accept="image/*" style="display: none;">
+</td>
+    </tr>
+    
+    <tr>
+        <td>Discipline</td>
+        <td colspan="2">
+            <input type="text" class="form-control form-control-sm" name="summary_discipline" value="<?= htmlspecialchars($candidate['summary_discipline'] ?? '') ?>">
+        </td>
+        <td>Marriage Status</td>
+        <td colspan="2"><b><?= htmlspecialchars($candidate['marital']) ?></b></td>
+    </tr>
+    <tr>
+       <td>Position <br>
                                 Applying Occupation
                             </td>
                             <td colspan="2">
@@ -260,52 +353,21 @@
                                     placeholder="Or enter custom occupation"
                                     value="<?= htmlspecialchars($candidate['applying_occupation']) ?>">
                             </td>
-                        </tr>
-                        <tr>
-                            <td>KTP No.</td>
-                            <td colspan="2"><b><?= htmlspecialchars($candidate['nik']) ?></b></td>
-                            <td>Marriage Status</td>
-                            <td colspan="2"><b><?= htmlspecialchars($candidate['marital']) ?></b></td>
-                        </tr>
-                        <tr>
-                            <td>Last Education</td>
-                            <td colspan="2">
-                                Name: <input type="text" class="form-control form-control-sm"
-                                    name="summary_education_name"
-                                    value="<?= isset($last_education) ? htmlspecialchars($last_education['registered_school_name']) : '' ?>"><br>
-                                Location: <input type="text" class="form-control form-control-sm mt-1"
-                                    name="summary_education_location"
-                                    value="<?= isset($last_education) ? htmlspecialchars($last_education['location']) : '' ?>">
-                            </td>
-                            <td>Class Grade</td>
-                            <td colspan="2">
-                                <input type="text" class="form-control form-control-sm" name="summary_class_grade"
-                                    value="<?= htmlspecialchars($candidate['summary_class_grade'] ?? '') ?>">
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Mobile No.</td>
-                            <td colspan="2"><b><?= htmlspecialchars($candidate['no_hp']) ?></b></td>
-                            <td>e-mail</td>
-                            <td colspan="2"><b><?= htmlspecialchars($candidate['email']) ?></b></td>
-                        </tr>
-                        <tr>
-                            <td>Expected Salary</td>
-                            <td colspan="2">
-                                IDR <input type="number" class="form-control form-control-sm d-inline-block"
-                                    name="summary_expected_salary" style="width: 80%;"
-                                    value="<?= $candidate['desired_salary'] ?>">
-                            </td>
-                            <td>Career</td>
-                            <td colspan="2">
-                                <input type="number" class="form-control form-control-sm d-inline-block"
-                                    name="summary_career_years" style="width: 60px;"> years
-                                <input type="number" class="form-control form-control-sm d-inline-block"
-                                    name="summary_career_months" style="width: 60px;"> months
-                            </td>
-                        </tr>
-                    </table>
-                    </table>
+        <td>e-mail</td>
+        <td colspan="2"><b><?= htmlspecialchars($candidate['email']) ?></b></td>
+    </tr>
+     <tr>
+        <td>Class Grade</td>
+        <td colspan="2">
+            <input type="text" class="form-control form-control-sm" name="summary_class_grade" value="<?= htmlspecialchars($candidate['summary_class_grade'] ?? '') ?>">
+        </td>
+        <td>Career</td>
+        <td colspan="2">
+            <input type="number" class="form-control form-control-sm d-inline-block" name="summary_career_years" style="width: 60px;"> years
+            <input type="number" class="form-control form-control-sm d-inline-block" name="summary_career_months" style="width: 60px;"> months
+        </td>
+    </tr>
+</table>
                     <!-- end tebel masuk -->
 
 
@@ -760,13 +822,13 @@
                             <td>
                                 <select class="form-select form-select-sm" name="hired_work_location">
                                     <option value="">Select Location</option>
-                                    <option value="Direct"
-                                        <?= (($hired_status['work_location'] ?? '') == 'Direct') ? 'selected' : '' ?>>
-                                        Direct
+                                    <option value="HO"
+                                        <?= (($hired_status['work_location'] ?? '') == 'HO') ? 'selected' : '' ?>>
+                                        HO
                                     </option>
-                                    <option value="Indirect"
-                                        <?= (($hired_status['work_location'] ?? '') == 'Indirect') ? 'selected' : '' ?>>
-                                        Indirect
+                                    <option value="KN Project"
+                                        <?= (($hired_status['work_location'] ?? '') == 'KN Project') ? 'selected' : '' ?>>
+                                        KN Project
                                     </option>
                                 </select>
                             </td>
@@ -857,8 +919,8 @@
                             <tr>
                                 <th style="width:30%;" class="text-center bg-light">Description</th>
                                 <th style="width:15%;" class="text-center bg-light">Date<br>(dd-mmm-yyyy)</th>
-                                <th style="width:15%;" class="text-center bg-light">Period<br>(dd-mmm-yyyy)</th>
-                                <th style="width:15%;" class="text-center bg-light">Period<br>(dd-mmm-yyyy)</th>
+                                <th style="width:15%;" class="text-center bg-light">Period Star<br>(dd-mmm-yyyy)</th>
+                                <th style="width:15%;" class="text-center bg-light">Period End<br>(dd-mmm-yyyy)</th>
                                 <th style="width:25%;" class="text-center bg-light">Result</th>
                             </tr>
                         </thead>
@@ -1006,6 +1068,54 @@
         }
         //end
 
+        $('#photo-upload-container').on('click', function() {
+        $('#photo-input').click(); 
+    });
+
+    // Saat file dipilih, tampilkan preview-nya
+    $('#photo-input').on('change', function(evt) {
+        const [file] = evt.target.files;
+        if (file) {
+            $('#photo-preview').attr('src', URL.createObjectURL(file)).show();
+            $('#photo-placeholder').hide();
+        }
+    });
+
+    // --- Logika untuk upload tanda tangan ---
+    // Saat wadah tanda tangan diklik, picu input file yang tersembunyi
+    $('#signature-upload-container').on('click', function() {
+        $('#signature-input').click();
+    });
+
+    // Saat file dipilih, tampilkan preview-nya
+    $('#signature-input').on('change', function(evt) {
+        const [file] = evt.target.files;
+        if (file) {
+            $('#signature-preview').attr('src', URL.createObjectURL(file)).show();
+            $('#signature-placeholder').hide();
+        }
+    });
+
+        //Preview untuk Foto
+    document.getElementById('photo-input').onchange = evt => {
+        const [file] = evt.target.files;
+        if (file) {
+            document.getElementById('photo-preview').src = URL.createObjectURL(file);
+            document.getElementById('photo-preview').style.display = 'block';
+            document.getElementById('photo-placeholder').style.display = 'none';
+        }
+    };
+
+    // Preview untuk Tanda Tangan
+    document.getElementById('signature-input').onchange = evt => {
+        const [file] = evt.target.files;
+        if (file) {
+            document.getElementById('signature-preview').src = URL.createObjectURL(file);
+            document.getElementById('signature-preview').style.display = 'block';
+            document.getElementById('signature-placeholder').style.display = 'none';
+        }
+    };
+    //
 
         // --- LOGIKA UNTUK MENGHITUNG TOTAL KARIR OTOMATIS (DENGAN DEBUGGING) ---
         try {

@@ -540,7 +540,6 @@ public function update_candidate($id)
         'bpjs_ks' => $this->input->post('bpjs_ks'),
         
     ];
-
     
 
      // --- LOGIKA UPLOAD FOTO YANG DIPERBAIKI ---
@@ -704,182 +703,181 @@ public function update_candidate($id)
 
 // untuk bagian form summary
 
-    public function formsummary($id)
-    {
-    $data['candidate'] = $this->hr_model->get_candidate_by_id($id);
-    if (!$data['candidate']) {
-        show_404();
+    public function formsummary($id = null)
+{
+    // Cek jika ada ID, berarti ini mode EDIT
+    if ($id) {
+        // Ambil data kandidat dari DB
+        $data['candidate'] = $this->hr_model->get_candidate_by_id($id);
+        
+        // Jika ID ada tapi data tidak ditemukan, tampilkan halaman 404
+        if (!$data['candidate']) {
+            show_404();
+        }
+        
+        // Ambil semua data terkait lainnya dari database
+        $data['last_education']   = $this->hr_model->get_last_education($id);
+        $data['careers']          = $this->hr_model->get_careers_by_user_id($id);
+        $families_from_db         = (array) $this->hr_model->get_families_by_user_id($id);
+        $uploaded_docs_raw        = (array) $this->hr_model->get_documents_by_user_id($id);
+        $certificates_from_db     = (array) $this->hr_model->get_certificates_by_user_id($id);
+        $hired_data_from_db       = (array) $this->hr_model->get_hired_data_by_user_id($id);
+        $salary_data_from_db      = (array) $this->hr_model->get_salary_data_by_user_id($id);
+        $rewards_from_db          = (array) $this->hr_model->get_rewards_by_user_id($id);
+        $disciplinary_from_db     = (array) $this->hr_model->get_disciplinary_by_user_id($id);
+        $data['chronology_data']  = (array) $this->hr_model->get_chronology_by_user_id($id);
+        
+        $data['title'] = 'Edit Summary - ' . ($data['candidate']['nama'] ?? 'Unknown');
+
+    } else {
+        // Jika TIDAK ADA ID, berarti ini mode INPUT BARU
+
+        // Inisialisasi semua key yang dibutuhkan oleh view agar tidak error
+        $data['candidate'] = [
+            '_id' => null,
+        'id' => null,
+        'jk' => '', 
+        'nik' => '', 
+            'nama' => '',
+            'tgl_lahir' => '',
+            'tempat_lahir' => '',
+            'jenis_kelamin' => '',
+            'no_ktp' => '',
+            'alamat_ktp' => '',
+            'alamat_sekarang' => '',
+            'no_hp' => '',
+            'agama' => '',
+            'status_perkawinan' => '',
+            'kewarganegaraan' => '',
+            'tinggi_badan' => '',
+            'berat_badan' => '',
+            'hobi' => '',
+            'email' => '',
+            // TODO: Tambahkan key lain jika ada yang dibutuhkan oleh form
+        ];
+
+        // Siapkan variabel lain sebagai array kosong
+        $data['last_education']   = null;
+        $data['careers']          = [];
+        $families_from_db         = [];
+        $uploaded_docs_raw        = [];
+        $certificates_from_db     = [];
+        $hired_data_from_db       = [];
+        $salary_data_from_db      = [];
+        $rewards_from_db          = [];
+        $disciplinary_from_db     = [];
+        $data['chronology_data']  = [];
+
+        $data['title'] = 'Input New Employee Summary';
     }
 
-    $data['last_education'] = $this->hr_model->get_last_education($id);
-    $data['careers'] = $this->hr_model->get_careers_by_user_id($id);
-    
-    // --- LOGIKA BARU DAN BENAR UNTUK DATA KELUARGA ---
-    
-    // 1. Siapkan array default. Gunakan 'grandparent' (tanpa spasi) agar konsisten.
+    // --- PROSES DATA (Logika ini berjalan untuk kedua mode) ---
+
+    // LOGIKA KELUARGA
     $family_summary = [
-        'grandparent' => ['number' => 0, 'accompany' => 'No'],  
+        'grandparent' => ['number' => 0, 'accompany' => 'No'],
         'parent'      => ['number' => 0, 'accompany' => 'No'],
         'wife'        => ['number' => 0, 'accompany' => 'No'],
         'son'         => ['number' => 0, 'accompany' => 'No'],
-        'daughter'    => ['number' => 0, 'accompany' => 'No']
+        'daughter'    => ['number' => 0, 'accompany' => 'No'],
     ];
-
-    // 2. Ambil data keluarga yang sudah tersimpan di database
-    $families_from_db = $this->hr_model->get_families_by_user_id($id);
-
-    // 3. Isi array summary dengan data yang sudah ada
     if (!empty($families_from_db)) {
         foreach ($families_from_db as $family) {
-            // ganti 'grand parent' atau 'Grand Parent' menjadi 'grandparent' agar cocok
-            $relation_key = str_replace(' ', '', strtolower($family['relation'])); 
-            
+            $relation_key = str_replace(' ', '', strtolower($family['relation'] ?? ''));
             if (array_key_exists($relation_key, $family_summary)) {
-                // Ambil nilai 'number' dan 'cohabit' yang sudah tersimpan di database
-                $family_summary[$relation_key]['number'] = $family['number'] ?? 0;
+                $family_summary[$relation_key]['number']    = $family['number'] ?? 0;
                 $family_summary[$relation_key]['accompany'] = ucfirst($family['cohabit'] ?? 'no');
             }
         }
     }
-    
-    // 4. Kirim hasil akhir ke view
     $data['family_summary'] = $family_summary;
-    // ---end AKHIR DARI LOGIKA KELUARGA ---
 
-    //bagian untuk melihat data dokumen yang sudah tersimpan di database
-        $uploaded_docs_raw = $this->hr_model->get_documents_by_user_id($id);
-        
-          $uploaded_docs_formatted = [];
+    // DOKUMEN
+    $uploaded_docs_formatted = [];
     foreach ($uploaded_docs_raw as $doc) {
-        $uploaded_docs_formatted[$doc['document_type']] = $doc;
+        if (!empty($doc['document_type'])) {
+            $uploaded_docs_formatted[$doc['document_type']] = $doc;
+        }
     }
     $data['documents'] = $uploaded_docs_formatted;
-    // --- AKHIR DARI BLOK DOKUMEN ---
 
-    // --- LOGIKA UNTUK DATA SERTIFIKAT (DIPERBAIKI) ---
-$certificates_from_db = $this->hr_model->get_certificates_by_user_id($id);
-$certificate_data_formatted = [];
-
-// Isi array dengan data dari database, sesuai urutan
-if (!empty($certificates_from_db)) {
-    $i = 1;
-    foreach ($certificates_from_db as $cert) {
-        $certificate_data_formatted['id_' . $i]        = $cert['id'];
-        $certificate_data_formatted['name_' . $i]      = $cert['certificate'];
-        $certificate_data_formatted['authority_' . $i] = $cert['authority'];
-        $certificate_data_formatted['no_' . $i]        = $cert['certificate_no'];
-        $certificate_data_formatted['date_' . $i]      = $cert['acquisition'];
-        $i++;
+    // SERTIFIKAT
+    $certificate_data_formatted = [];
+    if (!empty($certificates_from_db)) {
+        $i = 1;
+        foreach ($certificates_from_db as $cert) {
+            $certificate_data_formatted['id_' . $i]        = $cert['id'] ?? null;
+            $certificate_data_formatted['name_' . $i]       = $cert['certificate'] ?? '';
+            $certificate_data_formatted['authority_' . $i] = $cert['authority'] ?? '';
+            $certificate_data_formatted['no_' . $i]         = $cert['certificate_no'] ?? '';
+            $certificate_data_formatted['date_' . $i]       = $cert['acquisition'] ?? '';
+            $i++;
+        }
     }
-}
-$data['certificate_data'] = $certificate_data_formatted;
-// --- AKHIR LOGIKA SERTIFIKAT ---
+    $data['certificate_data'] = $certificate_data_formatted;
 
-
-
-// 1. Ambil semua data hired untuk user ini dari database
-    $hired_data_from_db = $this->hr_model->get_hired_data_by_user_id($id);
-
-    // 2. Siapkan array kosong untuk menampung data yang sudah diformat
+    // HIRED STATUS
     $hired_status_formatted = [];
-
-    // 3. Ubah format data agar mudah diakses di view
     foreach ($hired_data_from_db as $row) {
-        // Buat key baru yang cocok dengan nama input di form Anda
-        // Contoh: 'Type of Hired' -> 'hired_type'
-        $input_name = str_replace(' ', '_', strtolower($row['intial']));
+        $input_name = str_replace(' ', '_', strtolower($row['intial'] ?? ''));
         $input_name = str_replace(['.', '(', ')'], '', $input_name);
-        
-        $hired_status_formatted[$input_name] = $row['value'];
+        if ($input_name !== '') {
+            $hired_status_formatted[$input_name] = $row['value'] ?? '';
+        }
     }
-
-    // 4. Kirim data yang sudah diformat ke view
     $data['hired_status'] = $hired_status_formatted;
-    
-    // --- AKHIR LOGIKA HIRED STATUS ---
-    //end
 
-    // 1. Ambil semua data gaji untuk user ini dari database
-$salary_data_from_db = $this->hr_model->get_salary_data_by_user_id($id);
-
-// 2. Siapkan array kosong untuk menampung data yang sudah diformat
-$salary_formatted = [];
-
-// 3. Ubah format data agar mudah diakses di view
-foreach ($salary_data_from_db as $row) {
-    // Buat kunci baru yang cocok dengan nama input di form Anda
-    // str_replace sekarang juga mengubah '/' menjadi '_'
-    $key = 'salary_' . str_replace([' ', '/'], '_', strtolower($row['allowances']));
-    
-    // Hapus karakter lain yang mungkin mengganggu
-    $key = str_replace(['.', '(', ')'], '', $key);
-    
-    $salary_formatted[$key] = $row['salary'];
-}   
-
-    // 4. Kirim data yang sudah diformat ke view
+    // SALARY
+    $salary_formatted = [];
+    foreach ($salary_data_from_db as $row) {
+        $key = 'salary_' . str_replace([' ', '/'], '_', strtolower($row['allowances'] ?? ''));
+        $key = str_replace(['.', '(', ')'], '', $key);
+        if ($key !== 'salary_') {
+            $salary_formatted[$key] = $row['salary'] ?? 0;
+        }
+    }
     $data['salary_data'] = $salary_formatted;
 
-
-
-    // Ambil data reward
-$rewards_from_db = $this->hr_model->get_rewards_by_user_id($id);
-$reward_data_formatted = [];
-
-if (!empty($rewards_from_db)) {
-    $i = 1;
-    foreach ($rewards_from_db as $reward) {
-        if ($i > 4) break;
-        $reward_data_formatted['id_'.$i]     = $reward['id'];
-        $reward_data_formatted['name_'.$i]   = $reward['reward_name'];
-        $reward_data_formatted['date_'.$i]   = $reward['reward_date'];
-        $reward_data_formatted['result_'.$i] = $reward['reward_result'];
-        $i++;
+    // REWARDS
+    $reward_data_formatted = [];
+    if (!empty($rewards_from_db)) {
+        $i = 1;
+        foreach ($rewards_from_db as $reward) {
+            if ($i > 4) break;
+            $reward_data_formatted['id_'.$i]     = $reward['id'] ?? null;
+            $reward_data_formatted['name_'.$i]   = $reward['reward_name'] ?? '';
+            $reward_data_formatted['date_'.$i]   = $reward['reward_date'] ?? '';
+            $reward_data_formatted['result_'.$i] = $reward['reward_result'] ?? '';
+            $i++;
+        }
     }
-}
-$data['reward_data'] = $reward_data_formatted;
-//end 
+    $data['reward_data'] = $reward_data_formatted;
 
-
-// --- LOGIKA UNTUK DATA DISCIPLINARY (DIPERBAIKI) ---
-$disciplinary_from_db = $this->hr_model->get_disciplinary_by_user_id($id);
-$disciplinary_data_formatted = [];
-
-if (!empty($disciplinary_from_db)) {
-    $i = 1;
-    foreach ($disciplinary_from_db as $item) {
-        if ($i > 4) break;
-        $disciplinary_data_formatted['id_'.$i]          = $item['id'];
-        $disciplinary_data_formatted['description_'.$i]  = $item['description'];
-        $disciplinary_data_formatted['date_'.$i]        = $item['disciplinary_date'];
-        $disciplinary_data_formatted['date_start_'.$i]  = $item['disciplinary_period_star']; // Ambil dari kolom yang benar
-        $disciplinary_data_formatted['date_end_'.$i]    = $item['disciplinary_period_end'];   // Ambil dari kolom yang benar
-        $disciplinary_data_formatted['result_'.$i]      = $item['disciplinary_result'];
-        $i++;
+    // DISCIPLINARY
+    $disciplinary_data_formatted = [];
+    if (!empty($disciplinary_from_db)) {
+        $i = 1;
+        foreach ($disciplinary_from_db as $item) {
+            if ($i > 4) break;
+            $disciplinary_data_formatted['id_'.$i]            = $item['id'] ?? null;
+            $disciplinary_data_formatted['description_'.$i]   = $item['description'] ?? '';
+            $disciplinary_data_formatted['date_'.$i]           = $item['disciplinary_date'] ?? '';
+            $disciplinary_data_formatted['date_start_'.$i]   = $item['disciplinary_period_star'] ?? '';
+            $disciplinary_data_formatted['date_end_'.$i]     = $item['disciplinary_period_end'] ?? '';
+            $disciplinary_data_formatted['result_'.$i]        = $item['disciplinary_result'] ?? '';
+            $i++;
+        }
     }
-}
-$data['disciplinary_data'] = $disciplinary_data_formatted;
-// --- AKHIR LOGIKA DISCIPLINARY ---
+    $data['disciplinary_data'] = $disciplinary_data_formatted;
 
-
-
-// --- TAMBAHKAN LOGIKA INI ---
-    // Ambil daftar semua posisi untuk dropdown
-    $data['positions'] = $this->hr_model->get_all_positions();
+    // DATA YANG SELALU DIBUTUHKAN (misal: untuk dropdown)
+    $data['positions'] = (array) $this->hr_model->get_all_positions();
     
-    // Ambil data kronologi yang sudah tersimpan
-    $data['chronology_data'] = $this->hr_model->get_chronology_by_user_id($id);
-    // --- AKHIR DARI LOGIKA BARU ---
-    
-    
-    $data['title'] = 'Summary Status - ' . $data['candidate']['nama'];
+    // Load view dengan semua data yang sudah disiapkan
     $this->template->load('template', 'hr/formsummary', $data);
 }
 //end 
 // application/controllers/Hr.php
-
-
-
 
 
 //star pas bagian submit sumary
@@ -899,7 +897,6 @@ public function submit_summary()
         'desired_salary'             => $this->input->post('summary_expected_salary'),
         'summary_career_years'       => $this->input->post('summary_career_years'),
         'summary_career_months'      => $this->input->post('summary_career_months'),
-
           // Data untuk alamat dari textarea
         'alamat'                       => $this->input->post('address_home'),
         'current_address'              => $this->input->post('address_current')
@@ -912,9 +909,50 @@ public function submit_summary()
     $summary_user_data['applying_occupation'] = $custom_occupation;
     }
 
-    // --- AKHIR LOGIKA BARU ---
+    // Ambil data kandidat saat ini untuk menghapus file lama jika ada
+    $candidate = $this->hr_model->get_candidate_by_id($user_id);
 
-  $this->hr_model->update_candidate($user_id, $summary_user_data);
+    // Proses upload FOTO
+    if (!empty($_FILES['photo']['name'])) {
+        $config_photo['upload_path']   = './uploads/hr_file/';
+        $config_photo['allowed_types'] = 'jpg|jpeg|png|gif';
+        $config_photo['encrypt_name']  = TRUE;
+        $this->load->library('upload', $config_photo, 'photo_upload'); // Buat instance baru
+
+        if ($this->photo_upload->do_upload('photo')) {
+            // Hapus foto lama
+            if (!empty($candidate['path_foto']) && file_exists($config_photo['upload_path'] . $candidate['path_foto'])) {
+                unlink($config_photo['upload_path'] . $candidate['path_foto']);
+            }
+            // Simpan nama file baru
+            $summary_user_data['path_foto'] = $this->photo_upload->data('file_name');
+        } else {
+            // Tangani error jika perlu
+        }
+    }
+
+    // Proses upload TANDA TANGAN
+    if (!empty($_FILES['signature']['name'])) {
+        $config_signature['upload_path']   = './uploads/signatures/'; // Pastikan folder ini ada
+        $config_signature['allowed_types'] = 'jpg|jpeg|png|gif';
+        $config_signature['encrypt_name']  = TRUE;
+        $this->load->library('upload', $config_signature, 'signature_upload'); // Buat instance baru
+
+        if ($this->signature_upload->do_upload('signature')) {
+            // Hapus tanda tangan lama
+            if (!empty($candidate['path_ttd']) && file_exists($config_signature['upload_path'] . $candidate['path_ttd'])) {
+                unlink($config_signature['upload_path'] . $candidate['path_ttd']);
+            }
+            // Simpan nama file baru
+            $summary_user_data['path_ttd'] = $this->signature_upload->data('file_name');
+        } else {
+            // Tangani error jika perlu
+        }
+    }
+
+
+    // --- AKHIR LOGIKA BARU ---
+      $this->hr_model->update_candidate($user_id, $summary_user_data);
       //logika ini hanya untuk hr_family 
      $family_types = ['grandparent', 'parent', 'wife', 'son', 'daughter'];
 
@@ -941,7 +979,6 @@ public function submit_summary()
     // end
 
 
-
     // 2. Kumpulkan dan simpan data yang HANYA untuk tabel hr_academic
     $academic_id = $this->input->post('academic_id');
     
@@ -955,7 +992,6 @@ public function submit_summary()
         $this->hr_model->update_academic_record($academic_id, $academic_data);
     }
    // 4. TAMBAHKAN BLOK INI UNTUK UPLOAD DOKUMEN
-    // =======================================================
     $document_fields = [
         'doc_resume'         => 'Resume',
         'doc_ktp'            => 'KTP',
@@ -995,6 +1031,7 @@ public function submit_summary()
         }
     }
 //end 
+
     
  
     
@@ -1523,6 +1560,7 @@ public function absensi()
     $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
     $data['js_files'][]  = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
 
+    
     // Muat view absensi melalui template utama
     $this->template->load('template', 'hr/v_absensi', $data);
 }
@@ -1766,25 +1804,243 @@ public function absensi()
         // Pastikan Anda membuat file ini
         force_download('./assets/templates/template_absensi.xlsx', NULL);
     }
+    //
 
+    //
+  public function cetak_laporan_harian()
+{
+    // 1. Ambil dan validasi tanggal
+    $tanggal = $this->input->get('tanggal');
+    if (!$tanggal) {
+        echo "Tanggal tidak valid.";
+        return;
+    }
+    
+    // 2. Ambil semua data absensi untuk tanggal tersebut (HANYA SATU KALI)
+    $filters = ['start_date' => $tanggal, 'end_date' => $tanggal];
+    $data_absensi = $this->hr_model->get_all_absensi(null, $filters);
+
+    // 3. Siapkan variabel default untuk data persetujuan
+    $report_status = 'Nothing';
+    $approval_data = [
+        'prepared_by' => null, 'prepared_at' => null,
+        'reviewed_by' => null, 'reviewed_at' => null,
+        'reviewed_2_by' => null, 'reviewed_2_at' => null,
+        'approved_by' => null, 'approved_at' => null,
+    ];
+
+    // 4. Proses data jika absensi tidak kosong
+    if (!empty($data_absensi)) {
+        // Tentukan status terendah
+        $statuses_numeric = array_column($data_absensi, 'status');
+        $min_status_level = min($statuses_numeric);
+        $status_map_balik = [1 => 'Nothing', 2 => 'Prepared', 3 => 'Reviewed', 4 => 'Reviewed 2', 5 => 'Approved'];
+        $report_status = $status_map_balik[$min_status_level] ?? 'Nothing';
+
+        // Ambil data dari baris pertama (asumsi semua status & tanggal sama per hari)
+        $first_row = $data_absensi[0];
+        
+        // Kumpulkan semua ID user yang terlibat
+        $user_ids = array_filter([
+            $first_row['prepared_by'], $first_row['reviewed_by'],
+            $first_row['reviewed_2_by'], $first_row['approved_by']
+        ]);
+        
+        // Ambil nama user dari model
+         $user_details = $this->hr_model->get_user_details_by_ids($user_ids);
+
+        // ======================================================
+        // PERBAIKI LOGIKA UNTUK MENYIAPKAN DATA PERSETUJUAN
+        // ======================================================
+        $prepared_by_id = $first_row['prepared_by'];
+        $approval_data['prepared_by']       = $user_details[$prepared_by_id]['nama'] ?? '';
+        $approval_data['prepared_at']       = $first_row['prepared_at'] ? date('Y-m-d', strtotime($first_row['prepared_at'])) : null;
+        $approval_data['prepared_ttd']      = $user_details[$prepared_by_id]['path_ttd'] ?? null;
+
+        $reviewed_by_id = $first_row['reviewed_by'];
+        $approval_data['reviewed_by']       = $user_details[$reviewed_by_id]['nama'] ?? '';
+        $approval_data['reviewed_at']       = $first_row['reviewed_at'] ? date('Y-m-d', strtotime($first_row['reviewed_at'])) : null;
+        $approval_data['reviewed_ttd']      = $user_details[$reviewed_by_id]['path_ttd'] ?? null;
+
+        $reviewed_2_by_id = $first_row['reviewed_2_by'];
+        $approval_data['reviewed_2_by']     = $user_details[$reviewed_2_by_id]['nama'] ?? '';
+        $approval_data['reviewed_2_at']     = $first_row['reviewed_2_at'] ? date('Y-m-d', strtotime($first_row['reviewed_2_at'])) : null;
+        $approval_data['reviewed_2_ttd']    = $user_details[$reviewed_2_by_id]['path_ttd'] ?? null;
+        
+        $approved_by_id = $first_row['approved_by'];
+        $approval_data['approved_by']       = $user_details[$approved_by_id]['nama'] ?? '';
+        $approval_data['approved_at']       = $first_row['approved_at'] ? date('Y-m-d', strtotime($first_row['approved_at'])) : null;
+        $approval_data['approved_ttd']      = $user_details[$approved_by_id]['path_ttd'] ?? null;
+    }
+    
+    // 5. Siapkan SEMUA data untuk dikirim ke view PDF
+    $data_view['title'] = "Laporan Absensi Harian";
+    $data_view['tanggal_laporan'] = date('d F Y', strtotime($tanggal));
+    $data_view['absensi'] = $data_absensi;
+    $data_view['report_status'] = $report_status;
+    $data_view['approval_data'] = $approval_data; // Kirim data nama & tanggal
+    
+    // 6. Render PDF
+    $options = new Options();
+    $options->set('isHtml5ParserEnabled', true);
+    $options->setChroot(FCPATH);
+    $dompdf = new Dompdf($options);
+
+    $html = $this->load->view('hr/v_laporan_harian_pdf', $data_view, true);
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper('A4', 'landscape');
+    $dompdf->render();
+    
+    $filename = 'laporan_harian_' . $tanggal . '.pdf';
+    $dompdf->stream($filename, ['Attachment' => 0]);
+}
+//
+
+    public function cetak_laporan_absensi($id)
+{
+    if (!$id) {
+        show_404();
+    }
+
+    // Ambil detail data untuk satu absensi saja
+    $data_absensi = $this->hr_model->get_single_absensi_detail($id);
+
+    if (!$data_absensi) {
+        echo "Data absensi tidak ditemukan.";
+        return;
+    }
+
+    // Siapkan data untuk view PDF
+    $data_view['title'] = "Laporan Absensi Karyawan";
+    $data_view['absensi'] = $data_absensi;
+
+    // Load library dan view PDF
+    $options = new Options();
+    $options->set('isHtml5ParserEnabled', true);
+    $dompdf = new Dompdf($options);
+    
+    // Kita bisa buat view PDF baru yang lebih simpel atau gunakan yang sudah ada
+    $html = $this->load->view('hr/v_laporan_absensi_single_pdf', $data_view, true);
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper('A4', 'portrait');
+    $dompdf->render();
+    
+    $filename = 'laporan_absensi_' . $data_absensi['nik'] . '_' . $data_absensi['tgl_masuk'] . '.pdf';
+    $dompdf->stream($filename, ['Attachment' => 0]); // 0 untuk preview
+}
+//
+
+//
     public function get_absensi_json()
 {
     header('Content-Type: application/json');
+    
+    // Ambil semua parameter filter dari JavaScript
+    $filters = [
+        'year'  => $this->input->get('year'), // Ambil parameter tahun
+        'month' => $this->input->get('month'), // Ambil parameter bulan
+        'location'   => $this->input->get('location'),
+    ];
     $search_term = $this->input->get('search_data');
     
-    $absensi_data = $this->hr_model->get_all_absensi($search_term);
+    // Ambil parameter pagination
+    $page = $this->input->get('page', TRUE) ?: 1;
+    $rows = $this->input->get('rows', TRUE) ?: 20;
+    $offset = ($page - 1) * $rows;
+
+    // Panggil model dengan semua filter
+     $total = $this->hr_model->count_absensi_recap_harian($filters);
+    $data = $this->hr_model->get_absensi_recap_harian($filters, $rows, $offset);
     
-    $response = [
-        'total' => count($absensi_data),
-        'rows'  => $absensi_data
-    ];
-    echo json_encode($response);
+    // Kirim respons JSON yang benar
+    echo json_encode(['total' => $total, 'rows' => $data]);
 }
+//
+
+//baru
+public function promote_daily_status()
+{
+    header('Content-Type: application/json');
+    $tanggal = $this->input->post('tgl_masuk');
+    $lokasi = $this->input->post('work_location');
+    if (!$tanggal || !$lokasi) {
+        echo json_encode(['status' => 'error', 'message' => 'Data tanggal atau lokasi tidak lengkap.']);
+        return;
+    }
+
+
+    $user_id = $this->session->userdata('_id'); 
+     if (!$user_id) {
+        echo json_encode(['status' => 'error', 'message' => 'Sesi tidak valid. Silakan login ulang.']);
+        return;
+    }
+
+   
+
+    $result = $this->hr_model->promote_daily_status($tanggal, $lokasi, $user_id);
+
+    if ($result['success']) {
+        // ======================================================
+        // LOGIKA PENGIRIMAN EMAIL BARU
+        // ======================================================
+        $user_data = $this->hr_model->get_user_by_id($user_id); // Kita akan buat fungsi ini
+        $user_name = $user_data['nama'] ?? 'Sistem';
+
+        $subject = 'Pembaruan Status Absensi Tanggal ' . $tanggal;
+        $message = "Halo,<br><br>Status absensi untuk tanggal <b>{$tanggal}</b> di lokasi <b>{$lokasi}</b> telah diperbarui.<br>";
+        $message .= "Status baru adalah: <b>" . $result['new_status'] . "</b><br>";
+        $message .= "Diperbarui oleh: <b>{$user_name}</b>.<br><br>Terima kasih.";
+
+        // Muat library email
+        $this->load->library('email');
+        
+        $this->email->from('no-reply@sistem.com', 'Sistem HR');
+        $this->email->to('abni4250@gmail.com'); // Ganti dengan email tujuan
+        // Anda bisa menambahkan penerima lain: $this->email->cc('penerima_lain@email.com');
+        
+        $this->email->subject($subject);
+        $this->email->message($message);
+        
+        // Coba kirim email (tambahkan @ untuk menekan error jika gagal)
+        @$this->email->send();
+        // ======================================================
+
+        echo json_encode(['status' => 'success', 'message' => 'Status berhasil diubah menjadi ' . $result['new_status']]);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => $result['message']]);
+    }
+}
+//
+
+//buat update absnesi statusnya
+// public function update_absensi_status()
+// {
+//     header('Content-Type: application/json');
+//     $id = $this->input->post('id');
+//     $current_status = $this->input->post('current_status');
+
+//     // Tentukan alur kerja status
+//     $flow = ['Nothing', 'Prepared', 'Reviewed', 'Reviewed 2', 'Approved'];
+//     $currentIndex = array_search($current_status, $flow);
+    
+//     // Cek apakah status masih bisa dinaikkan
+//     if ($currentIndex !== false && $currentIndex < count($flow) - 1) {
+//         $new_status = $flow[$currentIndex + 1];
+//         $success = $this->hr_model->update_absensi_status($id, $new_status);
+
+//         if ($success) {
+//             echo json_encode(['success' => true]);
+//         } else {
+//             echo json_encode(['errorMsg' => 'Gagal mengupdate status di database.']);
+//         }
+//     } else {
+//         echo json_encode(['errorMsg' => 'Status sudah final dan tidak bisa dinaikkan lagi.']);
+//     }
+// }
+//
 
 /**
  * 1. Fungsi untuk upload dan preview data dari Excel
- * - Menerima file, membacanya, dan mengembalikan data sebagai JSON.
- * - Tidak menyimpan ke database.
  */
 public function preview_absensi()
 {
@@ -2411,8 +2667,217 @@ public function update_candidate_status()
         echo json_encode(['errorMsg' => 'Status tidak bisa dinaikkan lagi.']);
     }
 }
+//end
+
+
+//
+public function report_ho()
+{
+    $data['title'] = 'Laporan Absensi - Head Office (HO)';
+    $data['location_filter'] = 'HO'; // Kirim filter lokasi ke view
+
+    // Muat aset EasyUI
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
+    $data['js_files'][]  = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+
+    // Gunakan view baru yang akan kita buat: v_report_absensi.php
+    $this->template->load('template', 'hr/v_report_absensi', $data);
+}
+
+// 2. Fungsi untuk menampilkan halaman Laporan KN Project
+public function report_kn_project()
+{
+    $data['title'] = 'Laporan Absensi - KN Project';
+    $data['location_filter'] = 'KN Project'; // Kirim filter lokasi ke view
+
+    // Muat aset EasyUI
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
+    $data['js_files'][]  = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+    
+    // Gunakan view yang sama dengan report_ho
+    $this->template->load('template', 'hr/v_report_absensi', $data);
+}
+
+// 3. Fungsi BARU untuk menyediakan data JSON khusus untuk halaman laporan
+public function get_report_json()
+{
+    header('Content-Type: application/json');
+    
+    // Ambil semua parameter filter
+    $filters = [
+        'start_date' => $this->input->get('start_date'),
+        'end_date'   => $this->input->get('end_date'),
+        'location'   => $this->input->get('location'), // Filter lokasi yang spesifik
+    ];
+    $search_term = $this->input->get('search_data');
+    
+    // Pagination
+    $page = $this->input->get('page', TRUE) ?: 1;
+    $rows = $this->input->get('rows', TRUE) ?: 20;
+    $offset = ($page - 1) * $rows;
+
+    $total = $this->hr_model->count_all_absensi($search_term, $filters);
+    $data = $this->hr_model->get_all_absensi($search_term, $filters, $rows, $offset);
+    
+    echo json_encode(['total' => $total, 'rows' => $data]);
+}
 //
 
+public function promote_absensi_status()
+{
+    header('Content-Type: application/json');
+    $id = $this->input->post('id');
+
+    if (!$id) {
+        echo json_encode(['status' => 'error', 'message' => 'ID tidak valid.']);
+        return;
+    }
+
+    // Ambil status saat ini dari database untuk validasi
+    $currentAbsen = $this->hr_model->get_absensi_by_id($id);
+    if (!$currentAbsen) {
+        echo json_encode(['status' => 'error', 'message' => 'Data absensi tidak ditemukan.']);
+        return;
+    }
+
+    $currentStatus = $currentAbsen['status'];
+    $nextStatus = '';
+
+    // Logika penentuan status berikutnya di sisi server
+    switch ($currentStatus) {
+        case 'Nothing':
+            $nextStatus = 'Prepared';
+            break;
+        case 'Prepared':
+            $nextStatus = 'Reviewed';
+            break;
+        case 'Reviewed':
+            $nextStatus = 'Reviewed 2';
+            break;
+        case 'Reviewed 2':
+            $nextStatus = 'Approved';
+            break;
+        default:
+            echo json_encode(['status' => 'error', 'message' => 'Status sudah final.']);
+            return;
+    }
+
+    // Panggil model untuk update status
+    $result = $this->hr_model->update_single_status($id, $nextStatus);
+
+    if ($result) {
+        echo json_encode(['status' => 'success', 'message' => 'Status berhasil diubah menjadi ' . $nextStatus]);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Gagal memperbarui status.']);
+    }
+}
+//end promote absne
+
+//buat hak akses status
+public function Hak_akses()
+{
+    $data['title'] = 'Hak Akses absensi';
+    
+    // Muat aset EasyUI
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
+    $data['js_files'][]  = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+
+    // Muat view timesheet melalui template utama
+    $this->template->load('template', 'hr/v_hak_akses', $data);
+}
+
+// 2. Fungsi untuk menyediakan data posisi ke datagrid di halaman hak akses
+public function get_posisi_json_for_akses()
+{
+    header('Content-Type: application/json');
+    $search = $this->input->get('search_data');
+    $data = $this->hr_model->get_all_posisi_with_akses($search);
+    echo json_encode(['total' => count($data), 'rows' => $data]);
+}
+
+// 3. Fungsi untuk mengambil hak akses yang sudah ada untuk sebuah posisi
+public function get_akses_by_posisi($posisi_id)
+{
+    header('Content-Type: application/json');
+    $data = $this->hr_model->get_akses_by_posisi_id($posisi_id);
+    echo json_encode($data);
+}
+
+// 4. Fungsi untuk menyimpan perubahan hak akses
+public function save_hak_akses()
+{
+    header('Content-Type: application/json');
+    $posisi_id = $this->input->post('posisi_id');
+    $akses = $this->input->post('akses'); // Ambil array dari checkbox
+
+    $result = $this->hr_model->save_hak_akses($posisi_id, $akses);
+
+    if ($result) {
+        echo json_encode(['status' => 'success', 'message' => 'Hak akses berhasil disimpan.']);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Gagal menyimpan hak akses.']);
+    }
+}
+
+//
+public function save_posisi() {
+    header('Content-Type: application/json');
+    $data = ['posisi' => $this->input->post('posisi')];
+
+    // Validasi sederhana
+    if (empty($data['posisi'])) {
+        echo json_encode(['errorMsg' => 'Nama Posisi tidak boleh kosong.']);
+        return;
+    }
+
+    $result = $this->hr_model->insert_posisi($data);
+
+    if ($result) {
+        echo json_encode(['message' => 'Posisi baru berhasil disimpan.']);
+    } else {
+        echo json_encode(['errorMsg' => 'Gagal menyimpan posisi baru.']);
+    }
+}
+
+public function update_posisi($id) {
+    header('Content-Type: application/json');
+    $data = ['posisi' => $this->input->post('posisi')];
+
+    // Validasi sederhana
+    if (empty($data['posisi'])) {
+        echo json_encode(['errorMsg' => 'Nama Posisi tidak boleh kosong.']);
+        return;
+    }
+
+    $result = $this->hr_model->update_posisi($id, $data);
+
+    if ($result) {
+        echo json_encode(['message' => 'Posisi berhasil diperbarui.']);
+    } else {
+        echo json_encode(['errorMsg' => 'Gagal memperbarui posisi atau tidak ada data yang berubah.']);
+    }
+}
+
+public function delete_posisi() {
+    header('Content-Type: application/json');
+    $id = $this->input->post('id');
+    
+    if (!$id) {
+        echo json_encode(['errorMsg' => 'ID Posisi tidak valid.']);
+        return;
+    }
+
+    $result = $this->hr_model->delete_posisi($id);
+
+    if ($result) {
+        echo json_encode(['message' => 'Posisi berhasil dihapus.']);
+    } else {
+        echo json_encode(['errorMsg' => 'Gagal menghapus posisi.']);
+    }
+}
 
 }
 

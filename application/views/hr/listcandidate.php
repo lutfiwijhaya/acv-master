@@ -135,7 +135,7 @@
                                     onclick="editForm()">Edit</a>
                                 <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-remove"
                                     plain="false" onclick="delete_item()">Delete</a>
-                                <a href="#" id="btn-add-summary" class="easyui-linkbutton" iconCls="icon-add" data-options="disabled:true">Add Summary</a>
+                                <a href="#" id="btn-add-summary" class="easyui-linkbutton" iconCls="icon-add" data-options="disabled:true">Input Summary</a>
                                 <a href="javascript:void(0)" id="btn-promote-status" class="easyui-linkbutton" iconCls="icon-add" data-options="disabled:true" onclick="promoteStatus()">Promote Status</a>
                                 <a href="javascript:void(0)" id="btn-export-pdf" class="easyui-linkbutton"
                                     data-options="iconCls:'icon-print', disabled:true" onclick="exportToPdf()">Export

@@ -80,6 +80,7 @@ class Admin extends CI_Controller
             $this->db->delete('tbl_levels');
         }
     }
+
     function menu()
     {
         $data['title']  = 'Data Menu';

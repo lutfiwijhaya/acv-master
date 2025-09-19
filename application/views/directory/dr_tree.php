@@ -1,9 +1,75 @@
+<style>
+	.fancy-link {
+		position: relative;
+		display: inline-block;
+		margin-right: 15px;
+		/* jarak antar link */
+		text-decoration: none;
+		color: #343232ff;
+		/* biru modern */
+		font-weight: 1000;
+		transition: all 0.2s ease-in-out;
+		cursor: pointer;
+	}
+
+	.fancy-link::after {
+		content: "";
+		position: absolute;
+		width: 0;
+		height: 2px;
+		left: 0;
+		bottom: -3px;
+		background: #007bff;
+		transition: width 0.3s ease;
+	}
+
+	.fancy-link:hover {
+		font-weight: 1500;
+		color: #0056b3;
+		/* biru lebih gelap saat hover */
+	}
+
+	.fancy-link:hover::after {
+		width: 100%;
+		/* underline animasi muncul */
+	}
+</style>
+
+<style>
+	/* Hilangkan background tombol */
+	.link-as-text.l-btn {
+		background: none !important;
+		border: none !important;
+		padding: 0 !important;
+		box-shadow: none !important;
+	}
+
+	/* Warna teks default */
+	.link-as-text span span {
+		color: #2b2c2cff;
+		/* biru modern */
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s ease-in-out;
+	}
+
+	/* Hover efek */
+	.link-as-text:hover span span {
+		color: #0056b3;
+		/* biru lebih gelap */
+		font-weight: 700;
+	}
+	.link-as-text:hover span span::after {
+		width: 100%;
+	}
+</style>
+
 <section class="content-header">
 	<h1 id="tree-title">Directory</h1>
 </section>
 <div class="col-12">
 	<div class="card">
-		<div class="easyui-panel" style="position:relative;overflow:auto;">
+		<div class="easyui-panel" style="position:relative;overflow:auto;width: auto;">
 			<div class="card-body">
 				<div class="easyui-layout">
 
@@ -16,16 +82,21 @@
 
 					<div class="row" style="margin-bottom: 10px;">
 						<div class="col-md-6">
-							<a href="javascript:void(0);" class="easyui-linkbutton" iconCls="icon-tip" plain="false" onclick="toggleTable()">Show/Hide</a>
-							<a href="javascript:void(0);" class="easyui-linkbutton" iconCls="icon-add" plain="false" onclick="newForm()">New</a>
-							<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-edit" plain="false" onclick="editForm()">Rename</a>
-							<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-redo" plain="false" onclick="moveDirectory()">Move</a>
-							<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-remove" plain="false" onclick="destroy()">Delete</a>
+							<a href="javascript:void(0);" class="fancy-link" onclick="toggleTable()">Show/Hide</a>
+							<a href="javascript:void(0);" class="fancy-link" onclick="newForm()">New</a>
+							<a href="javascript:void(0);" class="fancy-link" onclick="editForm()">Rename</a>
+							<a href="javascript:void(0);" class="fancy-link" onclick="moveDirectory()">Move</a>
+							<a href="javascript:void(0);" class="fancy-link" onclick="destroy()">Delete</a>
 						</div>
 
 						<div class="col-md-6" style="display: flex; justify-content: flex-end; align-items: center;">
-							<input id="search" placeholder="Search Directory" style="width: auto; flex-grow: 1; margin-right: 10px;">
-							<a href="javascript:void(0);" id="btn_serach" class="easyui-linkbutton" style="margin-right: 190px;" iconCls="icon-search" plain="false" onclick="doSearch()">Search</a>
+							<a href="javascript:void(0);" id="btn_search"
+								class="easyui-linkbutton link-as-text"
+								iconCls="icon-search"
+								plain="true"
+								onclick="doSearch()">Search</a>
+							<input id="search" placeholder="Search Directory" style="width: auto; flex-grow: 1; margin-right: 200px;">
+
 						</div>
 					</div>
 
@@ -96,15 +167,25 @@
 
 					<div class="row" style="margin-bottom: 10px;">
 						<div class="col-md-6">
-							<a href="javascript:void(0);" class="easyui-linkbutton" iconCls="icon-add" plain="false" onclick="newFile()">Upload</a>
-							<a href="javascript:void(0);" class="easyui-linkbutton" iconCls="icon-save" plain="false" onclick="downloadCheckedFiles()">Download</a>
-							<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-edit" plain="false" onclick="openRenameFileDialog()">Rename</a>
-							<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-redo" plain="false" onclick="openMoveFileDialog()">Move</a>
-							<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-remove" plain="false" onclick="delete_file()">Delete</a>
+							<a href="javascript:void(0);" class="fancy-link" onclick="newFile()">Upload</a>
+							<a href="javascript:void(0);" class="fancy-link" onclick="downloadCheckedFiles()">Download</a>
+							<a href="javascript:void(0)" class="fancy-link" onclick="openRenameFileDialog()">Rename</a>
+							<a href="javascript:void(0)" class="fancy-link" onclick="openMoveFileDialog()">Move</a>
+							<a href="javascript:void(0)" class="fancy-link" onclick="delete_file()">Delete</a>
 						</div>
+
 						<div class="col-md-6" style="display: flex; justify-content: flex-end; align-items: center;">
-							<input id="search_file" placeholder="Search File" style="width: auto; flex-grow: 1; margin-right: 10px;">
-							<a href="javascript:void(0);" id="btn_serach_file" style="margin-right: 190px;" class="easyui-linkbutton" iconCls="icon-search" plain="false" onclick="doSearchFile()">Search</a>
+
+
+							<a href="javascript:void(0);" id="btn_serach_file"
+								class="easyui-linkbutton link-as-text"
+								iconCls="icon-search"
+								plain="true"
+								onclick="doSearchFile()">Search</a>
+
+							<input id="search_file" placeholder="Search Directory" style="width: auto; flex-grow: 1; margin-right: 200px;">
+
+
 						</div>
 					</div>
 					<table id="dgGrid_file"
@@ -165,8 +246,8 @@
 		</div>
 	</form>
 	<div id="dialog-buttons">
-		<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-ok" onclick="submitFormDirectory()">Save</a>
-		<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:jQuery('#dialog-form').dialog('close')">Cancel</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton"  onclick="submitFormDirectory()">Save</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton"  onclick="javascript:jQuery('#dialog-form').dialog('close')">Cancel</a>
 	</div>
 </div>
 
@@ -234,8 +315,8 @@
 		</div>
 	</div>
 	<div id="dialog-buttons">
-		<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-ok" onclick="submitForm()">Save</a>
-		<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="cancelform2()">Cancel</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton"  onclick="submitForm()">Save</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton"  onclick="cancelform2()">Cancel</a>
 	</div>
 </div>
 <div id="dialog-rename-file" class="easyui-window" title="Rename File" data-options="modal:true,closed:true,iconCls:'icon-edit',inline:false" style="width:100%;max-width:600px;padding:20px;">
@@ -329,6 +410,20 @@
 		return value; // Jika tidak cocok atau kosong, kembalikan nilai asli
 	}
 
+	document.getElementById("search").addEventListener("keypress", function(e) {
+		if (e.key === "Enter") {
+			doSearch();
+		}
+	});
+
+	// Enter untuk pencarian Grid File
+	document.getElementById("search_file").addEventListener("keypress", function(e) {
+		if (e.key === "Enter") {
+			doSearchFile();
+		}
+	});
+
+
 
 	function doSearch() {
 		$('#dgGrid').datagrid('load', {
@@ -344,6 +439,7 @@
 		});
 	}
 
+	
 
 	function formatLink_open(value, row) {
 		if (!value || !row || !row.id_dr) { // Validasi dasar: pastikan value, row, dan id_dr ada

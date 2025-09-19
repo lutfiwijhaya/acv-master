@@ -573,60 +573,71 @@
 
 
 <script>
-	$(function() {
-		const sidebar = document.getElementById('resizable-sidebar');
-		const resizer = document.getElementById('sidebar-resizer');
-		const content = document.querySelector('.content-wrapper');
-		const footer = document.querySelector('.main-footer');
-		let isResizing = false;
-		// Restore lebar dari localStorage saat load
-		const savedWidth = localStorage.getItem('sidebar_width');
-		if (savedWidth) {
-			sidebar.style.width = savedWidth + 'px';
-			resizer.style.left = savedWidth + 'px';
-			content.style.marginLeft = savedWidth + 'px';
-			footer.style.marginLeft = savedWidth + 'px'; // tambahkan ini
-		}
+$(function() {
+    const sidebar = document.getElementById('resizable-sidebar');
+    const resizer = document.getElementById('sidebar-resizer');
+    const content = document.querySelector('.content-wrapper');
+    const footer = document.querySelector('.main-footer');
+    let isResizing = false;
 
+    // Restore lebar dari localStorage saat load
+    const savedWidth = localStorage.getItem('sidebar_width');
+    if (savedWidth) {
+        sidebar.style.width = savedWidth + 'px';
+        resizer.style.left = savedWidth + 'px';
+        content.style.marginLeft = savedWidth + 'px';
+        footer.style.marginLeft = savedWidth + 'px';
+    }
 
-		// Saat klik dan drag resizer
-		resizer.addEventListener('mousedown', function(e) {
-			isResizing = true;
-			document.body.style.cursor = 'ew-resize';
-		});
+    // Saat klik dan drag resizer
+    resizer.addEventListener('mousedown', function(e) {
+        isResizing = true;
+        document.body.style.cursor = 'ew-resize';
+    });
 
-		document.addEventListener('mousemove', function(e) {
-			if (!isResizing) return;
-			let newWidth = e.clientX;
-			if (newWidth < 200) newWidth = 200;
-			if (newWidth > 500) newWidth = 500;
-			sidebar.style.width = newWidth + 'px';
-			resizer.style.left = newWidth + 'px';
-			content.style.marginLeft = newWidth + 'px';
-			footer.style.marginLeft = newWidth + 'px'; // tambahkan ini
-			// Simpan ke localStorage
-			localStorage.setItem('sidebar_width', newWidth);
-		});
+    document.addEventListener('mousemove', function(e) {
+        if (!isResizing) return;
+        let newWidth = e.clientX;
+        if (newWidth < 200) newWidth = 200;
+        if (newWidth > 500) newWidth = 500;
+        sidebar.style.width = newWidth + 'px';
+        resizer.style.left = newWidth + 'px';
+        content.style.marginLeft = newWidth + 'px';
+        footer.style.marginLeft = newWidth + 'px';
+        localStorage.setItem('sidebar_width', newWidth);
+    });
 
-		document.addEventListener('mouseup', function() {
-			isResizing = false;
-			document.body.style.cursor = 'default';
-		});
+    document.addEventListener('mouseup', function() {
+        isResizing = false;
+        document.body.style.cursor = 'default';
+    });
 
-		// Fix ketika pushmenu collapse
-		$(document).on('collapsed.lte.pushmenu', function() {
-			content.style.marginLeft = '80px';
-			resizer.style.left = '80px';
-			footer.style.marginLeft = '80px'; // tambahkan ini
+    // Fix ketika pushmenu collapse
+    $(document).on('collapsed.lte.pushmenu', function() {
+        content.style.marginLeft = '80px';
+        resizer.style.left = '80px';
+        footer.style.marginLeft = '80px';
+    });
 
-		});
+    $(document).on('shown.lte.pushmenu', function() {
+        const width = sidebar.offsetWidth;
+        content.style.marginLeft = width + 'px';
+        resizer.style.left = width + 'px';
+        footer.style.marginLeft = width + 'px';
+    });
 
-		$(document).on('shown.lte.pushmenu', function() {
-			const width = sidebar.offsetWidth;
-			content.style.marginLeft = width + 'px';
-			resizer.style.left = width + 'px';
-			footer.style.marginLeft = width + 'px'; // tambahkan ini
-
-		});
-	});
+    // Tambahkan ResizeObserver untuk sinkronisasi kalau ada perubahan lebar sidebar
+    const observer = new ResizeObserver(entries => {
+        for (let entry of entries) {
+            const newWidth = entry.contentRect.width;
+            localStorage.setItem('sidebar_width', newWidth);
+            content.style.marginLeft = newWidth + 'px';
+            footer.style.marginLeft = newWidth + 'px';
+            resizer.style.left = newWidth + 'px';
+        }
+    });
+    observer.observe(sidebar);
+});
 </script>
+
+

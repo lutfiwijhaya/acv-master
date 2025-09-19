@@ -564,7 +564,6 @@
 		// Logout clear state
 		$('#logout-btn').on('click', function(e) {
 			e.preventDefault();
-			localStorage.removeItem('last_selected_node');
 			window.location.href = $(this).attr('href');
 		});
 

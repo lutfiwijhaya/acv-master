@@ -30,14 +30,16 @@
                 <tbody>
                     <?php
                     $no = 1;
-
-                    function render_menu($menus, $parent_id = 0, $level = 0, $uri_segment, &$no)
+                    function render_menu($menus, $parent_id = 0, $level = 0, $uri_segment, &$no, $segment2)
                     {
                         foreach ($menus as $m) {
                             if ($m->is_main == $parent_id && $m->is_aktif == 1) {
                                 $isParent = has_child($menus, $m->_id);
-                                $checked = checked_akses($uri_segment, $m->_id);
-
+                                if ($segment2 == 'akses_posisi') {
+                                    $checked = checked_akses($uri_segment, $m->_id);
+                                } else {
+                                    $checked = checked_akses_user($uri_segment, $m->_id);
+                                }
                                 echo "<tr data-parent='$parent_id' data-id='$m->_id' data-level='$level' class='" . ($isParent ? "parent" : "child") . "'>
                         <td>$no</td>
                         <td style='padding-left:" . ($level * 20) . "px; cursor:" . ($isParent ? "pointer" : "default") . "'>" . ($isParent ? "<strong class='toggle-parent'>$m->title</strong>" : $m->title) . "</td>
@@ -52,7 +54,7 @@
                                 $no++;
 
                                 if ($isParent) {
-                                    render_menu($menus, $m->_id, $level + 1, $uri_segment, $no);
+                                    render_menu($menus, $m->_id, $level + 1, $uri_segment, $no, $segment2);
                                 }
                             }
                         }
@@ -68,7 +70,7 @@
                         return false;
                     }
 
-                    render_menu($menu, 0, 0, $this->uri->segment(3), $no);
+                    render_menu($menu, 0, 0, $this->uri->segment(3), $no, $segment2);
                     ?>
                 </tbody>
             </table>
@@ -86,19 +88,25 @@
             return false;
         }
 
-        var selectedIds = [];
-        $("input.child-checkbox:checked").each(function() {
-            selectedIds.push($(this).data("id"));
+        var menus = [];
+        $("input.child-checkbox").each(function() {
+            menus.push({
+                id: $(this).data("id"),
+                status: $(this).prop("checked") // true/false sesuai checkbox
+            });
         });
 
         var level = '<?php echo $this->uri->segment(3); ?>';
         var segment = '<?php echo $this->uri->segment(2); ?>';
+        console.log({
+            menus
+        });
 
         $.ajax({
             url: "<?php echo base_url() ?>admin/kasi_akses_ajax",
             type: "POST",
             data: {
-                id_menu: selectedIds,
+                menus: menus,
                 segment: segment,
                 level: level
             },
@@ -110,6 +118,7 @@
             }
         });
     }
+
 
     // === Update state parent-child (disable child kalau parent unchecked) ===
     function updateSubmenuState() {

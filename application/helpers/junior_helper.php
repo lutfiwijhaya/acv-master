@@ -1,23 +1,26 @@
 <?php
 
-function tgl_indo($tgl){
+function tgl_indo($tgl)
+{
     $bln = array("Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember");
-    $tanggal = substr($tgl,8,2);
-    $bulan = substr($tgl,5,2);
-    $tahun = substr($tgl,0,4);
-    return $tanggal.' '.$bln[(int)$bulan-1].' '.$tahun;       
+    $tanggal = substr($tgl, 8, 2);
+    $bulan = substr($tgl, 5, 2);
+    $tahun = substr($tgl, 0, 4);
+    return $tanggal . ' ' . $bln[(int)$bulan - 1] . ' ' . $tahun;
 }
 
-function bln_indo($tgl){
+function bln_indo($tgl)
+{
     $bln = array("Jan", "Feb", "Maret", "April", "Mei", "Juni", "Juli", "Agust", "Sep", "Okt", "Nov", "Des");
-    $tanggal = substr($tgl,8,2);
-    $bulan = substr($tgl,5,2);
-    $tahun = substr($tgl,0,4);
-    return $tanggal.' '.$bln[(int)$bulan-1].' '.$tahun;       
+    $tanggal = substr($tgl, 8, 2);
+    $bulan = substr($tgl, 5, 2);
+    $tahun = substr($tgl, 0, 4);
+    return $tanggal . ' ' . $bln[(int)$bulan - 1] . ' ' . $tahun;
 }
-function bulan($bln){
-    switch ($bln){
-        case 1: 
+function bulan($bln)
+{
+    switch ($bln) {
+        case 1:
             return "Januari";
             break;
         case 2:
@@ -55,11 +58,12 @@ function bulan($bln){
             break;
     }
 }
-function jam($tgl){
-    $jam = substr($tgl,11,2);
-    $menit = substr($tgl,14,2);
-    $detik = substr($tgl,17,2);
-    return $jam.':'.$menit.':'.$detik;       
+function jam($tgl)
+{
+    $jam = substr($tgl, 11, 2);
+    $menit = substr($tgl, 14, 2);
+    $detik = substr($tgl, 17, 2);
+    return $jam . ':' . $menit . ':' . $detik;
 }
 function is_login()
 {
@@ -70,12 +74,23 @@ function is_login()
         return true;
     }
 }
-function checked_akses($id_user_level,$id_menu){
+function checked_akses($id_user_level, $id_menu)
+{
     $ci = get_instance();
-    $ci->db->where('id_posisi',$id_user_level);
-    $ci->db->where('id_menu',$id_menu);
+    $ci->db->where('id_posisi', $id_user_level);
+    $ci->db->where('id_menu', $id_menu);
     $data = $ci->db->get('tbl_levels');
-    if($data->num_rows()>0){
+    if ($data->num_rows() > 0) {
+        return "checked='checked'";
+    }
+}
+function checked_akses_user($id_user_level, $id_menu)
+{
+    $ci = get_instance();
+    $ci->db->where('id_user', $id_user_level);
+    $ci->db->where('id_menu', $id_menu);
+    $data = $ci->db->get('tbl_user_menu');
+    if ($data->num_rows() > 0) {
         return "checked='checked'";
     }
 }

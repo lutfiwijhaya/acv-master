@@ -13,89 +13,13 @@
             </div>
         </div>
 
-        <!-- Sidebar Menu -->
+        <!-- Sidebar Menu with jsTree -->
         <nav class="mt-2">
-            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+            <div id="sidebar-tree"></div>
 
-                <?php
-                // Ambil instance CodeIgniter untuk bisa memanggil model di dalam fungsi
-                $CI = &get_instance();
-
-                // INI ADALAH FUNGSI REKURSIF
-                function build_menu($user_position, $parent_id)
-                {
-                    $CI = &get_instance(); // Panggil instance lagi di dalam fungsi
-
-                    // Ambil semua menu anak dari parent_id ini
-                    $submenus = $CI->menu_model->getSubMenus($user_position, $parent_id);
-
-                    // Jika ada anak, looping
-                    if ($submenus->num_rows() > 0) {
-                        foreach ($submenus->result() as $menu) {
-                            // Cek lagi, apakah menu ini punya anak?
-                            $has_children = $CI->menu_model->getSubMenus($user_position, $menu->_id)->num_rows() > 0;
-
-                            if ($has_children) {
-                                // JIKA PUNYA ANAK, buat dropdown
-                                echo '<li class="nav-item has-treeview">';
-                                echo '<a href="#" class="nav-link">';
-                                echo '<i class="nav-icon ' . $menu->icon . '"></i>';
-                                echo '<p>' . $menu->title . '<i class="fas fa-angle-left right"></i></p>';
-                                echo '</a>';
-                                echo '<ul class="nav nav-treeview">';
-
-                                // Panggil fungsi ini lagi untuk membangun cucu-cucunya
-                                build_menu($user_position, $menu->_id);
-
-                                echo '</ul>';
-                                echo '</li>';
-                            } else {
-                                // JIKA TIDAK PUNYA ANAK, buat link biasa
-                                echo '<li class="nav-item">';
-                                echo '<a href="' . base_url($menu->uri) . '" class="nav-link">';
-                                echo '<i class="nav-icon ' . $menu->icon . '"></i>';
-                                echo '<p>' . $menu->title . '</p>';
-                                echo '</a>';
-                                echo '</li>';
-                            }
-                        }
-                    }
-                }
-
-                // PANGGILAN AWAL: Ambil menu level 1
-                $main_menus = $CI->menu_model->getMainMenu($this->session->userdata('_id'));
-                foreach ($main_menus->result() as $main) {
-                    // Cek apakah menu utama ini punya anak?
-                    $has_children = $CI->menu_model->getSubMenus($this->session->userdata('_id'), $main->_id)->num_rows() > 0;
-
-                    if ($has_children) {
-                        // JIKA PUNYA ANAK, buat dropdown
-                        echo '<li class="nav-item has-treeview">';
-                        echo '<a href="#" class="nav-link">';
-                        echo '<i class="nav-icon ' . $main->icon . '"></i>';
-                        echo '<p>' . $main->title . '<i class="fas fa-angle-left right"></i></p>';
-                        echo '</a>';
-                        echo '<ul class="nav nav-treeview">';
-
-                        // Panggil fungsi rekursif untuk membangun anak-anaknya
-                        build_menu($this->session->userdata('_id'), $main->_id);
-
-                        echo '</ul>';
-                        echo '</li>';
-                    } else {
-                        // JIKA TIDAK PUNYA ANAK, buat link biasa
-                        echo '<li class="nav-item">';
-                        echo '<a href="' . base_url($main->uri) . '" class="nav-link">';
-                        echo '<i class="nav-icon ' . $main->icon . '"></i>';
-                        echo '<p>' . $main->title . '</p>';
-                        echo '</a>';
-                        echo '</li>';
-                    }
-                }
-
-                ?>
-
-                <li class="nav-header">USER</li>
+            <!-- Static User Menu -->
+            <div class="nav-header mt-3" style="color: #6c757d; font-size: 11px; font-weight: 600; text-transform: uppercase; padding: 0.5rem 1rem;">USER</div>
+            <ul class="nav nav-pills nav-sidebar flex-column">
                 <li class="nav-item">
                     <a href="javascript:void(0);" class="nav-link" onclick="openChangePasswordModal()">
                         <i class="nav-icon fa fa-key"></i>
@@ -105,9 +29,7 @@
                 <li class="nav-item">
                     <a href="<?= base_url() ?>admin/logout" class="nav-link">
                         <i class="nav-icon fa fa-sign-out-alt"></i>
-                        <p>
-                            Logout
-                        </p>
+                        <p>Logout</p>
                     </a>
                 </li>
             </ul>
@@ -117,48 +39,169 @@
     <!-- /.sidebar -->
 </aside>
 
+<!-- jsTree CSS dan JS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
 
-<!-- <div id="dlgChangePassword" class="easyui-dialog" title="Change Password" closed="true" modal="true" buttons="#dlg-buttons" style="width: 400px; padding: 15px;">
-    <form id="frmChangePassword">
-        <div class="input-group mb-3">
-            <label style="width: 100%;">Old Password:</label>
-            <input type="password" id="old_password" class="form-control" placeholder="Old Password" name="old_password" required>
-            <div class="input-group-append">
-                <div class="input-group-text toggle-password" data-target="old_password">
-                    <i class="fas fa-eye"></i>
-                </div>
-            </div>
-        </div>
+<!-- Custom CSS untuk styling jsTree agar sesuai dengan AdminLTE -->
+<style>
+    #sidebar-tree {
+        background: transparent;
+        padding: 0;
+    }
 
-        <div class="input-group mb-3">
-            <label style="width: 100%;">New Password:</label>
-            <input type="password" id="new_password" class="form-control" placeholder="New Password" name="new_password" required>
-            <div class="input-group-append">
-                <div class="input-group-text toggle-password" data-target="new_password">
-                    <i class="fas fa-eye"></i>
-                </div>
-            </div>
-        </div>
+    #sidebar-tree .jstree-default .jstree-anchor {
+        color: #c2c7d0;
+        padding: 8px 16px;
+        border-radius: 0.25rem;
+        margin: 1px 8px;
+        display: flex;
+        align-items: center;
+    }
 
-        <div class="input-group mb-3">
-            <label style="width: 100%;">Confirm Password:</label>
-            <input type="password" id="confirm_password" class="form-control" placeholder="Confirm Password" name="confirm_password" required>
-            <div class="input-group-append">
-                <div class="input-group-text toggle-password" data-target="confirm_password">
-                    <i class="fas fa-eye"></i>
-                </div>
-            </div>
-        </div>
-    </form>
-</div> -->
+    #sidebar-tree .jstree-default .jstree-anchor:hover,
+    #sidebar-tree .jstree-default .jstree-anchor:focus {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        text-decoration: none;
+    }
 
-<!-- <div id="dlg-buttons">
-    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-ok" onclick="submitChangePassword()">Save</a>
-    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="$('#dlgChangePassword').dialog('close')">Cancel</a>
-</div> -->
+    #sidebar-tree .jstree-default .jstree-clicked {
+        background: #007bff !important;
+        color: #fff !important;
+        box-shadow: none;
+    }
+
+    #sidebar-tree .jstree-default .jstree-node {
+        margin: 0;
+        padding: 0;
+    }
+
+    #sidebar-tree .jstree-default .jstree-children {
+        padding-left: 0;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    #sidebar-tree .jstree-default .jstree-children .jstree-anchor {
+        padding-left: 40px;
+        font-size: 0.9em;
+    }
+
+    #sidebar-tree .jstree-default .jstree-children .jstree-children .jstree-anchor {
+        padding-left: 60px;
+    }
+
+    #sidebar-tree .jstree-default .jstree-ocl {
+        color: #c2c7d0;
+        margin-right: 5px;
+    }
+
+    #sidebar-tree .jstree-default .jstree-icon {
+        margin-right: 8px;
+        width: 16px;
+        height: 16px;
+        line-height: 16px;
+        text-align: center;
+    }
+
+    #sidebar-tree .jstree-default .jstree-icon:empty {
+        display: none;
+    }
+
+    /* Custom icon styling */
+    .nav-icon {
+        margin-right: 8px;
+        width: 16px;
+        text-align: center;
+    }
+</style>
 
 <script type="text/javascript">
     $(document).ready(function() {
+        // Build tree data
+        var treeData = [];
+
+        <?php
+        // Ambil instance CodeIgniter
+        $CI = &get_instance();
+
+        // Fungsi rekursif untuk membangun data tree
+        function build_tree_data($user_position, $parent_id, $level = 0)
+        {
+            $CI = &get_instance();
+            $items = [];
+
+            if ($level == 0) {
+                // Level 0: Main menus
+                $menus = $CI->menu_model->getMainMenu($user_position);
+            } else {
+                // Level > 0: Sub menus
+                $menus = $CI->menu_model->getSubMenus($user_position, $parent_id);
+            }
+
+            if ($menus->num_rows() > 0) {
+                foreach ($menus->result() as $menu) {
+                    $has_children = $CI->menu_model->getSubMenus($user_position, $menu->_id)->num_rows() > 0;
+
+                    $item = [
+                        'id' => 'menu_' . $menu->_id,
+                        'text' => '<i class="nav-icon ' . $menu->icon . '"></i> ' . $menu->title,
+                        'state' => ['opened' => false]
+                    ];
+
+                    if (!$has_children && !empty($menu->uri)) {
+                        $item['a_attr'] = [
+                            'href' => base_url($menu->uri),
+                            'class' => 'menu-link'
+                        ];
+                    }
+
+                    if ($has_children) {
+                        $item['children'] = build_tree_data($user_position, $menu->_id, $level + 1);
+                    }
+
+                    $items[] = $item;
+                }
+            }
+
+            return $items;
+        }
+
+        // Generate tree data
+        $tree_data = build_tree_data($this->session->userdata('_id'), null, 0);
+
+        // Output as JavaScript
+        echo 'treeData = ' . json_encode($tree_data) . ';';
+        ?>
+
+        // Initialize jsTree
+        $('#sidebar-tree').jstree({
+            'core': {
+                'data': treeData,
+                'themes': {
+                    'name': false,
+                    'dots': false,
+                    'icons': false
+                },
+                'animation': 150
+            },
+            'plugins': ['wholerow']
+        });
+
+        // Handle node click
+        $('#sidebar-tree').on('select_node.jstree', function(e, data) {
+            var href = data.node.a_attr.href;
+            if (href && href !== '#') {
+                window.location.href = href;
+            }
+        });
+
+        // Handle node open/close animation
+        $('#sidebar-tree').on('open_node.jstree close_node.jstree', function(e, data) {
+            // Optional: Add custom animation or behavior
+        });
+
+        // Password toggle functionality
         $('.toggle-password').click(function() {
             var fieldId = $(this).data('target');
             var input = $('#' + fieldId);
@@ -191,4 +234,15 @@
             }
         }, 'json');
     }
+
+    // Function to highlight current page in tree
+    function setActiveMenuItem() {
+        var currentUrl = window.location.href;
+        $('#sidebar-tree a[href="' + currentUrl + '"]').closest('.jstree-node').addClass('jstree-clicked');
+    }
+
+    // Call after tree is loaded
+    $('#sidebar-tree').on('ready.jstree', function() {
+        setActiveMenuItem();
+    });
 </script>

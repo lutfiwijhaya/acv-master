@@ -29,9 +29,38 @@
                 </thead>
                 <tbody>
                     <?php
-                    $no = 1;
-                    function render_menu($menus, $parent_id = 0, $level = 0, $uri_segment, &$no, $segment2)
+                    // Helper to build parent chain for numbering
+                    function get_parent_chain($menus, $id, &$chain = [])
                     {
+                        foreach ($menus as $m) {
+                            if ($m->_id == $id) {
+                                if ($m->is_main != 0) {
+                                    get_parent_chain($menus, $m->is_main, $chain);
+                                }
+                                $chain[] = $m->_id;
+                            }
+                        }
+                        return $chain;
+                    }
+
+                    // Helper to get the index of a menu among its siblings
+                    function get_sibling_index($menus, $parent_id, $id)
+                    {
+                        $index = 1;
+                        foreach ($menus as $m) {
+                            if ($m->is_main == $parent_id && $m->is_aktif == 1) {
+                                if ($m->_id == $id) {
+                                    return $index;
+                                }
+                                $index++;
+                            }
+                        }
+                        return 1;
+                    }
+
+                    function render_menu($menus, $parent_id = 0, $level = 0, $uri_segment, &$no, $segment2, $parent_number = '')
+                    {
+                        $child_count = 1;
                         foreach ($menus as $m) {
                             if ($m->is_main == $parent_id && $m->is_aktif == 1) {
                                 $isParent = has_child($menus, $m->_id);
@@ -40,22 +69,31 @@
                                 } else {
                                     $checked = checked_akses_user($uri_segment, $m->_id);
                                 }
+
+                                // Build numbering
+                                if ($level == 0) {
+                                    $number = $child_count;
+                                } else {
+                                    $number = $parent_number . '.' . $child_count;
+                                }
+
                                 echo "<tr data-parent='$parent_id' data-id='$m->_id' data-level='$level' class='" . ($isParent ? "parent" : "child") . "'>
-                        <td>$no</td>
-                        <td style='padding-left:" . ($level * 20) . "px; cursor:" . ($isParent ? "pointer" : "default") . "'>" . ($isParent ? "<strong class='toggle-parent'>$m->title</strong>" : $m->title) . "</td>
-                        <td class='checkbox-col' align='center'>
-                            <div class='checkbox-inline'>
-                                <input type='checkbox' $checked data-id='$m->_id' id='table_checkbox_$no' class='child-checkbox'>
-                                <label for='table_checkbox_$no'></label>
-                            </div>
-                        </td>
-                    </tr>";
+                                        <td>$number</td>
+                                        <td style='padding-left:" . ($level * 20) . "px; cursor:" . ($isParent ? "pointer" : "default") . "'>" . ($isParent ? "<strong class='toggle-parent'>$m->title</strong>" : $m->title) . "</td>
+                                        <td class='checkbox-col' align='center'>
+                                            <div class='checkbox-inline'>
+                                                <input type='checkbox' $checked data-id='$m->_id' id='table_checkbox_$number' class='child-checkbox'>
+                                                <label for='table_checkbox_$number'></label>
+                                            </div>
+                                        </td>
+                                    </tr>";
 
                                 $no++;
 
                                 if ($isParent) {
-                                    render_menu($menus, $m->_id, $level + 1, $uri_segment, $no, $segment2);
+                                    render_menu($menus, $m->_id, $level + 1, $uri_segment, $no, $segment2, $number);
                                 }
+                                $child_count++;
                             }
                         }
                     }

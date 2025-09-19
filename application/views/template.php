@@ -180,50 +180,84 @@
 			toast: true,
 			position: 'top-end',
 			showConfirmButton: false,
-			timer: 3000
+			timer: 3000,
+			timerProgressBar: true,
+			didOpen: (toast) => {
+				toast.onmouseenter = Swal.stopTimer
+				toast.onmouseleave = Swal.resumeTimer
+			}
 		});
 	</script>
 
 	<script type="text/javascript">
 		$(document).ready(function() {
-			let lastSelectedId = localStorage.getItem("last_selected_node");
+			const sidebar = document.getElementById('resizable-sidebar');
+			const contentWrapper = document.querySelector('.content-wrapper');
 
-			$('#tree-explorer').jstree({
-				'core': {
-					'data': {
-						"url": "<?= site_url('explorer/get_tree') ?>",
-						"dataType": "json"
-					}
-				},
-				"plugins": ["state", "wholerow"], // tambahkan wholerow agar highlight full baris
-				"state": {
-					"key": "tree_state_<?= $this->session->userdata('user_id') ?>"
+			// Ambil lebar terakhir dari localStorage (jika ada)
+			const savedWidth = localStorage.getItem('sidebar_width');
+			if (savedWidth) {
+				sidebar.style.width = savedWidth + 'px';
+				contentWrapper.style.marginLeft = savedWidth + 'px';
+			}
+
+			// Fungsi untuk simpan dan terapkan lebar baru saat resize
+			let resizeObserver = new ResizeObserver(entries => {
+				for (let entry of entries) {
+					const newWidth = entry.contentRect.width;
+					localStorage.setItem('sidebar_width', newWidth);
+					contentWrapper.style.marginLeft = newWidth + 'px';
+				}
+			});
+			resizeObserver.observe(sidebar);
+
+				$(function() {
+			const sidebar = document.getElementById('resizable-sidebar');
+			const resizer = document.getElementById('sidebar-resizer');
+			const content = document.querySelector('.content-wrapper');
+
+			let isResizing = false;
+
+			resizer.addEventListener('mousedown', function(e) {
+				isResizing = true;
+				document.body.style.cursor = 'ew-resize';
+			});
+
+			document.addEventListener('mousemove', function(e) {
+				if (!isResizing) return;
+
+				let newWidth = e.clientX;
+				if (newWidth < 200) newWidth = 200;
+				if (newWidth > 500) newWidth = 500;
+
+				sidebar.style.width = newWidth + 'px';
+				resizer.style.left = newWidth + 'px';
+				content.style.marginLeft = newWidth + 'px';
+			});
+
+			document.addEventListener('mouseup', function() {
+				isResizing = false;
+				document.body.style.cursor = 'default';
+			});
+		});
+
+		$(function() {
+			const observer = new ResizeObserver(entries => {
+				for (let entry of entries) {
+					const newWidth = entry.contentRect.width;
+					$('.content-wrapper').css('margin-left', newWidth + 'px');
 				}
 			});
 
-			// Aktifkan kembali node terakhir setelah jsTree selesai load
-			$('#tree-explorer').on('loaded.jstree', function(e, data) {
-				if (lastSelectedId) {
-					const tree = $('#tree-explorer').jstree(true);
-					tree.deselect_all();
-					tree.select_node(lastSelectedId);
-					tree.open_node(lastSelectedId); // buka node
-				}
-			});
+			observer.observe(document.getElementById('resizable-sidebar'));
+		});
+			
 
-			// Simpan node terakhir yang diklik
-			$('#tree-explorer').on('activate_node.jstree', function(e, data) {
-				var node_id = data.node.id;
-				var href = data.node.a_attr.href;
+			
 
-				// Simpan ke localStorage
-				localStorage.setItem("last_selected_node", node_id);
+		
 
-				// Redirect
-				if (href && href !== '#') {
-					window.location.href = href;
-				}
-			});
+			
 		});
 	</script>
 

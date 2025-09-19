@@ -55,10 +55,22 @@ class Admin extends CI_Controller
         $level = $this->backend_model->getIsLevel();
         echo json_encode($level);
     }
-    function akses()
+
+    function akses_posisi()
     {
         $data['css_files'][] = '';
         $data['js_files'][] = '';
+        $data['title']  = 'Akses Posisi';
+        $data['level'] = $this->db->get_where('tbl_levels', array('id_posisi' =>  $this->uri->segment(3)))->row_array();
+        $data['menu'] = $this->db->get_where('tbl_menus', array('is_main !=' => null))->result();
+        $this->template->load('template', 'master/akses', $data);
+    }
+
+    function akses_user()
+    {
+        $data['css_files'][] = '';
+        $data['js_files'][] = '';
+        $data['title']  = 'Akses User';
         $data['level'] = $this->db->get_where('tbl_levels', array('id_posisi' =>  $this->uri->segment(3)))->row_array();
         $data['menu'] = $this->db->get_where('tbl_menus', array('is_main !=' => null))->result();
         $this->template->load('template', 'master/akses', $data);
@@ -66,20 +78,55 @@ class Admin extends CI_Controller
 
     function kasi_akses_ajax()
     {
-        $id_menu        = $_GET['id_menu'];
-        $id_user_level  = $_GET['level'];
-        // chek data
-        $params = array('id_menu' => $id_menu, 'id_posisi' => $id_user_level);
-        $akses = $this->db->get_where('tbl_levels', $params);
-        if ($akses->num_rows() < 1) {
-            // insert data baru
-            $this->db->insert('tbl_levels', $params);
-        } else {
-            $this->db->where('id_menu', $id_menu);
+        $id_menus       = $this->input->post('id_menu');
+        $id_user_level  = $this->input->post('level');
+        $segment       = $this->input->post('segment');
+
+        if (!is_array($id_menus)) {
+            $id_menus = [];
+        }
+
+
+        if ($segment == 'akses_posisi') {
+            // Hapus akses lama di tbl_levels
             $this->db->where('id_posisi', $id_user_level);
             $this->db->delete('tbl_levels');
+
+            // Tambahkan akses baru ke tbl_levels
+            foreach ($id_menus as $id_menu) {
+                $params = array(
+                    'id_menu'   => $id_menu,
+                    'id_posisi' => $id_user_level
+                );
+                $this->db->insert('tbl_levels', $params);
+            }
+        } elseif ($segment == 'akses_user') {
+            // Hapus akses lama di tbl_user_menu
+            $this->db->where('id_user', $id_user_level);
+            $this->db->delete('tbl_user_menu');
+
+            // Tambahkan akses baru ke tbl_user_menu
+            foreach ($id_menus as $id_menu) {
+                $params = array(
+                    'id_menu' => $id_menu,
+                    'id_user' => $id_user_level
+                );
+                $this->db->insert('tbl_user_menu', $params);
+            }
+        } else {
+            echo json_encode([
+                'status'  => 'error',
+                'message' => 'ID tidak ditemukan di tbl_posisi maupun tbl_user'
+            ]);
+            return;
         }
+
+        echo json_encode([
+            'status'  => 'success',
+            'message' => 'Akses berhasil diperbarui'
+        ]);
     }
+
 
     function menu()
     {
@@ -1613,9 +1660,9 @@ class Admin extends CI_Controller
     function getSubMenus2($id, $is_main)
     {
         $this->db->from('tbl_menus');
-        $this->db->join('tbl_levels', 'tbl_menus._id=tbl_levels.id_menu');
+        $this->db->join('tbl_user_menu', 'tbl_menus._id=tbl_user_menu.id_menu');
         $this->db->where('is_aktif', 1);
-        $this->db->where('tbl_levels.id_posisi', $id);
+        $this->db->where('tbl_user_menu.id_user', $id);
         $this->db->where('tbl_menus.is_main', $is_main);
         return $this->db->get();
     }

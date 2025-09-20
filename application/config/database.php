@@ -75,10 +75,10 @@ $query_builder = TRUE;
 
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => 'localhost',
-	'username' => 'root',
-	'password' => '',
-	'database' => 'db_lepet',
+	'hostname' => '31.97.111.183:3306',
+	'username' => 'srv1_acv_user',
+	'password' => 'Achivon2025@',
+	'database' => 'srv1_acv_db',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => false,

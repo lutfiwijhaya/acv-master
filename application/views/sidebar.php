@@ -77,6 +77,17 @@
         padding: 0;
     }
 
+    .jstree-default .jstree-node {
+    min-height: 24px;
+    line-height: 24px;
+    margin-left: 5px !important;
+    min-width: 24px
+}
+
+  .os-content {
+    padding: 0px 0px !important; 
+}
+
     #sidebar-tree .jstree-default .jstree-children {
         padding-left: 0;
         background: rgba(255, 255, 255, 0.05);

@@ -262,40 +262,59 @@
     <tr>
         <td colspan="4" class="p-2">
             <table class="table table-borderless mb-0">
-                <tr>
-                    <td style="width:25%;">Name</td>
-                    <td style="width:75%;"><b><?= htmlspecialchars($candidate['nama']) ?></b> (<?= $candidate['jk'] == 'L' ? 'Male' : 'Female' ?>)</td>
-                </tr>
-                <tr>
-                    <td>Birthday</td>
-                    <td><b><?= date('d F Y', strtotime($candidate['tgl_lahir'])) ?></b>
-                        (Age:
-                        <input type="number" class="form-control form-control-sm d-inline-block" name="summary_age_years" style="width: 60px;"> years
-                        <input type="number" class="form-control form-control-sm d-inline-block" name="summary_age_months" style="width: 60px;"> months)
-                    </td>
-                </tr>
-                 <tr>
-                    <td>KTP No.</td>
-                    <td><b><?= htmlspecialchars($candidate['nik']) ?></b></td>
-                </tr>
-                <tr>
-                    <td>Last Education</td>
-                    <td>
-                        Name: <input type="text" class="form-control form-control-sm" name="summary_education_name" value="<?= isset($last_education) ? htmlspecialchars($last_education['registered_school_name']) : '' ?>"><br>
-                        Location: <input type="text" class="form-control form-control-sm mt-1" name="summary_education_location" value="<?= isset($last_education) ? htmlspecialchars($last_education['location']) : '' ?>">
-                    </td>
-                </tr>
-                 <tr>
-                    <td>Mobile No.</td>
-                    <td><b><?= htmlspecialchars($candidate['no_hp']) ?></b></td>
-                </tr>
-                 <tr>
-                    <td>Expected Salary</td>
-                    <td>
-                        IDR <input type="number" class="form-control form-control-sm d-inline-block" name="summary_expected_salary" style="width: 80%;" value="<?= $candidate['desired_salary'] ?>">
-                    </td>
-                </tr>
-            </table>
+    <tr>
+        <td style="width:25%;">Name</td>
+        <td style="width:75%;">
+            <input type="text" class="form-control form-control-sm" name="nama" value="<?= htmlspecialchars($candidate['nama']) ?>">
+        </td>
+    </tr>
+    <tr>
+        <td>Gender</td>
+        <td>
+            <select class="form-select form-select-sm" name="jk">
+                <option value="L" <?= ($candidate['jk'] == 'L') ? 'selected' : '' ?>>Male</option>
+                <option value="P" <?= ($candidate['jk'] == 'P') ? 'selected' : '' ?>>Female</option>
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <td>Birthday</td>
+        <td>
+            <input type="date" class="form-control form-control-sm d-inline-block" style="width: auto;" name="tgl_lahir" value="<?= $candidate['tgl_lahir'] ?>">
+            (Age:
+            <input type="number" class="form-control form-control-sm d-inline-block" name="summary_age_years" style="width: 60px;"> years
+            <input type="number" class="form-control form-control-sm d-inline-block" name="summary_age_months" style="width: 60px;"> months)
+        </td>
+    </tr>
+    <tr>
+        <td>KTP No.</td>
+        <td>
+            <input type="text" class="form-control form-control-sm" name="nik" value="<?= htmlspecialchars($candidate['nik']) ?>">
+        </td>
+    </tr>
+     <tr>
+        <td>Last Education</td>
+        <td>
+            Name: <input type="text" class="form-control form-control-sm" name="summary_education_name" value="<?= isset($last_education['registered_school_name']) ? htmlspecialchars($last_education['registered_school_name']) : '' ?>"><br>
+            Location: <input type="text" class="form-control form-control-sm mt-1" name="summary_education_location" value="<?= isset($last_education['location']) ? htmlspecialchars($last_education['location']) : '' ?>">
+        </td>
+    </tr>
+     <tr>
+        <td>Mobile No.</td>
+        <td>
+            <input type="text" class="form-control form-control-sm" name="no_hp" value="<?= htmlspecialchars($candidate['no_hp']) ?>">
+        </td>
+    </tr>
+    <tr>
+        <td>Expected Salary</td>
+        <td>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text">IDR</span>
+                <input type="number" class="form-control" name="summary_expected_salary" value="<?= $candidate['desired_salary'] ?>">
+            </div>
+        </td>
+    </tr>
+    </table>
         </td>
        <td class="text-center align-middle p-2">
     <div id="photo-upload-container" class="image-upload-container">
@@ -331,7 +350,15 @@
             <input type="text" class="form-control form-control-sm" name="summary_discipline" value="<?= htmlspecialchars($candidate['summary_discipline'] ?? '') ?>">
         </td>
         <td>Marriage Status</td>
-        <td colspan="2"><b><?= htmlspecialchars($candidate['marital']) ?></b></td>
+<td colspan="2">
+    <select class="form-select form-select-sm" name="marital">
+        <option value="">-- Select Status --</option>
+        <option value="Single" <?= ($candidate['marital'] == 'Single') ? 'selected' : '' ?>>Single</option>
+        <option value="Married" <?= ($candidate['marital'] == 'Married') ? 'selected' : '' ?>>Married</option>
+        <option value="Divorced" <?= ($candidate['marital'] == 'Divorced') ? 'selected' : '' ?>>Divorced</option>
+        <option value="Widowed" <?= ($candidate['marital'] == 'Widowed') ? 'selected' : '' ?>>Widowed</option>
+    </select>
+</td>
     </tr>
     <tr>
        <td>Position <br>
@@ -354,7 +381,9 @@
                                     value="<?= htmlspecialchars($candidate['applying_occupation']) ?>">
                             </td>
         <td>e-mail</td>
-        <td colspan="2"><b><?= htmlspecialchars($candidate['email']) ?></b></td>
+<td colspan="2">
+    <input type="email" class="form-control form-control-sm" name="email" value="<?= htmlspecialchars($candidate['email']) ?>">
+</td>
     </tr>
      <tr>
         <td>Class Grade</td>
@@ -728,10 +757,14 @@
                         </tr>
                         <tr>
                             <td class="bg-light fw-bold">Salary Type</td>
-                            <td>
-                                <input type="hidden" name="salary_type" value="All Day, Hourly">
-                                <span class="form-control form-control-sm bg-light border-0">All Day, Hourly</span>
-                            </td>
+                        <td>
+                            <select class="form-select form-select-sm" name="salary_type">
+                                <option value="">- Pilih Tipe -</option>
+                                <option value="All"    <?= (($hired_status['salary_type'] ?? '') == 'All') ? 'selected' : '' ?>>All</option>
+                                <option value="Day"    <?= (($hired_status['salary_type'] ?? '') == 'Day') ? 'selected' : '' ?>>Day</option>
+                                <option value="Hourly" <?= (($hired_status['salary_type'] ?? '') == 'Hourly') ? 'selected' : '' ?>>Hourly</option>
+                            </select>
+                        </td>
                             <td class="bg-light">Basic</td>
                             <td>
                                 <div class="input-group input-group-sm">

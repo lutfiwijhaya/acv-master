@@ -291,6 +291,7 @@ public function get_all_candidates($search_term = null)
     public function insert_candidate($data)
     {
         $this->db->insert('tbl_user', $data);
+         return $this->db->insert_id();
         return $this->db->affected_rows() > 0;
     }
 // end fungsi untuk menyimpan kandidat baru
@@ -320,6 +321,41 @@ public function get_all_candidates($search_term = null)
     
     // Eksekusi query dan kembalikan satu baris data sebagai array
     return $this->db->get()->row_array();
+}
+//
+
+//
+public function save_or_update_academic($id, $data)
+{
+    // Sesuaikan 'hr_academic' dengan nama tabel pendidikan Anda yang sebenarnya
+    $table_name = 'hr_academic'; 
+
+    if (!empty($id)) {
+        // Jika ada ID, lakukan UPDATE berdasarkan ID tersebut
+        $this->db->where('id', $id); // Asumsi primary key adalah 'id'
+        return $this->db->update($table_name, $data);
+    } else {
+        // Jika tidak ada ID, lakukan INSERT data baru
+        return $this->db->insert($table_name, $data);
+    }
+}
+//
+
+//
+public function save_or_update_certificate($id, $data)
+{
+    if (!empty($id)) {
+        $this->db->where('id', $id);
+        // GANTI INI:
+        // return $this->db->update('hr_certificate', $data); 
+        // MENJADI NAMA YANG BENAR (contoh: hr_certificates):
+        return $this->db->update('hr_certificates', $data);
+    } else {
+        // GANTI INI JUGA:
+        // return $this->db->insert('hr_certificate', $data);
+        // MENJADI NAMA YANG BENAR:
+        return $this->db->insert('hr_certificates', $data);
+    }
 }
 
 //
@@ -531,14 +567,18 @@ public function get_all_summaries($search_term = null)
         'u.marital as marriage_status',
         'u.summary_class_grade as class_grade',
         'u.email',
+        "COALESCE(
+        (SELECT SUM(TIMESTAMPDIFF(MONTH, hc.period_star, hc.period_end) + 1) FROM hr_career hc WHERE hc.user_id = u._id),
+        (u.summary_career_years * 12 + u.summary_career_months)
+        ) as total_career_months"
         // Subquery untuk mengambil pendidikan terakhir
         // '(SELECT ac.registered_school_name FROM hr_academic ac WHERE ac.user_id = u._id ORDER BY ac.graduation DESC LIMIT 1) as last_education',
         // Subquery untuk menghitung total karir dalam bulan
         // '(SELECT SUM(TIMESTAMPDIFF(MONTH, hc.period_star, hc.period_end) + 1) FROM hr_career hc WHERE hc.user_id = u._id) as total_career_months'
          // --- TAMBAHKAN SUBQUERY INI ---
-        '(SELECT SUM(TIMESTAMPDIFF(MONTH, hc.period_star, hc.period_end) + 1) 
-          FROM hr_career hc 
-          WHERE hc.user_id = u._id) as total_career_months',
+        // '(SELECT SUM(TIMESTAMPDIFF(MONTH, hc.period_star, hc.period_end) + 1) 
+        //   FROM hr_career hc 
+        //   WHERE hc.user_id = u._id) as total_career_months',
 
     ]);
     $this->db->from('tbl_user u');

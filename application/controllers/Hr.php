@@ -737,7 +737,13 @@ public function update_candidate($id)
             '_id' => null,
         'id' => null,
         'jk' => '', 
-        'nik' => '', 
+        'nik' => '',
+        'marital' => '',
+        'posisi' => '',
+        'applying_occupation' => '',
+        'alamat' => '',         
+        'current_address' => '',  
+        'desired_salary' => '',
             'nama' => '',
             'tgl_lahir' => '',
             'tempat_lahir' => '',
@@ -873,6 +879,7 @@ public function update_candidate($id)
     // DATA YANG SELALU DIBUTUHKAN (misal: untuk dropdown)
     $data['positions'] = (array) $this->hr_model->get_all_positions();
     
+    
     // Load view dengan semua data yang sudah disiapkan
     $this->template->load('template', 'hr/formsummary', $data);
 }
@@ -887,14 +894,23 @@ public function submit_summary()
     
     // 1. Kumpulkan dan simpan data yang HANYA untuk tabel tbl_user
     $summary_user_data = [
+        'nama'                  => $this->input->post('nama'),
+        'jk'                    => $this->input->post('jk'),
+        'tgl_lahir'             => $this->input->post('tgl_lahir'),
+        'nik'                   => $this->input->post('nik'),
+        'no_hp'                 => $this->input->post('no_hp'),
+        'email'                 => $this->input->post('email'),
+        'marital'               => $this->input->post('marital'),
         'religion'                   => $this->input->post('religion'),
         'summary_discipline'         => $this->input->post('summary_discipline'),
         'posisi'                     => $this->input->post('posisi_id'),
+        'desired_salary' => !empty($this->input->post('summary_expected_salary')) ? $this->input->post('summary_expected_salary') : 0,
         'summary_age_years'          => $this->input->post('summary_age_years'),
         'summary_age_months'         => $this->input->post('summary_age_months'),
         'applying_occupation'        => $this->input->post('summary_position'),
         'summary_class_grade'        => $this->input->post('summary_class_grade'),
-        'desired_salary'             => $this->input->post('summary_expected_salary'),
+        
+        // 'desired_salary'             => $this->input->post('summary_expected_salary'),
         'summary_career_years'       => $this->input->post('summary_career_years'),
         'summary_career_months'      => $this->input->post('summary_career_months'),
           // Data untuk alamat dari textarea
@@ -949,6 +965,31 @@ public function submit_summary()
             // Tangani error jika perlu
         }
     }
+
+    if (empty($user_id)) {
+        // ### PROSES INSERT (TAMBAH DATA BARU) ###
+
+        // a. Simpan data utama ke tbl_user dan dapatkan ID dari data yang baru dibuat
+        $user_id = $this->hr_model->insert_candidate($summary_user_data);
+
+        // b. Jika gagal membuat user baru, hentikan proses dan beri pesan error
+        if (!$user_id) {
+            $this->session->set_flashdata('swal_icon', 'error');
+            $this->session->set_flashdata('swal_text', 'Gagal menyimpan data utama karyawan.');
+            redirect('hr/formsummary'); // Kembali ke form tambah
+        }
+
+        $this->session->set_flashdata('swal_text', 'Data karyawan baru berhasil ditambahkan.');
+
+    } else {
+        // ### PROSES UPDATE (EDIT DATA LAMA) ###
+
+        // a. Update data utama di tbl_user berdasarkan user_id yang ada
+        $this->hr_model->update_candidate($user_id, $summary_user_data);
+
+        $this->session->set_flashdata('swal_text', 'Data karyawan berhasil diperbarui.');
+    }
+
 
 
     // --- AKHIR LOGIKA BARU ---
@@ -1223,6 +1264,45 @@ if (is_array($subjects)) {
     }
 }
 // --- AKHIR LOGIKA CHRONOLOGY STATUS ---
+ $family_types = ['grandparent', 'parent', 'wife', 'son', 'daughter'];
+    foreach ($family_types as $type) {
+        $number = $this->input->post('family_' . $type . '_number');
+        if (isset($number) && $number !== '') {
+            $family_data = [
+                'number' => $number,
+                'cohabit' => $this->input->post('family_' . $type . '_accompany')
+            ];
+            $this->hr_model->save_or_update_family_by_relation($user_id, ucfirst($type), $family_data);
+        }
+    }
+
+    // 3. Proses data Pendidikan
+    $academic_data = [
+        'user_id' => $user_id,
+        'registered_school_name' => $this->input->post('summary_education_name'),
+        'location' => $this->input->post('summary_education_location')
+    ];
+    // Simpan hanya jika nama sekolah diisi
+    if (!empty($academic_data['registered_school_name'])) {
+        $academic_id = $this->input->post('academic_id');
+        $this->hr_model->save_or_update_academic($academic_id, $academic_data);
+    }
+
+     for ($i = 1; $i <= 4; $i++) {
+        $id = $this->input->post('certificate_id_' . $i);
+        $name = $this->input->post('certificate_name_' . $i);
+        if (empty($name)) continue;
+
+        $cert_data = [
+            'user_id' => $user_id, // Gunakan $user_id yang sudah pasti ada
+            'certificate' => $name,
+            'authority' => $this->input->post('certificate_authority_' . $i),
+            'certificate_no' => $this->input->post('certificate_no_' . $i),
+            'acquisition' => $this->input->post('certificate_date_' . $i)
+        ];
+        $this->hr_model->save_or_update_certificate($id, $cert_data);
+    }
+
 
     $this->hr_model->update_status($user_id, 'Employee');
 

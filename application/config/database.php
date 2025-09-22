@@ -75,9 +75,9 @@ $query_builder = TRUE;
 
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => 'localhost',
-	'username' => 'root',
-	'password' => '',
+	'hostname' => '192.168.9.84:3306',
+	'username' => 'acv-db',
+	'password' => 'password',
 	'database' => 'db_lepet',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',

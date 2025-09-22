@@ -114,135 +114,270 @@
         width: 16px;
         text-align: center;
     }
+
+    /* Loading spinner overlay */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        backdrop-filter: blur(2px);
+    }
+
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    .loading-text {
+        margin-top: 15px;
+        color: #007bff;
+        font-weight: 500;
+        text-align: center;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Hide loading overlay by default */
+    .loading-overlay.hidden {
+        display: none;
+    }
 </style>
 
+<!-- Loading Overlay HTML -->
+<div id="loadingOverlay" class="loading-overlay hidden">
+    <div>
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Memuat halaman...</div>
+    </div>
+</div>
+
 <script type="text/javascript">
+    // Fungsi untuk show/hide loading
+    function showLoading() {
+        $('#loadingOverlay').removeClass('hidden');
+        console.log('Loading shown');
+    }
+
+    function hideLoading() {
+        $('#loadingOverlay').addClass('hidden');
+        console.log('Loading hidden');
+    }
+
+    // Fungsi untuk load halaman dengan AJAX
+    function loadPage(url) {
+        console.log('Loading page:', url);
+        showLoading();
+
+        // Pastikan container ada
+        if ($('#main-content-container').length === 0) {
+            console.error('Container #main-content-container tidak ditemukan!');
+            hideLoading();
+            // Fallback ke normal navigation
+            window.location.href = url;
+            return;
+        }
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            timeout: 30000,
+            success: function(data, textStatus, xhr) {
+                console.log('AJAX Success:', textStatus);
+                
+                // Update content
+                $('#main-content-container').html(data);
+                
+                // Update URL tanpa refresh
+                if (window.history && window.history.pushState) {
+                    window.history.pushState({path: url}, '', url);
+                }
+                
+                hideLoading();
+                
+                // Trigger event untuk script lain jika diperlukan
+                $(document).trigger('pageLoaded', [url]);
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error);
+                hideLoading();
+                
+                if (status === 'timeout') {
+                    alert('Halaman terlalu lama dimuat. Silakan coba lagi.');
+                } else if (status !== 'abort') {
+                    alert('Gagal memuat halaman: ' + error + '. Halaman akan dimuat ulang.');
+                    window.location.href = url;
+                }
+            }
+        });
+    }
+
     $(document).ready(function() {
+        console.log('Document ready, initializing sidebar...');
+        
         // Build tree data
         var treeData = [];
 
         <?php
-        // Ambil instance CodeIgniter
         $CI = &get_instance();
-
-        // Fungsi rekursif untuk membangun data tree
-        function build_tree_data($user_position, $parent_id, $level = 0)
-        {
+        function build_tree_data($user_position, $parent_id, $level = 0) {
             $CI = &get_instance();
             $items = [];
-
             if ($level == 0) {
-                // Level 0: Main menus
                 $menus = $CI->menu_model->getMainMenu($user_position);
             } else {
-                // Level > 0: Sub menus
                 $menus = $CI->menu_model->getSubMenus($user_position, $parent_id);
             }
-
             if ($menus->num_rows() > 0) {
                 foreach ($menus->result() as $menu) {
                     $has_children = $CI->menu_model->getSubMenus($user_position, $menu->_id)->num_rows() > 0;
-
                     $item = [
                         'id' => 'menu_' . $menu->_id,
                         'text' => '<i class="nav-icon ' . $menu->icon . '"></i> ' . $menu->title,
-                        'state' => ['opened' => false]
                     ];
-
                     if (!$has_children && !empty($menu->uri)) {
                         $item['a_attr'] = [
                             'href' => base_url($menu->uri),
-                            'class' => 'menu-link'
+                            'class' => 'menu-link ajax-link',
+                            'data-url' => base_url($menu->uri)
                         ];
                     }
-
                     if ($has_children) {
                         $item['children'] = build_tree_data($user_position, $menu->_id, $level + 1);
                     }
-
                     $items[] = $item;
                 }
             }
-
             return $items;
         }
-
-        // Generate tree data
         $tree_data = build_tree_data($this->session->userdata('_id'), null, 0);
-
-        // Output as JavaScript
         echo 'treeData = ' . json_encode($tree_data) . ';';
         ?>
+
+        console.log('Tree data:', treeData);
 
         // Initialize jsTree
         $('#sidebar-tree').jstree({
             'core': {
                 'data': treeData,
-                'themes': {
-                    'name': false,
-                    'dots': false,
-                    'icons': false
-                },
+                'themes': { 'name': false, 'dots': false, 'icons': false },
                 'animation': 150
             },
-            'plugins': ['wholerow']
-        });
-
-        // Handle node click
-        $('#sidebar-tree').on('select_node.jstree', function(e, data) {
-            var href = data.node.a_attr.href;
-            if (href && href !== '#') {
-                window.location.href = href;
+            'plugins': ['wholerow', 'state'],
+            'state': {
+                'key': 'sidebar_tree_state'
             }
         });
 
-        // Handle node open/close animation
-        $('#sidebar-tree').on('open_node.jstree close_node.jstree', function(e, data) {
-            // Optional: Add custom animation or behavior
-        });
+        // Event handler untuk klik menu
+        $('#sidebar-tree').on('click', '.jstree-anchor', function(e) {
+            console.log('Menu clicked');
+            
+            var tree = $('#sidebar-tree').jstree(true);
+            var node = tree.get_node(this);
+            
+            e.preventDefault();
+            e.stopPropagation();
 
-        // Password toggle functionality
-        $('.toggle-password').click(function() {
-            var fieldId = $(this).data('target');
-            var input = $('#' + fieldId);
-            var icon = $(this).find('i');
+            var href = $(this).attr('href');
+            var dataUrl = $(this).attr('data-url');
+            var url = dataUrl || href;
 
-            if (input.attr('type') === 'password') {
-                input.attr('type', 'text');
-                icon.removeClass('fas fa-eye').addClass('fas fa-eye-slash');
+            console.log('URL to load:', url);
+            console.log('Has ajax-link class:', $(this).hasClass('ajax-link'));
+
+            if (url && url !== '#' && url !== 'javascript:void(0);' && $(this).hasClass('ajax-link')) {
+                // Select node untuk visual feedback
+                tree.select_node(node);
+                
+                // Load halaman dengan AJAX
+                loadPage(url);
             } else {
-                input.attr('type', 'password');
-                icon.removeClass('fas fa-eye-slash').addClass('fas fa-eye');
+                // Toggle node jika bukan link atau buka submenu
+                console.log('Toggling node');
+                tree.toggle_node(node);
             }
         });
+
+        // Handle browser back/forward
+        $(window).on('popstate', function(e) {
+            if (e.originalEvent.state && e.originalEvent.state.path) {
+                loadPage(e.originalEvent.state.path);
+            }
+        });
+
+        console.log('Sidebar initialization complete');
     });
 
+    // Set active menu item berdasarkan URL
+    function setActiveMenuItem() {
+        var currentUrl = window.location.href;
+        var tree = $('#sidebar-tree').jstree(true);
+        
+        if (tree) {
+            var allNodes = tree.get_json('#', { flat: true });
+            $.each(allNodes, function(i, node) {
+                var nodeUrl = node.a_attr && node.a_attr['data-url'];
+                if (nodeUrl === currentUrl) {
+                    tree.select_node(node.id);
+                    var parents = tree.get_path(node, false, true);
+                    if (parents) {
+                        tree.open_node(parents);
+                    }
+                    return false;
+                }
+            });
+        }
+    }
+
+    // Set active menu saat tree ready
+    $('#sidebar-tree').on('ready.jstree', function() {
+        console.log('Tree ready, setting active menu');
+        setActiveMenuItem();
+    });
+
+    // Fungsi-fungsi lain
     function openChangePasswordModal() {
         $('#dlgChangePassword').dialog('open');
     }
 
     function submitChangePassword() {
         var formData = $('#frmChangePassword').serialize();
-
         $.post("<?= base_url('admin/change_password') ?>", formData, function(response) {
             if (response.success) {
-                $.messager.alert('Success', 'Password successfully changed!', 'info');
+                alert('Password successfully changed!');
                 $('#dlgChangePassword').dialog('close');
                 $('#frmChangePassword')[0].reset();
             } else {
-                $.messager.alert('Error', response.message, 'error');
+                alert('Error: ' + response.message);
             }
         }, 'json');
     }
 
-    // Function to highlight current page in tree
-    function setActiveMenuItem() {
-        var currentUrl = window.location.href;
-        $('#sidebar-tree a[href="' + currentUrl + '"]').closest('.jstree-node').addClass('jstree-clicked');
+    // Test function untuk debugging
+    function testAjaxLoad() {
+        console.log('Testing AJAX load...');
+        if ($('#main-content-container').length > 0) {
+            console.log('Container found!');
+            loadPage('<?= base_url("admin/dashboard") ?>');
+        } else {
+            console.log('Container NOT found!');
+        }
     }
 
-    // Call after tree is loaded
-    $('#sidebar-tree').on('ready.jstree', function() {
-        setActiveMenuItem();
-    });
+    // Log saat dokumen siap
+    console.log('Script loaded successfully');
 </script>

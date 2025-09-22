@@ -57,15 +57,26 @@
 			top: 0;
 			left: 0;
 			height: 100vh;
+			background-color: #f4f6f9;
 			z-index: 1030;
-			overflow: auto;
-			/* tetap di atas konten */
+			transition: width 0.2s ease;
 		}
 
-		.content-wrapper {
-			margin-left: 250px;
-			/* default sesuai sidebar awal */
+		#sidebar-resizer {
+			position: fixed;
+			top: 0;
+			width: 5px;
+			height: 100vh;
+			cursor: ew-resize;
+			z-index: 1040;
+			left: 250px;
+			background-color: transparent;
+		}
+
+		content-wrapper {
 			transition: margin-left 0.2s ease;
+			margin-left: 250px;
+			/* default */
 		}
 
 
@@ -154,13 +165,7 @@
 			<div class="float-right d-none d-sm-inline-block">
 				<b>Version</b> 1.0.0
 			</div>
-		</footer>
-
-		<!-- Control Sidebar -->
-		<aside class="control-sidebar control-sidebar-dark">
-			<!-- Control sidebar content goes here -->
-		</aside>
-		<!-- /.control-sidebar -->
+		</footer>	
 	</div>
 	<!-- ./wrapper -->
 
@@ -175,6 +180,8 @@
 	<script src="<?php echo base_url(); ?>assets/admin/dist/js/adminlte.js"></script>
 
 
+	
+
 	<script type="text/javascript">
 		const Toast = Swal.mixin({
 			toast: true,
@@ -187,76 +194,9 @@
 				toast.onmouseleave = Swal.resumeTimer
 			}
 		});
-	</script>
-
-	<script type="text/javascript">
-		$(document).ready(function() {
-			const sidebar = document.getElementById('resizable-sidebar');
-			const contentWrapper = document.querySelector('.content-wrapper');
-
-			// Ambil lebar terakhir dari localStorage (jika ada)
-			const savedWidth = localStorage.getItem('sidebar_width');
-			if (savedWidth) {
-				sidebar.style.width = savedWidth + 'px';
-				contentWrapper.style.marginLeft = savedWidth + 'px';
-			}
-
-			// Fungsi untuk simpan dan terapkan lebar baru saat resize
-			let resizeObserver = new ResizeObserver(entries => {
-				for (let entry of entries) {
-					const newWidth = entry.contentRect.width;
-					localStorage.setItem('sidebar_width', newWidth);
-					contentWrapper.style.marginLeft = newWidth + 'px';
-				}
-			});
-			resizeObserver.observe(sidebar);
-
-				$(function() {
-			const sidebar = document.getElementById('resizable-sidebar');
-			const resizer = document.getElementById('sidebar-resizer');
-			const content = document.querySelector('.content-wrapper');
-
-			let isResizing = false;
-
-			resizer.addEventListener('mousedown', function(e) {
-				isResizing = true;
-				document.body.style.cursor = 'ew-resize';
-			});
-
-			document.addEventListener('mousemove', function(e) {
-				if (!isResizing) return;
-
-				let newWidth = e.clientX;
-				if (newWidth < 200) newWidth = 200;
-				if (newWidth > 500) newWidth = 500;
-
-				sidebar.style.width = newWidth + 'px';
-				resizer.style.left = newWidth + 'px';
-				content.style.marginLeft = newWidth + 'px';
-			});
-
-			document.addEventListener('mouseup', function() {
-				isResizing = false;
-				document.body.style.cursor = 'default';
-			});
-		});
-
-		$(function() {
-			const observer = new ResizeObserver(entries => {
-				for (let entry of entries) {
-					const newWidth = entry.contentRect.width;
-					$('.content-wrapper').css('margin-left', newWidth + 'px');
-				}
-			});
-
-			observer.observe(document.getElementById('resizable-sidebar'));
-		});
-			
-
-			
-
 		
-
+		$(document).ready(function() {
+			
 			
 		});
 	</script>

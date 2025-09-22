@@ -75,10 +75,10 @@ $query_builder = TRUE;
 
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => '192.168.9.84:3306',
-	'username' => 'acv-db',
+	'hostname' => '31.97.111.183:3306',
+	'username' => 'achivon',
 	'password' => 'password',
-	'database' => 'db_lepet',
+	'database' => 'achivon',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => false,

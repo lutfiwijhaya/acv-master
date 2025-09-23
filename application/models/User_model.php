@@ -26,14 +26,14 @@ class User_model extends CI_Model
 
 	public function saveUserMenus($user_id, $menus_id = [])
 	{
-		$this->db->where('user_id', $user_id)
+		$this->db->where('id_user', $user_id)
 			->delete('tbl_user_menu');
 
 		if (!empty($menus_id)) {
 			foreach ($menus_id as $menu_id) {
 				$this->db->insert('tbl_user_menu', [
-					'user_id'    => $user_id,
-					'menu_id'    => $menu_id,
+					'id_user'    => $user_id,
+					'id_menu'    => $menu_id,
 					'is_granted' => '1'
 				]);
 			}

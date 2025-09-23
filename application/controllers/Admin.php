@@ -135,8 +135,53 @@ class Admin extends CI_Controller
         ]);
     }
 
+    function kasi_akses_ajax_old()
+    {
+        $id_menu        = $_GET['id_menu'];
+        $id_user_level  = $_GET['id_user'];
+        // chek data
+        $params = array('id_menu' => $id_menu, 'id_user' => $id_user_level);
+        $akses = $this->db->get_where('tbl_user_menu', $params);
+        if ($akses->num_rows() < 1) {
+            // insert data baru
+            $this->db->insert('tbl_user_menu', $params);
+        } else {
+            $this->db->where('id_menu', $id_menu);
+            $this->db->where('id_user', $id_user_level);
+            $this->db->delete('tbl_user_menu');
+        }
+    }
 
+    public function kasi_akses_ajax_new()
+    {
+        $id_menu       = $this->input->post('id_menu');
+        $id_user_level = $this->input->post('id_user');
+        $status        = $this->input->post('status'); // 1 = check, 0 = uncheck
 
+        if (!$id_menu || !$id_user_level) {
+            echo json_encode(['success' => false, 'msg' => 'Parameter kurang']);
+            return;
+        }
+
+        $params = array(
+            'id_menu' => $id_menu,
+            'id_user' => $id_user_level
+        );
+
+        if ($status == 1) {
+            // ✅ Kalau dicentang, pastikan datanya ada
+            $akses = $this->db->get_where('tbl_user_menu', $params);
+            if ($akses->num_rows() < 1) {
+                $this->db->insert('tbl_user_menu', $params);
+            }
+        } else {
+            // ❌ Kalau di-uncheck, hapus datanya
+            $this->db->where($params);
+            $this->db->delete('tbl_user_menu');
+        }
+
+        echo json_encode(['success' => true]);
+    }
 
 
 
@@ -2640,8 +2685,76 @@ class Admin extends CI_Controller
         }
     }
 
+    public function check_user_access()
+    {
+        $segment = $this->input->post('segment') ?: '';
+        $idUser  = $this->input->post('user_id') ?: 0;
 
+        $segment = preg_replace('/[^a-zA-Z0-9]+/', ' ', $segment);
+        $segment = trim($segment);
 
+        if (!$segment || !$idUser) {
+            show_error("segment dan user_id wajib dikirim", 400);
+        }
+
+        // --- Ambil semua akses user dulu ---
+        $this->db->select('id_menu');
+        $this->db->from('tbl_user_menu');
+        $this->db->where('id_user', $idUser);
+        $userMenus = $this->db->get()->result_array();
+        $userMenuIds = array_column($userMenus, 'id_menu');
+
+        // === Ambil parent sesuai segment ===
+        $this->db->select('_id,title');
+        $this->db->from('tbl_menus');
+        $this->db->where('is_main', 0);
+        $this->db->like('title', $segment, 'both');
+        $parentQuery = $this->db->get();
+        $parents     = $parentQuery->result_array();
+
+        if (empty($parents)) {
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode([]));
+        }
+
+        // recursive builder
+        $buildTree = function ($parentId) use (&$buildTree, $userMenuIds) {
+            $this->db->select('_id,title');
+            $this->db->from('tbl_menus');
+            $this->db->where('is_main', $parentId);
+            $children = $this->db->get()->result_array();
+
+            $result = [];
+            foreach ($children as $child) {
+                $result[] = [
+                    "id"   => $child['_id'],
+                    "text" => $child['title'],
+                    "state" => [
+                        "selected" => in_array($child['_id'], $userMenuIds) ? true : false
+                    ],
+                    "children" => $buildTree($child['_id'])
+                ];
+            }
+            return $result;
+        };
+
+        $tree = [];
+        foreach ($parents as $p) {
+            $tree[] = [
+                "id"   => $p['_id'],
+                "text" => $p['title'],
+                "state" => [
+                    "selected" => in_array($p['_id'], $userMenuIds) ? true : false
+                ],
+                "children" => $buildTree($p['_id'])
+            ];
+        }
+
+        return $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode($tree));
+    }
 
 
     public function saveDirectory()

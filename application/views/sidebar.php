@@ -78,15 +78,15 @@
     }
 
     .jstree-default .jstree-node {
-    min-height: 24px;
-    line-height: 24px;
-    margin-left: 5px !important;
-    min-width: 24px
-}
+        min-height: 24px;
+        line-height: 24px;
+        margin-left: 5px !important;
+        min-width: 24px
+    }
 
-  .os-content {
-    padding: 0px 0px !important; 
-}
+    .os-content {
+        padding: 0px 0px !important;
+    }
 
     #sidebar-tree .jstree-default .jstree-children {
         padding-left: 0;
@@ -158,8 +158,13 @@
     }
 
     @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
     }
 
     /* Hide loading overlay by default */
@@ -208,24 +213,26 @@
             timeout: 30000,
             success: function(data, textStatus, xhr) {
                 console.log('AJAX Success:', textStatus);
-                
+
                 // Update content
                 $('#main-content-container').html(data);
-                
+
                 // Update URL tanpa refresh
                 if (window.history && window.history.pushState) {
-                    window.history.pushState({path: url}, '', url);
+                    window.history.pushState({
+                        path: url
+                    }, '', url);
                 }
-                
+
                 hideLoading();
-                
+
                 // Trigger event untuk script lain jika diperlukan
                 $(document).trigger('pageLoaded', [url]);
             },
             error: function(xhr, status, error) {
                 console.error('AJAX Error:', status, error);
                 hideLoading();
-                
+
                 if (status === 'timeout') {
                     alert('Halaman terlalu lama dimuat. Silakan coba lagi.');
                 } else if (status !== 'abort') {
@@ -238,13 +245,14 @@
 
     $(document).ready(function() {
         console.log('Document ready, initializing sidebar...');
-        
+
         // Build tree data
         var treeData = [];
 
         <?php
         $CI = &get_instance();
-        function build_tree_data($user_position, $parent_id, $level = 0) {
+        function build_tree_data($user_position, $parent_id, $level = 0)
+        {
             $CI = &get_instance();
             $items = [];
             if ($level == 0) {
@@ -284,7 +292,11 @@
         $('#sidebar-tree').jstree({
             'core': {
                 'data': treeData,
-                'themes': { 'name': false, 'dots': false, 'icons': false },
+                'themes': {
+                    'name': false,
+                    'dots': false,
+                    'icons': false
+                },
                 'animation': 150
             },
             'plugins': ['wholerow', 'state'],
@@ -296,10 +308,10 @@
         // Event handler untuk klik menu
         $('#sidebar-tree').on('click', '.jstree-anchor', function(e) {
             console.log('Menu clicked');
-            
+
             var tree = $('#sidebar-tree').jstree(true);
             var node = tree.get_node(this);
-            
+
             e.preventDefault();
             e.stopPropagation();
 
@@ -313,7 +325,7 @@
             if (url && url !== '#' && url !== 'javascript:void(0);' && $(this).hasClass('ajax-link')) {
                 // Select node untuk visual feedback
                 tree.select_node(node);
-                
+
                 // Load halaman dengan AJAX
                 loadPage(url);
             } else {
@@ -337,9 +349,11 @@
     function setActiveMenuItem() {
         var currentUrl = window.location.href;
         var tree = $('#sidebar-tree').jstree(true);
-        
+
         if (tree) {
-            var allNodes = tree.get_json('#', { flat: true });
+            var allNodes = tree.get_json('#', {
+                flat: true
+            });
             $.each(allNodes, function(i, node) {
                 var nodeUrl = node.a_attr && node.a_attr['data-url'];
                 if (nodeUrl === currentUrl) {

@@ -1,3 +1,67 @@
+<style>
+		.fancy-link {
+		position: relative;
+		display: inline-block;
+		margin-right: 15px;
+		/* jarak antar link */
+		text-decoration: none;
+		color: #343232ff;
+		/* biru modern */
+		font-weight: 1000;
+		transition: all 0.2s ease-in-out;
+		cursor: pointer;
+	}
+
+	.fancy-link::after {
+		content: "";
+		position: absolute;
+		width: 0;
+		height: 2px;
+		left: 0;
+		bottom: -3px;
+		background: #007bff;
+		transition: width 0.3s ease;
+	}
+
+	.fancy-link:hover {
+		font-weight: 1500;
+		color: #0056b3;
+		/* biru lebih gelap saat hover */
+	}
+
+	.fancy-link:hover::after {
+		width: 100%;
+		/* underline animasi muncul */
+	}
+
+	/* Hilangkan background tombol */
+	.link-as-text.l-btn {
+		background: none !important;
+		border: none !important;
+		padding: 0 !important;
+		box-shadow: none !important;
+	}
+
+	/* Warna teks default */
+	.link-as-text span span {
+		color: #2b2c2cff;
+		/* biru modern */
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s ease-in-out;
+	}
+
+	/* Hover efek */
+	.link-as-text:hover span span {
+		color: #0056b3;
+		/* biru lebih gelap */
+		font-weight: 700;
+	}
+	.link-as-text:hover span span::after {
+		width: 100%;
+	}
+</style>
+
 <!DOCTYPE html>
 <html>
 

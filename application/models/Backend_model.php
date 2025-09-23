@@ -74,6 +74,35 @@ class Backend_model extends CI_Model
         return $result;
     }
 
+    function getUsersNew($limit = 20, $offset = 0, $sort = 'tbl_user._id', $order = 'ASC', $search = null)
+    {
+        // ===== Query Total =====
+        $this->db->select('tbl_user.*, tbl_posisi.posisi');
+        $this->db->from('tbl_user');
+        $this->db->join('tbl_posisi', 'tbl_user.posisi = tbl_posisi._id');
+
+        if ($search) {
+            $this->db->group_start();
+            $this->db->like('tbl_user.nama', $search);
+            $this->db->or_like('tbl_posisi.posisi', $search);
+            $this->db->group_end();
+        }
+
+        $total = $this->db->count_all_results('', false);
+
+        // ===== Query Rows (pagination) =====
+        $this->db->order_by($sort, $order);
+        $this->db->limit($limit, $offset);
+        $query = $this->db->get();
+        $rows  = $query->result_array();
+
+        return [
+            'total' => $total,
+            'rows'  => $rows
+        ];
+    }
+
+
     function getIsLevel()
     {
         $query = $this->db->get('tbl_posisi')->result();
@@ -444,38 +473,38 @@ class Backend_model extends CI_Model
     }
 
 
-  function getserials($item_id, $id_from)
-{
-    $page  = isset($_POST['page']) ? intval($_POST['page']) : 1;
-    $rows  = isset($_POST['rows']) ? intval($_POST['rows']) : 20;
-    $sort  = isset($_POST['sort']) ? strval($_POST['sort']) : 'wh_item_serials.id';
-    $order = isset($_POST['order']) ? strval($_POST['order']) : 'ASC';
-    $search = isset($_POST['search_data']) ? strval($_POST['search_data']) : '';
-    $offset = ($page - 1) * $rows;
-    $result = array();
+    function getserials($item_id, $id_from)
+    {
+        $page  = isset($_POST['page']) ? intval($_POST['page']) : 1;
+        $rows  = isset($_POST['rows']) ? intval($_POST['rows']) : 20;
+        $sort  = isset($_POST['sort']) ? strval($_POST['sort']) : 'wh_item_serials.id';
+        $order = isset($_POST['order']) ? strval($_POST['order']) : 'ASC';
+        $search = isset($_POST['search_data']) ? strval($_POST['search_data']) : '';
+        $offset = ($page - 1) * $rows;
+        $result = array();
 
-    // 🔹 Hitung total data serials
-    $this->db->from('wh_item_serials');
-    $this->db->join('wh_items', 'wh_items.id = wh_item_serials.item_id', 'left');
-    $this->db->where('wh_item_serials.item_id', $item_id);
-    $this->db->where('wh_item_serials.loc', 1);
-    $this->db->where('wh_item_serials.loc_id', $id_from);
+        // 🔹 Hitung total data serials
+        $this->db->from('wh_item_serials');
+        $this->db->join('wh_items', 'wh_items.id = wh_item_serials.item_id', 'left');
+        $this->db->where('wh_item_serials.item_id', $item_id);
+        $this->db->where('wh_item_serials.loc', 1);
+        $this->db->where('wh_item_serials.loc_id', $id_from);
 
-    if (!empty($search)) {
-        $this->db->group_start();
-        $this->db->like('wh_items.kode_barang', $search, 'both');
-        $this->db->or_like('wh_item_serials.serial', $search, 'both');
-        $this->db->or_like('wh_item_serials.remark', $search, 'both');
-        $this->db->or_like('wh_items.level_1', $search, 'both');
-        $this->db->or_like('wh_items.level_2', $search, 'both');
-        $this->db->or_like('wh_items.level_3', $search, 'both');
-        $this->db->or_like('wh_items.level_4', $search, 'both');
-        $this->db->group_end();
-    }
-    $result['total'] = $this->db->count_all_results();  // 👈 tambahkan total
+        if (!empty($search)) {
+            $this->db->group_start();
+            $this->db->like('wh_items.kode_barang', $search, 'both');
+            $this->db->or_like('wh_item_serials.serial', $search, 'both');
+            $this->db->or_like('wh_item_serials.remark', $search, 'both');
+            $this->db->or_like('wh_items.level_1', $search, 'both');
+            $this->db->or_like('wh_items.level_2', $search, 'both');
+            $this->db->or_like('wh_items.level_3', $search, 'both');
+            $this->db->or_like('wh_items.level_4', $search, 'both');
+            $this->db->group_end();
+        }
+        $result['total'] = $this->db->count_all_results();  // 👈 tambahkan total
 
-    // 🔹 Ambil data rows
-    $this->db->select("
+        // 🔹 Ambil data rows
+        $this->db->select("
         wh_items.id AS item_id,
         wh_items.kode_barang,
         wh_items.level_1,
@@ -488,31 +517,31 @@ class Backend_model extends CI_Model
         wh_item_serials.loc,
         wh_item_serials.loc_id
     ");
-    $this->db->from('wh_item_serials');
-    $this->db->join('wh_items', 'wh_items.id = wh_item_serials.item_id', 'left');
-    $this->db->where('wh_item_serials.item_id', $item_id);
-    $this->db->where('wh_item_serials.loc', 1);
-    $this->db->where('wh_item_serials.loc_id', $id_from);
+        $this->db->from('wh_item_serials');
+        $this->db->join('wh_items', 'wh_items.id = wh_item_serials.item_id', 'left');
+        $this->db->where('wh_item_serials.item_id', $item_id);
+        $this->db->where('wh_item_serials.loc', 1);
+        $this->db->where('wh_item_serials.loc_id', $id_from);
 
-    if (!empty($search)) {
-        $this->db->group_start();
-        $this->db->like('wh_items.kode_barang', $search, 'both');
-        $this->db->or_like('wh_item_serials.serial', $search, 'both');
-        $this->db->or_like('wh_items.level_1', $search, 'both');
-        $this->db->or_like('wh_items.level_2', $search, 'both');
-        $this->db->or_like('wh_items.level_3', $search, 'both');
-        $this->db->or_like('wh_items.level_4', $search, 'both');
-        $this->db->group_end();
+        if (!empty($search)) {
+            $this->db->group_start();
+            $this->db->like('wh_items.kode_barang', $search, 'both');
+            $this->db->or_like('wh_item_serials.serial', $search, 'both');
+            $this->db->or_like('wh_items.level_1', $search, 'both');
+            $this->db->or_like('wh_items.level_2', $search, 'both');
+            $this->db->or_like('wh_items.level_3', $search, 'both');
+            $this->db->or_like('wh_items.level_4', $search, 'both');
+            $this->db->group_end();
+        }
+
+        $this->db->order_by($sort, $order);
+        $this->db->limit($rows, $offset);
+
+        $query = $this->db->get();
+        $result['rows'] = $query->result_array();
+
+        return $result;
     }
-
-    $this->db->order_by($sort, $order);
-    $this->db->limit($rows, $offset);
-
-    $query = $this->db->get();
-    $result['rows'] = $query->result_array();
-
-    return $result;
-}
 
 
 

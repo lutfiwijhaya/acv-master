@@ -75,10 +75,10 @@ $query_builder = TRUE;
 
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => 'localhost:3306',
-	'username' => 'root',
-	'password' => '',
-	'database' => 'db_lepet',
+	'hostname' => '31.97.111.183:3306',
+	'username' => 'achivon',
+	'password' => 'password',
+	'database' => 'achivon',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => false,

@@ -31,7 +31,7 @@
                            style="width:300px;">
                 </div>
                 <div>
-                    <a href="<?= site_url('hr/listsummary') ?>" class="easyui-linkbutton" data-options="iconCls:'icon-back'">
+                    <a href="<?= site_url('hr/list_active_employees') ?>" class="easyui-linkbutton" data-options="iconCls:'icon-back'">
                         Back to Summary List
                     </a>
                 </div>

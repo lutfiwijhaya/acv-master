@@ -13,13 +13,13 @@
     }
 
     .header-logo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 20px 0;
-}
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 20px 0;
+    }
 
     .header-logo img {
         height: 25px;
@@ -33,6 +33,70 @@
         display: inline-block;
         vertical-align: middle;
     }
+
+    /* CSS untuk tabel approval/tanda tangan */
+    .approval-box {
+        width: 280px; /* Ukuran lebih kecil */
+        border-collapse: collapse;
+        border: 1px solid #000;
+        margin: 0 0 15px auto; /* Margin auto di kiri untuk mendorong ke kanan */
+        float: right; /* Alternatif untuk memposisikan ke kanan */
+        clear: right; /* Mencegah elemen float lain di sebelah kanan */
+    }
+
+    .approval-box th {
+        background-color: #f2f2f2;
+        border: 1px solid #000;
+        padding: 5px; /* Padding lebih kecil */
+        text-align: center;
+        font-size: 9px; /* Font lebih kecil */
+        font-weight: bold;
+    }
+
+    .approval-box td {
+        border: 1px solid #000;
+        padding: 5px; /* Padding lebih kecil */
+        text-align: center;
+        vertical-align: middle;
+        font-size: 8px; /* Font lebih kecil */
+    }
+
+    /* .signature-cell {
+        height: 40px; 
+    }
+
+    .signature-cell td {
+        vertical-align: middle;
+    } */
+        .signature-cell td {
+    height: 40px; /* Atur tinggi tetap PADA SEL, bukan baris */
+    vertical-align: bottom; /* Agar nama dan tanggal menempel di bawah */
+}
+
+    .signature-cell img {
+        max-height: 50px;
+        max-width: 150px;
+        object-fit: contain;
+    }
+
+    .employee-signature-box {
+    width: 200px; /* Sesuaikan lebar kotak */
+    margin-top: 40px; /* Jarak dari tabel di atasnya */
+    margin-left: auto; /* Mendorong kotak ke kanan */
+    margin-right: 20px; /* Jarak dari tepi kanan */
+    text-align: center;
+    font-size: 10px;
+}
+.signature-area {
+    height: 60px; /* Area kosong untuk tanda tangan */
+    vertical-align: bottom;
+    padding-bottom: 5px;
+}
+.name-area {
+    border-top: 1px solid #000; /* Garis tanda tangan */
+    padding-top: 5px;
+    font-weight: bold;
+}
 
     .card {
         border: 1px solid #000;
@@ -147,7 +211,6 @@
         padding: 3px;
     }
 
-
     /* Specific styling for family status columns */
     .family-status-cell {
         vertical-align: middle;
@@ -161,14 +224,96 @@
     <?php foreach ($summaries as $index => $summary): ?>
     <div class="card">
         <!-- Header with Logo -->
-        <div class="header-logo">
-            <img src="<?= base_url() ?>assets/admin/dist/img/Logo4.png" alt="Logo">
-            <span class="header-title">SUMMARY STATUS – EMPLOYEE</span>
-        </div>
+       <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+    <!-- Logo dan Title sejajar horizontal di atas -->
+    <tr>
+       <td style="text-align: center; padding-bottom: 15px; border-bottom: 2px solid #000;">
+    
+    <img src="<?= FCPATH ?>assets/admin/dist/img/Logo4.png" alt="Logo" 
+         style="height: 30px; vertical-align: middle; margin-right: 15px;">
+         
+    <span style="font-size: 16px; font-weight: bold; text-transform: uppercase; vertical-align: middle;">
+        SUMMARY STATUS – EMPLOYEE
+    </span>
+
+</td>
+    </tr>
+
+    <!-- Baris untuk Foto & Tanda Tangan -->
+    <tr>
+        <td style="padding-top: 15px;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <!-- Kolom Foto (Kiri) -->
+                    <td style="width: 15%; vertical-align: top; padding-right: 10px;">
+                        <?php if (!empty($summary['main']['path_foto']) && file_exists(FCPATH . 'uploads/hr_file/' . $summary['main']['path_foto'])): ?>
+                            <img src="<?= FCPATH . 'uploads/hr_file/' . $summary['main']['path_foto'] ?>" 
+                                 style="width: 90px; height: 110px; object-fit: cover; border: 1px solid #999;">
+                        <?php else: ?>
+                            <div style="width: 90px; height: 110px; border: 1px solid #999; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #777;">
+                                No Photo
+                            </div>
+                        <?php endif; ?>
+                    </td>
+
+                    <!-- Spacer tengah -->
+                    <td style="width: 50%;"></td>
+                    
+                    <!-- Tabel Tanda Tangan (Kanan) -->
+                    <td style="width: 35%; text-align: right; vertical-align: top;">
+                        <table class="approval-box-small" style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #000; padding: 5px; background-color: #f0f0f0;">Pre-selected Employee</th>
+                                    <th style="border: 1px solid #000; padding: 5px; background-color: #f0f0f0;">Approval Employee</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="signature-cell">
+                                    <td style="border: 1px solid #000; padding: 5px; height: 60px; text-align: center; vertical-align: middle;">
+                                        <?php if (!empty($summary['approval_data']['approved_ttd'])): ?>
+                                            <img src="<?= FCPATH . 'uploads/signatures/' . $summary['approval_data']['approved_ttd'] ?>" 
+                                                 style="max-width: 80px; max-height: 50px;">
+                                        <?php else: ?>
+                                            &nbsp;
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="border: 1px solid #000; padding: 5px; height: 60px; text-align: center; vertical-align: middle;">
+                                        <?php if (!empty($summary['approval_data']['summary_employee_ttd'])): ?>
+                                            <img src="<?= FCPATH . 'uploads/signatures/' . $summary['approval_data']['summary_employee_ttd'] ?>" 
+                                                 style="max-width: 80px; max-height: 50px;">
+                                        <?php else: ?>
+                                            &nbsp;
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid #000; padding: 5px; text-align: center;">
+                                        <?= htmlspecialchars($summary['approval_data']['approved_name'] ?? '') ?>
+                                    </td>
+                                    <td style="border: 1px solid #000; padding: 5px; text-align: center;">
+                                        <?= htmlspecialchars($summary['approval_data']['summary_employee_name'] ?? '') ?>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid #000; padding: 5px; text-align: center;">
+                                        <?= $summary['approval_data']['approved_at'] ? date('d-m-Y', strtotime($summary['approval_data']['approved_at'])) : '' ?>
+                                    </td>
+                                    <td style="border: 1px solid #000; padding: 5px; text-align: center;">
+                                        <?= $summary['approval_data']['summary_employee_at'] ? date('d-m-Y', strtotime($summary['approval_data']['summary_employee_at'])) : '' ?>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
 
         <!-- A. CANDIDATE INFORMATION -->
-
-        <table class="table">
+        <table class="table" style="clear: both;">
             <tr>
                 <td colspan="6" class="sub-header"><b>A. CANDIDATE INFORMATION</b></td>
             </tr>
@@ -236,7 +381,6 @@
             </tr>
         </table>
 
-
         <!-- B. STATUS - FAMILY AND ADDRESS -->
         <table class="table family-table">
             <thead>
@@ -289,7 +433,6 @@
                 </tr>
             </tbody>
         </table>
-        <!--  -->
 
         <!-- C. CHECK LIST – DOCUMENT SUBMISSION -->
         <table class="table">
@@ -325,14 +468,15 @@
                         <?= isset($summary['documents']['Bank Account']) ? 'Complete✓' : 'Incomplete✗' ?>
                     </td>
                 </tr>
-                <td class="bg-light">Photo (5EA, 3.5cm x 4.5cm)</td>
-                <td class="text-center">
-                    <?= isset($summary['documents']['Photo 3.5x4.5']) ? 'Complete✓' : 'Incomplete✗' ?>
-                </td>
-                <td class="bg-light">Family Relation Certificate</td>
-                <td class="text-center">
-                    <?= isset($summary['documents']['Family Relation Certificate']) ? 'Complete✓' : 'Incomplete✗' ?>
-                </td>
+                <tr>
+                    <td class="bg-light">Photo (5EA, 3.5cm x 4.5cm)</td>
+                    <td class="text-center">
+                        <?= isset($summary['documents']['Photo 3.5x4.5']) ? 'Complete✓' : 'Incomplete✗' ?>
+                    </td>
+                    <td class="bg-light">Family Relation Certificate</td>
+                    <td class="text-center">
+                        <?= isset($summary['documents']['Family Relation Certificate']) ? 'Complete✓' : 'Incomplete✗' ?>
+                    </td>
                 </tr>
                 <tr>
                     <td class="bg-light">SKCK</td>
@@ -406,14 +550,12 @@
             </tbody>
         </table>
         <?php endif; ?>
-        <!-- end -->
 
         <!-- D. INITIAL HIRED STATUS -->
         <?php 
-            // Pastikan data hired_status dan salary ada
             $hired_status = $summary['hired_status'] ?? [];
             $salary_data = $summary['salary'] ?? [];
-            ?>
+        ?>
         <table class="table">
             <thead>
                 <tr>
@@ -517,9 +659,8 @@
                 </tr>
             </tbody>
         </table>
-        <!-- end bagian intial -->
 
-        <!-- star buat reward status -->
+        <!-- E. REWARD STATUS -->
         <?php if (!empty($summary['rewards'])): ?>
         <table class="table">
             <thead>
@@ -546,9 +687,8 @@
             </tbody>
         </table>
         <?php endif; ?>
-        <!-- end buat rewad -->
 
-        <!-- star buat disciplinary -->
+        <!-- F. DISCIPLINARY STATUS -->
         <?php if (!empty($summary['disciplinary'])): ?>
         <table class="table">
             <thead>
@@ -581,9 +721,8 @@
             </tbody>
         </table>
         <?php endif; ?>
-        <!-- end untuk disciplinary -->
 
-        <!-- star chronology -->
+        <!-- G. Chronology Status As Employee -->
         <?php if (!empty($summary['chronology'])): ?>
         <table class="table">
             <thead>
@@ -592,7 +731,7 @@
                 </tr>
                 <tr>
                     <th class="w-25 text-center bg-light">Subject</th>
-                    <th class="w-15 text-center bg-light">Star Date</th>
+                    <th class="w-15 text-center bg-light">Start Date</th>
                     <th class="w-15 text-center bg-light">Finish Date</th>
                     <th class="w-20 text-center bg-light">Position</th>
                     <th class="w-25 text-center bg-light">Work Location</th>
@@ -612,12 +751,29 @@
              <?php endforeach ?>   
             </tbody>
         </table>  
-        <?php endif; ?>  
-        <!-- end chronology -->
+        
+        <?php endif; ?>
+        <table class="employee-signature-box">
+        <tr>
+            <td class="signature-area">
+                <?php if (!empty($summary['main']['path_ttd']) && file_exists(FCPATH . 'uploads/signatures/' . $summary['main']['path_ttd'])): ?>
+                    <img src="<?= FCPATH . 'uploads/signatures/' . $summary['main']['path_ttd'] ?>" 
+                         style="max-height: 50px; max-width: 150px; object-fit: contain;">
+                <?php else: ?>
+                    &nbsp; <?php endif; ?>
+            </td>
+        </tr>
+        <tr>
+            <td class="name-area">
+                ( <?= htmlspecialchars($summary['main']['nama']) ?> )
+            </td>
+        </tr>
+    </table>
         <?php if ($index < count($summaries) - 1): ?>
         <div class="page-break"></div>
         <?php endif; ?>
-        <?php endforeach; ?>
+    </div>
+    <?php endforeach; ?>
 </body>
 
 </html>

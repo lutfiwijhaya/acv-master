@@ -17,26 +17,16 @@
         <nav class="mt-2">
             <div id="sidebar-tree"></div>
 
-            <!-- Static User Menu -->
-            <div class="nav-header mt-3" style="color: #6c757d; font-size: 11px; font-weight: 600; text-transform: uppercase; padding: 0.5rem 1rem;">USER</div>
-            <ul class="nav nav-pills nav-sidebar flex-column">
-                <li class="nav-item">
-                    <a href="javascript:void(0);" class="nav-link" onclick="openChangePasswordModal()">
-                        <i class="nav-icon fa fa-key"></i>
-                        <p>Change Password</p>
-                    </a>
-                </li>
+            <!-- <ul class="nav nav-pills nav-sidebar flex-column">
                 <li class="nav-item">
                     <a href="<?= base_url() ?>admin/logout" class="nav-link">
                         <i class="nav-icon fa fa-sign-out-alt"></i>
                         <p>Logout</p>
                     </a>
                 </li>
-            </ul>
+            </ul> -->
         </nav>
-        <!-- /.sidebar-menu -->
     </div>
-    <!-- /.sidebar -->
 </aside>
 
 <!-- jsTree CSS dan JS -->
@@ -108,22 +98,12 @@
     }
 
     #sidebar-tree .jstree-default .jstree-icon {
-        margin-right: 8px;
-        width: 16px;
-        height: 16px;
-        line-height: 16px;
-        text-align: center;
+        display: none !important;
     }
 
-    #sidebar-tree .jstree-default .jstree-icon:empty {
-        display: none;
-    }
-
-    /* Custom icon styling */
-    .nav-icon {
-        margin-right: 8px;
-        width: 16px;
-        text-align: center;
+    /* Sembunyikan icon di dalam text */
+    #sidebar-tree .nav-icon {
+        display: none !important;
     }
 
     /* Loading spinner overlay */
@@ -167,7 +147,6 @@
         }
     }
 
-    /* Hide loading overlay by default */
     .loading-overlay.hidden {
         display: none;
     }
@@ -182,7 +161,6 @@
 </div>
 
 <script type="text/javascript">
-    // Fungsi untuk show/hide loading
     function showLoading() {
         $('#loadingOverlay').removeClass('hidden');
         console.log('Loading shown');
@@ -193,16 +171,13 @@
         console.log('Loading hidden');
     }
 
-    // Fungsi untuk load halaman dengan AJAX
     function loadPage(url) {
         console.log('Loading page:', url);
         showLoading();
 
-        // Pastikan container ada
         if ($('#main-content-container').length === 0) {
             console.error('Container #main-content-container tidak ditemukan!');
             hideLoading();
-            // Fallback ke normal navigation
             window.location.href = url;
             return;
         }
@@ -213,11 +188,8 @@
             timeout: 30000,
             success: function(data, textStatus, xhr) {
                 console.log('AJAX Success:', textStatus);
-
-                // Update content
                 $('#main-content-container').html(data);
 
-                // Update URL tanpa refresh
                 if (window.history && window.history.pushState) {
                     window.history.pushState({
                         path: url
@@ -225,8 +197,6 @@
                 }
 
                 hideLoading();
-
-                // Trigger event untuk script lain jika diperlukan
                 $(document).trigger('pageLoaded', [url]);
             },
             error: function(xhr, status, error) {
@@ -246,7 +216,6 @@
     $(document).ready(function() {
         console.log('Document ready, initializing sidebar...');
 
-        // Build tree data
         var treeData = [];
 
         <?php
@@ -265,7 +234,7 @@
                     $has_children = $CI->menu_model->getSubMenus($user_position, $menu->_id)->num_rows() > 0;
                     $item = [
                         'id' => 'menu_' . $menu->_id,
-                        'text' => '<i class="nav-icon ' . $menu->icon . '"></i> ' . $menu->title,
+                        'text' => $menu->title, // Hanya text, tanpa icon
                     ];
                     if (!$has_children && !empty($menu->uri)) {
                         $item['a_attr'] = [
@@ -288,7 +257,6 @@
 
         console.log('Tree data:', treeData);
 
-        // Initialize jsTree
         $('#sidebar-tree').jstree({
             'core': {
                 'data': treeData,
@@ -305,7 +273,6 @@
             }
         });
 
-        // Event handler untuk klik menu
         $('#sidebar-tree').on('click', '.jstree-anchor', function(e) {
             console.log('Menu clicked');
 
@@ -323,19 +290,14 @@
             console.log('Has ajax-link class:', $(this).hasClass('ajax-link'));
 
             if (url && url !== '#' && url !== 'javascript:void(0);' && $(this).hasClass('ajax-link')) {
-                // Select node untuk visual feedback
                 tree.select_node(node);
-
-                // Load halaman dengan AJAX
                 loadPage(url);
             } else {
-                // Toggle node jika bukan link atau buka submenu
                 console.log('Toggling node');
                 tree.toggle_node(node);
             }
         });
 
-        // Handle browser back/forward
         $(window).on('popstate', function(e) {
             if (e.originalEvent.state && e.originalEvent.state.path) {
                 loadPage(e.originalEvent.state.path);
@@ -345,7 +307,6 @@
         console.log('Sidebar initialization complete');
     });
 
-    // Set active menu item berdasarkan URL
     function setActiveMenuItem() {
         var currentUrl = window.location.href;
         var tree = $('#sidebar-tree').jstree(true);
@@ -368,13 +329,11 @@
         }
     }
 
-    // Set active menu saat tree ready
     $('#sidebar-tree').on('ready.jstree', function() {
         console.log('Tree ready, setting active menu');
         setActiveMenuItem();
     });
 
-    // Fungsi-fungsi lain
     function openChangePasswordModal() {
         $('#dlgChangePassword').dialog('open');
     }
@@ -392,7 +351,6 @@
         }, 'json');
     }
 
-    // Test function untuk debugging
     function testAjaxLoad() {
         console.log('Testing AJAX load...');
         if ($('#main-content-container').length > 0) {
@@ -403,6 +361,5 @@
         }
     }
 
-    // Log saat dokumen siap
     console.log('Script loaded successfully');
 </script>

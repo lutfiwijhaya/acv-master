@@ -27,7 +27,7 @@
 
             <div id="toolbarDisciplinaryDetail" style="padding:8px;" class="d-flex justify-content-end align-items-center">
                 <div>
-                    <a href="<?= site_url('hr/listsummary') ?>" class="easyui-linkbutton" data-options="iconCls:'icon-back'">
+                    <a href="<?= site_url('hr/list_active_employees') ?>" class="easyui-linkbutton" data-options="iconCls:'icon-back'">
                         Back to Summary List
                     </a>
                 </div>

@@ -121,6 +121,12 @@ class hr_model extends CI_Model
     // star untuk bagian list candidate
 public function get_all_candidates($search_term = null)
     {
+        //
+        $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+        $rows = isset($_POST['rows']) ? intval($_POST['rows']) : 10;
+        $offset = ($page - 1) * $rows;
+
+    
         //untuk aktif dan nonaktif
         $this->db->select([
             'tbl_user.*, tbl_user.candidate_status',
@@ -131,6 +137,7 @@ public function get_all_candidates($search_term = null)
             ]);
         
         $this->db->from('tbl_user');
+         $this->db->where('candidate_status', 'Candidate');
         //untuk filtering data yang tampil 
          $this->db->where('posisi', 16); 
         //untuk menampilkan data yang belum dihapus (deleted = 0)
@@ -138,7 +145,7 @@ public function get_all_candidates($search_term = null)
         // Mengurutkan berdasarkan ID terbaru (paling baru di atas)
         $this->db->order_by('_id', 'DESC'); 
         // untuk memfinter saat star empoyeee
-         $this->db->where('candidate_status !=', 'Employee');
+        //  $this->db->where('candidate_status !=', 'Employee');
 
        //buat pencarian apa saja
     if (!empty($search_term)) {
@@ -567,6 +574,11 @@ public function get_all_summaries($search_term = null)
         'u.marital as marriage_status',
         'u.summary_class_grade as class_grade',
         'u.email',
+         "CASE 
+            WHEN wh.value = 'HO' THEN 'Indirect'
+            WHEN wh.value = 'KN Project' THEN 'Direct'
+            ELSE '' 
+        END AS direct_indirect_status",
         "COALESCE(
         (SELECT SUM(TIMESTAMPDIFF(MONTH, hc.period_star, hc.period_end) + 1) FROM hr_career hc WHERE hc.user_id = u._id),
         (u.summary_career_years * 12 + u.summary_career_months)
@@ -583,6 +595,8 @@ public function get_all_summaries($search_term = null)
     ]);
     $this->db->from('tbl_user u');
     $this->db->join('tbl_posisi tp', 'u.posisi = tp._id', 'left');
+    $this->db->join('hr_hired wh', "u._id = wh.user_id AND wh.intial = 'Work Location'", 'left');
+
    $this->db->join(
         '(SELECT user_id, registered_school_name, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY graduation DESC) as rn 
          FROM hr_academic) ac', 
@@ -590,23 +604,144 @@ public function get_all_summaries($search_term = null)
         'left'
     );
     $this->db->where('u.deleted', 0);
-    $this->db->where('u.candidate_status', 'Employee');
+    $this->db->where('u.candidate_status', 'Summary Employee');
     $this->db->where_not_in('u.posisi', $excluded_positions);
 
     if (!empty($search_term)) {
-        $this->db->group_start(); // Membuka kurung di query: ( ... )
+        $this->db->group_start(); 
         $this->db->like('u.nama', $search_term);
         $this->db->or_like('u.nik', $search_term);
         $this->db->or_like('tp.posisi', $search_term);
         $this->db->or_like('u.applying_occupation', $search_term);
         $this->db->or_like('u.email', $search_term);
-        $this->db->group_end(); // Menutup kurung: ... )
+        $this->db->group_end(); 
     }
     
     $this->db->order_by('u._id', 'DESC');
     return $this->db->get()->result_array();
 }
 //
+
+//
+function get_candidate_employee_for_datagrid($search_term = null)
+{
+    // 1. Logika Paginasi
+    $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+    $rows = isset($_POST['rows']) ? intval($_POST['rows']) : 10;
+    $offset = ($page - 1) * $rows;
+
+    // --- Query untuk MENGHITUNG TOTAL ---
+    $this->db->from('tbl_user u');
+    $this->db->join('tbl_posisi tp', 'u.posisi = tp._id', 'left');
+    $this->db->join(
+        '(SELECT user_id, registered_school_name, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY graduation DESC) as rn FROM hr_academic) ac', 
+        'u._id = ac.user_id AND ac.rn = 1', 
+        'left'
+    );
+    // FILTER STATUS UNTUK HALAMAN INI
+    $this->db->where('u.candidate_status', 'Candidate employee');
+    $this->db->where('u.deleted', 0);
+    $total = $this->db->count_all_results();
+
+    // --- Query untuk MENGAMBIL DATA ---
+    $this->db->select([
+        'u.*', 'u._id AS id_family', 'u._id AS id_document', 'u._id AS id_certificate',
+        'u._id AS id_hired', 'u._id AS id_reward', 'u._id AS id_disciplinary', 'u._id AS id_chronology',
+        'ac.registered_school_name as last_education', 'u.nama as candidate_name',
+        'u.tgl_lahir as birthday', 'u.nik as ktp_no', 'u.no_hp as mobile_no',
+        'tp.posisi as position', 'u._id AS id_cert', 'u.is_aktif', 'u.desired_salary',
+        'u.religion', 'u.summary_discipline as discipline', 'u.applying_occupation',
+        'u.marital as marriage_status', 'u.summary_class_grade as class_grade', 'u.email',
+        "COALESCE((SELECT SUM(TIMESTAMPDIFF(MONTH, hc.period_star, hc.period_end) + 1) FROM hr_career hc WHERE hc.user_id = u._id), (u.summary_career_years * 12 + u.summary_career_months)) as total_career_months"
+    ]);
+    $this->db->from('tbl_user u');
+    $this->db->join('tbl_posisi tp', 'u.posisi = tp._id', 'left');
+    $this->db->join(
+        '(SELECT user_id, registered_school_name, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY graduation DESC) as rn FROM hr_academic) ac', 
+        'u._id = ac.user_id AND ac.rn = 1', 
+        'left'
+    );
+    
+    // FILTER STATUS UNTUK HALAMAN INI
+    $this->db->where('u.candidate_status', 'Candidate employee');
+    $this->db->where('u.deleted', 0);
+
+    $this->db->order_by('u._id', 'DESC');
+    $this->db->limit($rows, $offset);
+    $result_rows = $this->db->get()->result_array();
+
+    // --- Kembalikan data ---
+    return [
+        'total' => $total,
+        'rows' => $result_rows
+    ];
+}
+//
+
+//
+function get_approval_employee_for_datagrid($search_term = null)
+{
+    // 1. Logika Paginasi (Biarkan sama)
+    $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+    $rows = isset($_POST['rows']) ? intval($_POST['rows']) : 20;
+    $offset = ($page - 1) * $rows;
+
+    // --- Query untuk MENGHITUNG TOTAL ---
+    $this->db->from('tbl_user u');
+    $this->db->join('tbl_posisi tp', 'u.posisi = tp._id', 'left');
+    $this->db->join(
+        '(SELECT user_id, registered_school_name, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY graduation DESC) as rn FROM hr_academic) ac', 
+        'u._id = ac.user_id AND ac.rn = 1', 
+        'left'
+    );
+    $this->db->where('u.candidate_status', 'Approval employee');
+    $this->db->where('u.deleted', 0);
+    $total = $this->db->count_all_results();
+
+    // --- Query untuk MENGAMBIL DATA ---
+    $this->db->select([
+        'u.*', 'u._id AS id_family', 'u._id AS id_document', 'u._id AS id_certificate',
+        'u._id AS id_hired', 'u._id AS id_reward', 'u._id AS id_disciplinary', 'u._id AS id_chronology',
+        'ac.registered_school_name as last_education', 'u.nama as candidate_name',
+        'u.tgl_lahir as birthday', 'u.nik as ktp_no', 'u.no_hp as mobile_no',
+        'tp.posisi as position', 'u._id AS id_cert', 'u.is_aktif', 'u.desired_salary',
+        'u.religion', 'u.summary_discipline as discipline', 'u.applying_occupation',
+        'u.marital as marriage_status', 'u.summary_class_grade as class_grade', 'u.email',
+        "CASE 
+            WHEN wh.value = 'HO' THEN 'Indirect'
+            WHEN wh.value = 'KN Project' THEN 'Direct'
+            ELSE '' 
+        END AS direct_indirect_status",
+        "COALESCE((SELECT SUM(TIMESTAMPDIFF(MONTH, hc.period_star, hc.period_end) + 1) FROM hr_career hc WHERE hc.user_id = u._id), (u.summary_career_years * 12 + u.summary_career_months)) as total_career_months"
+    ]);
+    $this->db->from('tbl_user u');
+    $this->db->join('hr_hired wh', "u._id = wh.user_id AND wh.intial = 'Work Location'", 'left');
+    $this->db->join('tbl_posisi tp', 'u.posisi = tp._id', 'left');
+    $this->db->join(
+        '(SELECT user_id, registered_school_name, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY graduation DESC) as rn FROM hr_academic) ac', 
+        'u._id = ac.user_id AND ac.rn = 1', 
+        'left'
+    );
+    $this->db->where('u.candidate_status', 'Approval employee');
+    $this->db->where('u.deleted', 0);
+
+    // =======================================================
+    // PERBAIKI TYPO DI SINI
+    // =======================================================
+    $this->db->order_by('u._id', 'DESC');
+    // =======================================================
+    
+    $this->db->limit($rows, $offset);
+    $result_rows = $this->db->get()->result_array();
+
+    // --- Kembalikan data ---
+    return [
+        'total' => $total,
+        'rows' => $result_rows
+    ];
+}
+//
+
 
 //bismilah
 public function get_absensi_recap_harian($filters = [], $limit = null, $offset = null)
@@ -753,6 +888,14 @@ public function promote_daily_status($tanggal, $lokasi,  $user_id)
 //
 
 //
+ public function update_candidate_data($id, $data)
+    {
+        $this->db->where('_id', $id);
+        return $this->db->update('tbl_user', $data);
+    }
+//
+
+//
 public function get_user_details_by_ids($user_ids)
 {
     if (empty($user_ids)) {
@@ -893,6 +1036,299 @@ public function update_active_status($id, $status)
 {
     $this->db->where('_id', $id);
     return $this->db->update('tbl_user', ['is_aktif' => $status]);
+}
+//
+
+//
+function get_active_summaries_for_datagrid($search_term = null)
+{
+    // Paginasi
+    $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+    $rows = isset($_POST['rows']) ? intval($_POST['rows']) : 20;
+    $offset = ($page - 1) * $rows;
+
+    // Filter posisi
+    $excluded_positions = [1, 2, 12, 16, 13, 14];
+
+    // --- MENGHITUNG TOTAL ---
+    $this->db->from('tbl_user u');
+    $this->db->join('tbl_posisi tp', 'u.posisi = tp._id', 'left');
+    $this->db->where('u.deleted', 0);
+    $this->db->where_not_in('u.posisi', $excluded_positions);
+    $this->db->where('u.is_aktif', 1); // <-- FILTER UTAMA: HANYA YANG AKTIF
+
+    if (!empty($search_term)) {
+        $this->db->group_start();
+        $this->db->like('u.nama', $search_term);
+        $this->db->or_like('u.nik', $search_term);
+        $this->db->or_like('tp.posisi', $search_term);
+        $this->db->or_like('u.applying_occupation', $search_term);
+        $this->db->or_like('u.email', $search_term);
+        $this->db->group_end();
+    }
+    $total = $this->db->count_all_results();
+
+    // --- MENGAMBIL DATA ---
+    $this->db->select([
+        'u.*', 'u._id AS id_family', 'u._id AS id_document', 'u._id AS id_certificate',
+        'u._id AS id_hired', 'u._id AS id_reward', 'u._id AS id_disciplinary', 'u._id AS id_chronology',
+        'ac.registered_school_name as last_education', 'u.nama as candidate_name',
+        'u.tgl_lahir as birthday', 'u.nik as ktp_no', 'u.no_hp as mobile_no', 'tp.posisi as position',
+        'u._id AS id_cert', 'u.is_aktif', 'u.desired_salary', 'u.religion',
+        'u.summary_discipline as discipline', 'u.applying_occupation', 'u.marital as marriage_status',
+        'u.summary_class_grade as class_grade', 'u.email',
+        "CASE 
+            WHEN wh.value = 'HO' THEN 'Indirect'
+            WHEN wh.value = 'KN Project' THEN 'Direct'
+            ELSE '' 
+        END AS direct_indirect_status",
+        "COALESCE((SELECT SUM(TIMESTAMPDIFF(MONTH, hc.period_star, hc.period_end) + 1) FROM hr_career hc WHERE hc.user_id = u._id), (u.summary_career_years * 12 + u.summary_career_months)) as total_career_months"
+    ]);
+    $this->db->from('tbl_user u');
+    $this->db->join('tbl_posisi tp', 'u.posisi = tp._id', 'left');
+    $this->db->join('hr_hired wh', "u._id = wh.user_id AND wh.intial = 'Work Location'", 'left');
+    $this->db->join('(SELECT user_id, registered_school_name, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY graduation DESC) as rn FROM hr_academic) ac', 'u._id = ac.user_id AND ac.rn = 1', 'left');
+    $this->db->where('u.deleted', 0);
+    $this->db->where_not_in('u.posisi', $excluded_positions);
+    $this->db->where('u.is_aktif', 2); // <-- FILTER UTAMA: HANYA YANG AKTIF
+    $this->db->where('wh.value', 'HO');
+    $this->db->where('u.candidate_status', 'Summary Employee');
+
+    if (!empty($search_term)) {
+        $this->db->group_start();
+        $this->db->like('u.nama', $search_term);
+        $this->db->or_like('u.nik', $search_term);
+        $this->db->or_like('tp.posisi', $search_term);
+        $this->db->or_like('u.applying_occupation', $search_term);
+        $this->db->or_like('u.email', $search_term);
+        $this->db->group_end();
+    }
+    
+    $this->db->order_by('u._id', 'DESC');
+    $this->db->limit($rows, $offset);
+    $result_rows = $this->db->get()->result_array();
+
+    return ['total' => $total, 'rows' => $result_rows];
+}
+
+/**
+ * FUNGSI BARU: Mengambil data summary HANYA yang non-aktif (is_aktif = 0)
+ */
+function get_inactive_summaries_for_datagrid($search_term = null)
+{
+     // Paginasi
+    $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+    $rows = isset($_POST['rows']) ? intval($_POST['rows']) : 10;
+    $offset = ($page - 1) * $rows;
+
+    // Filter posisi
+    $excluded_positions = [1, 2, 12, 16, 13, 14];
+
+    // --- MENGHITUNG TOTAL ---
+    $this->db->from('tbl_user u');
+    $this->db->join('tbl_posisi tp', 'u.posisi = tp._id', 'left');
+    $this->db->where('u.deleted', 0);
+    $this->db->where_not_in('u.posisi', $excluded_positions);
+    $this->db->where('u.is_aktif', 1); // <-- FILTER UTAMA: HANYA YANG AKTIF
+
+    if (!empty($search_term)) {
+        $this->db->group_start();
+        $this->db->like('u.nama', $search_term);
+        $this->db->or_like('u.nik', $search_term);
+        $this->db->or_like('tp.posisi', $search_term);
+        $this->db->or_like('u.applying_occupation', $search_term);
+        $this->db->or_like('u.email', $search_term);
+        $this->db->group_end();
+    }
+    $total = $this->db->count_all_results();
+
+    // --- MENGAMBIL DATA ---
+    $this->db->select([
+        'u.*', 'u._id AS id_family', 'u._id AS id_document', 'u._id AS id_certificate',
+        'u._id AS id_hired', 'u._id AS id_reward', 'u._id AS id_disciplinary', 'u._id AS id_chronology',
+        'ac.registered_school_name as last_education', 'u.nama as candidate_name',
+        'u.tgl_lahir as birthday', 'u.nik as ktp_no', 'u.no_hp as mobile_no', 'tp.posisi as position',
+        'u._id AS id_cert', 'u.is_aktif', 'u.desired_salary', 'u.religion',
+        'u.summary_discipline as discipline', 'u.applying_occupation', 'u.marital as marriage_status',
+        'u.summary_class_grade as class_grade', 'u.email',
+         "CASE 
+            WHEN wh.value = 'HO' THEN 'Indirect'
+            WHEN wh.value = 'KN Project' THEN 'Direct'
+            ELSE '' 
+        END AS direct_indirect_status",
+        "COALESCE((SELECT SUM(TIMESTAMPDIFF(MONTH, hc.period_star, hc.period_end) + 1) FROM hr_career hc WHERE hc.user_id = u._id), (u.summary_career_years * 12 + u.summary_career_months)) as total_career_months"
+    ]);
+    $this->db->from('tbl_user u');
+    $this->db->join('tbl_posisi tp', 'u.posisi = tp._id', 'left');
+     $this->db->join('hr_hired wh', "u._id = wh.user_id AND wh.intial = 'Work Location'", 'left');
+    $this->db->join('(SELECT user_id, registered_school_name, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY graduation DESC) as rn FROM hr_academic) ac', 'u._id = ac.user_id AND ac.rn = 1', 'left');
+    $this->db->where('u.deleted', 0);
+    $this->db->where_not_in('u.posisi', $excluded_positions);
+    $this->db->where('u.is_aktif', 1); // <-- FILTER UTAMA: HANYA YANG AKTIF
+    $this->db->where('wh.value', 'HO');
+    $this->db->where('u.candidate_status', 'Summary Employee');
+
+    if (!empty($search_term)) {
+        $this->db->group_start();
+        $this->db->like('u.nama', $search_term);
+        $this->db->or_like('u.nik', $search_term);
+        $this->db->or_like('tp.posisi', $search_term);
+        $this->db->or_like('u.applying_occupation', $search_term);
+        $this->db->or_like('u.email', $search_term);
+        $this->db->group_end();
+    }
+    
+    $this->db->order_by('u._id', 'DESC');
+    $this->db->limit($rows, $offset);
+    $result_rows = $this->db->get()->result_array();
+
+    return ['total' => $total, 'rows' => $result_rows];
+}
+//
+
+//
+function get_direct_employees_for_datagrid($search_term = null)
+{
+    // Paginasi
+    $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+    $rows = isset($_POST['rows']) ? intval($_POST['rows']) : 20;
+    $offset = ($page - 1) * $rows;
+
+    // Filter posisi
+    $excluded_positions = [1, 2, 12, 16, 13, 14];
+
+    // --- MENGHITUNG TOTAL ---
+    $this->db->from('tbl_user u');
+    $this->db->join('tbl_posisi tp', 'u.posisi = tp._id', 'left');
+    $this->db->where('u.deleted', 0);
+    $this->db->where_not_in('u.posisi', $excluded_positions);
+    $this->db->where('u.is_aktif', 1); // <-- FILTER UTAMA: HANYA YANG AKTIF
+
+    if (!empty($search_term)) {
+        $this->db->group_start();
+        $this->db->like('u.nama', $search_term);
+        $this->db->or_like('u.nik', $search_term);
+        $this->db->or_like('tp.posisi', $search_term);
+        $this->db->or_like('u.applying_occupation', $search_term);
+        $this->db->or_like('u.email', $search_term);
+        $this->db->group_end();
+    }
+    $total = $this->db->count_all_results();
+
+    // --- MENGAMBIL DATA ---
+    $this->db->select([
+        'u.*', 'u._id AS id_family', 'u._id AS id_document', 'u._id AS id_certificate',
+        'u._id AS id_hired', 'u._id AS id_reward', 'u._id AS id_disciplinary', 'u._id AS id_chronology',
+        'ac.registered_school_name as last_education', 'u.nama as candidate_name',
+        'u.tgl_lahir as birthday', 'u.nik as ktp_no', 'u.no_hp as mobile_no', 'tp.posisi as position',
+        'u._id AS id_cert', 'u.is_aktif', 'u.desired_salary', 'u.religion',
+        'u.summary_discipline as discipline', 'u.applying_occupation', 'u.marital as marriage_status',
+        'u.summary_class_grade as class_grade', 'u.email',
+        "CASE 
+            WHEN wh.value = 'HO' THEN 'Indirect'
+            WHEN wh.value = 'KN Project' THEN 'Direct'
+            ELSE '' 
+        END AS direct_indirect_status",
+        "COALESCE((SELECT SUM(TIMESTAMPDIFF(MONTH, hc.period_star, hc.period_end) + 1) FROM hr_career hc WHERE hc.user_id = u._id), (u.summary_career_years * 12 + u.summary_career_months)) as total_career_months"
+    ]);
+    $this->db->from('tbl_user u');
+    $this->db->join('tbl_posisi tp', 'u.posisi = tp._id', 'left');
+    $this->db->join('hr_hired wh', "u._id = wh.user_id AND wh.intial = 'Work Location'", 'left');
+    $this->db->join('(SELECT user_id, registered_school_name, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY graduation DESC) as rn FROM hr_academic) ac', 'u._id = ac.user_id AND ac.rn = 1', 'left');
+    $this->db->where('u.deleted', 0);
+    $this->db->where_not_in('u.posisi', $excluded_positions);
+    $this->db->where('u.is_aktif', 2); // <-- FILTER UTAMA: HANYA YANG AKTIF
+    $this->db->where('wh.value', 'KN Project');
+    $this->db->where('u.candidate_status', 'Summary Employee');
+
+    if (!empty($search_term)) {
+        $this->db->group_start();
+        $this->db->like('u.nama', $search_term);
+        $this->db->or_like('u.nik', $search_term);
+        $this->db->or_like('tp.posisi', $search_term);
+        $this->db->or_like('u.applying_occupation', $search_term);
+        $this->db->or_like('u.email', $search_term);
+        $this->db->group_end();
+    }
+    
+    $this->db->order_by('u._id', 'DESC');
+    $this->db->limit($rows, $offset);
+    $result_rows = $this->db->get()->result_array();
+
+    return ['total' => $total, 'rows' => $result_rows];
+}
+//
+
+//
+function get_indirect_employees_for_datagrid($search_term = null)
+{
+   // Paginasi
+    $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+    $rows = isset($_POST['rows']) ? intval($_POST['rows']) : 20;
+    $offset = ($page - 1) * $rows;
+
+    // Filter posisi
+    $excluded_positions = [1, 2, 12, 16, 13, 14];
+
+    // --- MENGHITUNG TOTAL ---
+    $this->db->from('tbl_user u');
+    $this->db->join('tbl_posisi tp', 'u.posisi = tp._id', 'left');
+    $this->db->where('u.deleted', 0);
+    $this->db->where_not_in('u.posisi', $excluded_positions);
+    $this->db->where('u.is_aktif', 1); 
+    
+    if (!empty($search_term)) {
+        $this->db->group_start();
+        $this->db->like('u.nama', $search_term);
+        $this->db->or_like('u.nik', $search_term);
+        $this->db->or_like('tp.posisi', $search_term);
+        $this->db->or_like('u.applying_occupation', $search_term);
+        $this->db->or_like('u.email', $search_term);
+        $this->db->group_end();
+    }
+    $total = $this->db->count_all_results();
+
+    // --- MENGAMBIL DATA ---
+    $this->db->select([
+        'u.*', 'u._id AS id_family', 'u._id AS id_document', 'u._id AS id_certificate',
+        'u._id AS id_hired', 'u._id AS id_reward', 'u._id AS id_disciplinary', 'u._id AS id_chronology',
+        'ac.registered_school_name as last_education', 'u.nama as candidate_name',
+        'u.tgl_lahir as birthday', 'u.nik as ktp_no', 'u.no_hp as mobile_no', 'tp.posisi as position',
+        'u._id AS id_cert', 'u.is_aktif', 'u.desired_salary', 'u.religion',
+        'u.summary_discipline as discipline', 'u.applying_occupation', 'u.marital as marriage_status',
+        'u.summary_class_grade as class_grade', 'u.email',
+        "CASE 
+            WHEN wh.value = 'HO' THEN 'Indirect'
+            WHEN wh.value = 'KN Project' THEN 'Direct'
+            ELSE '' 
+        END AS direct_indirect_status",
+        "COALESCE((SELECT SUM(TIMESTAMPDIFF(MONTH, hc.period_star, hc.period_end) + 1) FROM hr_career hc WHERE hc.user_id = u._id), (u.summary_career_years * 12 + u.summary_career_months)) as total_career_months"
+    ]);
+    $this->db->from('tbl_user u');
+    $this->db->join('tbl_posisi tp', 'u.posisi = tp._id', 'left');
+    $this->db->join('hr_hired wh', "u._id = wh.user_id AND wh.intial = 'Work Location'", 'left');
+    $this->db->join('(SELECT user_id, registered_school_name, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY graduation DESC) as rn FROM hr_academic) ac', 'u._id = ac.user_id AND ac.rn = 1', 'left');
+    $this->db->where('u.deleted', 0);
+    $this->db->where_not_in('u.posisi', $excluded_positions);
+    $this->db->where('u.is_aktif', 1); // <-- FILTER UTAMA: HANYA YANG AKTIF
+    $this->db->where('wh.value', 'KN Project');
+    $this->db->where('u.candidate_status', 'Summary Employee');
+
+    if (!empty($search_term)) {
+        $this->db->group_start();
+        $this->db->like('u.nama', $search_term);
+        $this->db->or_like('u.nik', $search_term);
+        $this->db->or_like('tp.posisi', $search_term);
+        $this->db->or_like('u.applying_occupation', $search_term);
+        $this->db->or_like('u.email', $search_term);
+        $this->db->group_end();
+    }
+    
+    $this->db->order_by('u._id', 'DESC');
+    $this->db->limit($rows, $offset);
+    $result_rows = $this->db->get()->result_array();
+
+    return ['total' => $total, 'rows' => $result_rows];
 }
 //
 
@@ -1190,6 +1626,179 @@ public function get_full_candidate_profile($user_id)
     // Tambahkan data lain yang perlu diekspor
     
     return $profile;
+}
+//
+
+//
+function get_preselected_for_datagrid()
+{
+    // Ambil parameter paginasi dari EasyUI
+    $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+    $rows = isset($_POST['rows']) ? intval($_POST['rows']) : 10;
+    $offset = ($page - 1) * $rows;
+
+    // Hitung total record yang sesuai
+    $this->db->from('tbl_user');
+    $this->db->where('candidate_status', 'Pre-selected');
+    $total = $this->db->count_all_results();
+
+    // Ambil data sesuai halaman
+    $this->db->select('*'); // atau pilih kolom yang dibutuhkan
+    $this->db->from('tbl_user');
+    $this->db->where('candidate_status', 'Pre-selected');
+    $this->db->order_by('nama', 'ASC');
+    $this->db->limit($rows, $offset);
+    $query = $this->db->get();
+    
+    // Kembalikan dalam format yang dimengerti EasyUI
+    return [
+        'total' => $total,
+        'rows' => $query->result_array()
+    ];
+}
+//
+
+//
+function get_interview_for_datagrid()
+{
+    $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+    $rows = isset($_POST['rows']) ? intval($_POST['rows']) : 10;
+    $offset = ($page - 1) * $rows;
+
+    $this->db->from('tbl_user');
+    $this->db->where('candidate_status', 'Interview'); // <-- Filter status
+    $total = $this->db->count_all_results();
+
+    $this->db->select('*');
+    $this->db->from('tbl_user');
+    $this->db->where('candidate_status', 'Interview'); // <-- Filter status
+    $this->db->order_by('nama', 'ASC');
+    $this->db->limit($rows, $offset);
+    $query = $this->db->get();
+    
+    return ['total' => $total, 'rows' => $query->result_array()];
+}
+
+// FUNGSI BARU UNTUK DATA APPROVAL
+function get_approval_for_datagrid()
+{
+    $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+    $rows = isset($_POST['rows']) ? intval($_POST['rows']) : 10;
+    $offset = ($page - 1) * $rows;
+
+    $this->db->from('tbl_user');
+    $this->db->where('candidate_status', 'Approval'); // <-- Filter status
+    $total = $this->db->count_all_results();
+
+    $this->db->select('*');
+    $this->db->from('tbl_user');
+    $this->db->where('candidate_status', 'Approval'); // <-- Filter status
+    $this->db->order_by('nama', 'ASC');
+    $this->db->limit($rows, $offset);
+    $query = $this->db->get();
+    
+    return ['total' => $total, 'rows' => $query->result_array()];
+}
+//
+
+//
+function get_history_for_datagrid($search_term = null)
+{
+     $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+    $rows = isset($_POST['rows']) ? intval($_POST['rows']) : 10;
+    $offset = ($page - 1) * $rows;
+
+    // --- MENGHITUNG TOTAL dari tabel hr_employees ---
+    $this->db->from('hr_employees'); // Sumber data diubah
+    if (!empty($search_term)) {
+        $this->db->like('nama', $search_term)->or_like('nik', $search_term);
+    }
+    $total = $this->db->count_all_results();
+
+    // --- MENGAMBIL DATA dari tabel hr_employees ---
+    $this->db->select([
+        'id AS _id', // Kirim 'id' dari hr_employees sebagai '_id'
+        'nama', 'applying_occupation', 'desired_salary', 'email', 'no_hp', 'marital',
+        'jk', 'tgl_lahir', 'tempat_lahir', 'alamat',
+        'current_address', 'npwp', 'bpjs_ks', 'bpjs_kt', 'nik',
+        'candidate_status', // Ambil status dari tabel ini
+        
+    ]);
+    $this->db->from('hr_employees'); // Sumber data diubah
+    
+    if (!empty($search_term)) {
+        $this->db->like('nama', $search_term)->or_like('nik', $search_term);
+    }
+
+    $this->db->order_by('id', 'DESC');
+    $this->db->limit($rows, $offset);
+    $result_rows = $this->db->get()->result_array();
+
+    // --- Kembalikan data ---
+    return [
+        'total' => $total,
+        'rows' => $result_rows
+    ];
+}
+//
+
+//
+public function approve_and_copy_candidate($user_id, $approver_id)
+{
+    // Ambil semua data kandidat dari tbl_user
+    $candidate = $this->db->get_where('tbl_user', ['_id' => $user_id])->row_array();
+
+    if (empty($candidate)) {
+        return false; // Hentikan jika kandidat tidak ditemukan
+    }
+
+    // 1. Mulai Transaksi Database
+    $this->db->trans_start();
+
+    // 2. Siapkan data untuk dimasukkan ke tabel hr_employees
+    $employee_data = [
+        'user_id_source'      => $candidate['_id'],
+        'nik'                 => $candidate['nik'],
+        'nama'                => $candidate['nama'],
+        'applying_occupation' => $candidate['applying_occupation'],
+        'desired_salary'      => $candidate['desired_salary'],
+        'email'               => $candidate['email'],
+        'no_hp'               => $candidate['no_hp'],
+        'marital'             => $candidate['marital'],
+        'jk'                  => $candidate['jk'],
+        'tgl_lahir'           => $candidate['tgl_lahir'],
+        'tempat_lahir'        => $candidate['tempat_lahir'],
+        'alamat'              => $candidate['alamat'],
+        'current_address'     => $candidate['current_address'],
+        'npwp'                => $candidate['npwp'],
+        'bpjs_ks'             => $candidate['bpjs_ks'],
+        'bpjs_kt'             => $candidate['bpjs_kt'],
+        'candidate_status'    => 'Approval'
+    ];
+    
+    // Masukkan data ke tabel baru
+    $this->db->insert('hr_employees', $employee_data);
+
+    // 3. Update status di tabel tbl_user menjadi 'Approval'
+    $this->db->where('_id', $user_id);
+    $update_data_user = [
+        'candidate_status' => 'Approval',
+        'approved_by'      => $approver_id,       // Menggunakan parameter yang dikirim
+        'approved_at'      => date('Y-m-d H:i:s')
+    ];
+    $this->db->update('tbl_user', $update_data_user);
+
+    // 4. Selesaikan Transaksi
+    $this->db->trans_complete();
+
+    // Cek apakah transaksi berhasil
+    if ($this->db->trans_status() === FALSE) {
+        // Transaksi gagal
+        return false;
+    } else {
+        // Transaksi berhasil
+        return true;
+    }
 }
 //
 

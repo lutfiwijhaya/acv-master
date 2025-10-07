@@ -60,6 +60,60 @@
         
     }
 
+    /* Header container untuk logo dan approval box */
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+        padding-top: 20px;
+    }
+
+    .logo-title {
+        flex: 1;
+        text-align: center;
+    }
+
+    /* Style untuk approval box kecil di sebelah kanan */
+    .approval-box-container {
+        width: 250px;
+        margin-left: 450px;
+    }
+
+    .approval-box-small {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 7px;
+    }
+
+    .approval-box-small th {
+        background-color: #f2f2f2;
+        padding: 2px;
+        text-align: center;
+        border: 1px solid #ccc;
+        font-weight: bold;
+        font-size: 7px;
+    }
+
+    .approval-box-small td {
+        padding: 2px;
+        text-align: center;
+        border: 1px solid #ccc;
+        vertical-align: middle;
+        font-size: 6px;
+    }
+
+    .approval-box-small .signature-small td {
+        height: 30px;
+        vertical-align: bottom;
+    }
+
+    .approval-box-small .signature-small img {
+        max-width: 40px;
+        max-height: 25px;
+        object-fit: contain;
+    }
+
     .page-break {
         page-break-after: always;
     }
@@ -69,25 +123,78 @@
 <body>
     <?php foreach ($candidates as $index => $candidate): ?>
     <div class="card">
-        <div style="text-align: center; width: 100%; padding-top: 20px;">
-            <img src="<?= base_url() ?>assets/admin/dist/img/Logo4.png" alt="Logo"
-                style="height: 30px; margin-right: 15px; vertical-align: middle;">
+        <div class="header-container">
+            <div class="logo-title">
+                <img src="<?= base_url() ?>assets/admin/dist/img/Logo4.png" alt="Logo"
+                     style="height: 30px; margin-right: 15px; vertical-align: middle;">
+                <h2 style="display: inline-block; vertical-align: middle; margin: 0;">
+                    CANDIDATE APPLICATION
+                </h2>
+            </div>
+            
+            <div class="approval-box-container">
+                <table class="approval-box-small">
+                    <thead>
+                        <tr>
+                            <th>Pre-selected</th>
+                            <th>Interview</th>
+                            <th>Approval</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    <tr class="signature-small">
+        <td>
+            <?php if (!empty($candidate['approval_data']['preselected_ttd'])): ?>
+                <img src="<?= FCPATH . 'uploads/signatures/' . $candidate['approval_data']['preselected_ttd'] ?>">
+            <?php endif; ?>
+        </td>
+        <td>
+            <?php if (!empty($candidate['approval_data']['interviewed_ttd'])): ?>
+                <img src="<?= FCPATH . 'uploads/signatures/' . $candidate['approval_data']['interviewed_ttd'] ?>">
+            <?php endif; ?>
+        </td>
+        <td>
+            <?php if (!empty($candidate['approval_data']['approved_ttd'])): ?>
+                <img src="<?= FCPATH . 'uploads/signatures/' . $candidate['approval_data']['approved_ttd'] ?>">
+            <?php endif; ?>
+        </td>
+    </tr>
+    <tr>
+        <td style="font-size: 6px;"><?= htmlspecialchars($candidate['approval_data']['preselected_name'] ?? '') ?></td>
+        <td style="font-size: 6px;"><?= htmlspecialchars($candidate['approval_data']['interviewed_name'] ?? '') ?></td>
+        <td style="font-size: 6px;"><?= htmlspecialchars($candidate['approval_data']['approved_name'] ?? '') ?></td>
+    </tr>
 
-            <h2 style="display: inline-block; vertical-align: middle; margin: 0;">
-                CANDIDATE APPLICATION
-            </h2>
+    <tr>
+        <td style="font-size: 6px;">
+            <?php if (!empty($candidate['approval_data']['preselected_at'])): ?>
+                <?= date('d-m-Y', strtotime($candidate['approval_data']['preselected_at'])) ?>
+            <?php endif; ?>
+        </td>
+        <td style="font-size: 6px;">
+            <?php if (!empty($candidate['approval_data']['interviewed_at'])): ?>
+                <?= date('d-m-Y', strtotime($candidate['approval_data']['interviewed_at'])) ?>
+            <?php endif; ?>
+        </td>
+        <td style="font-size: 6px;">
+            <?php if (!empty($candidate['approval_data']['approved_at'])): ?>
+                <?= date('d-m-Y', strtotime($candidate['approval_data']['approved_at'])) ?>
+            <?php endif; ?>
+        </td>
+    </tr>
+</tbody>
+                </table>
+            </div>
         </div>
+
         <div class="card-body">
-            <!-- Job Application Details Section -->
             <div class="card-header">JOB APPLICATION DETAILS</div>
             <table class="table">
                 <tr>
                     <th style="width: 25%;">Applying Occupation</th>
-                    <td style="width: 25%;"><?= htmlspecialchars($candidate['main']['applying_occupation'] ?? '-') ?>
-                    </td>
+                    <td style="width: 25%;"><?= htmlspecialchars($candidate['main']['applying_occupation'] ?? '-') ?></td>
                     <th style="width: 25%;">Desired Salary</th>
-                    <td style="width: 15%;">IDR
-                        <?= number_format($candidate['main']['desired_salary'] ?? 0, 0, ',', '.') ?></td>
+                    <td style="width: 15%;">IDR <?= number_format($candidate['main']['desired_salary'] ?? 0, 0, ',', '.') ?></td>
                 </tr>
             </table>
 
@@ -98,7 +205,7 @@
                        <?php if (!empty($candidate['main']['photo_base64'])): ?>
                             <div class="photo">
                                 <img src="<?= $candidate['main']['photo_base64'] ?>"
-                                    style="width: 100%; height: 100%; object-fit: cover;">
+                                     style="width: 100%; height: 100%; object-fit: cover;">
                             </div>
                         <?php else: ?>
                             <div class="photo" style="display: flex; align-items: center; justify-content: center;">
@@ -173,7 +280,6 @@
                 </tbody>
             </table>
 
-            <!-- Skill Authorized Certificates Section -->
             <div class="card-header">3. SKILL AUTHORIZED CERTIFICATES</div>
             <table class="table">
                 <thead>
@@ -204,7 +310,6 @@
                 </tbody>
             </table>
 
-            <!-- Summary of Career Status Section -->
             <div class="card-header">4. SUMMARY OF CAREER STATUS</div>
             <table class="table">
                 <thead>
@@ -237,12 +342,10 @@
                 </tbody>
             </table>
 
-            <!-- Motivation Reason for Application Section -->
             <div class="card-header">5. MOTIVATION REASON FOR APPLICATION</div>
             <div style="border: 1px solid #ccc; padding: 10px; min-height: 100px; margin-bottom: 10px;">
                 <?= nl2br(htmlspecialchars($candidate['motivation']['motivation_reason'] ?? '')) ?>
             </div>
-
         </div>
     </div>
 

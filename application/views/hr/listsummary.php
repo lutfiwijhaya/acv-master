@@ -34,6 +34,48 @@
 #toolbarSummary .l-btn-disabled:hover .l-btn-icon {
     color: #ffffff !important;
 }
+
+#toolbarSummary a.fancy-link,
+#toolbarSummary a.fancy-link .l-btn-left{
+  position: relative;
+  overflow: visible !important;
+}
+
+/* hapus gaya tombol biru + ikon, jadi pure link */
+#toolbarSummary a.fancy-link.l-btn,
+#toolbarSummary a.fancy-link .l-btn-left{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  padding:0!important;
+}
+#toolbarSummary a.fancy-link:hover,
+#toolbarSummary a.fancy-link:focus{
+  background:transparent!important;
+}
+#toolbarSummary a.fancy-link .l-btn-icon,
+#toolbarSummary a.fancy-link .l-btn-empty{
+  display:none!important;
+}
+#toolbarSummary a.fancy-link .l-btn-text{
+  color:#222 !important;          /* paksa gelap */
+  font-weight:600;
+  opacity:1 !important;           /* lawan opacity tema */
+}
+
+#toolbarSummary a.fancy-link:hover .l-btn-text{
+  color:#1273EB !important;
+}
+
+
+
+
+/* underline biru untuk item aktif (opsional) */
+/* #toolbarSummary a.fancy-link{ position:relative; }
+#toolbarSummary a.fancy-link.is-active .l-btn-text{ color:#1273EB; }
+#toolbarSummary a.fancy-link.is-active::after{
+  content:""; position:absolute; left:0; right:0; bottom:-6px; height:4px; background:#1273EB;
+} */
 </style>
 <section class="content-header"></section>
 <div class="col-12">
@@ -64,6 +106,9 @@
                     <thead>
                         <tr>
                             <th data-options="field:'ck', checkbox:true"></th> 
+                            <th data-options="field:'is_aktif', width:80, align:'center', formatter:formatActiveStatus">Aktif/Non Aktif</th>
+                             <th data-options="field:'direct_indirect_status', width:100, align:'center'">Direct/Indirect</th>
+                            <!-- <th data-options="field:'candidate_status', width:150, formatter:formatCandidateStatusSummary">Status Employee</th> -->
                             <th data-options="field:'candidate_name', width:150">Name</th>
                             <th data-options="field:'birthday', width:80">Birthday</th>
                             <th data-options="field:'age_calc', width:60,  formatter:formatAge">Age</th>
@@ -79,9 +124,7 @@
                             <th data-options="field:'marriage_status', width:80">Marriage Status</th>
                             <th data-options="field:'class_grade', width:100">Class Grade</th>
                             <th data-options="field:'email', width:200">E-mail</th>
-                            <th data-options="field:'total_career_months', width:120, formatter:formatCareer">Career
-                            </th>
-
+                            <th data-options="field:'total_career_months', width:120, formatter:formatCareer">Career</th>
                             <th
                                 data-options="field:'id_family', width:100, align:'center', formatter:formatFamilyAddressDetail">
                                 Family & Address </th>
@@ -108,10 +151,7 @@
                             <th
                                 data-options="field:'id_chronology', width:120, align:'center', formatter:formatChronologyDetail">
                                 Chronology Status</th>
-
-
-                            <th data-options="field:'is_aktif', width:80, align:'center', formatter:formatActiveStatus">
-                                Status</th>
+                            
                         </tr>
                     </thead>
                 </table>
@@ -119,19 +159,34 @@
                 <div id="toolbarSummary" style="padding: 10px">
                     <div class="row">
                         <div class="col-md-6">
-                            <a href="<?= site_url('hr/listcandidate') ?>" class="easyui-linkbutton" iconCls="icon-back"
-                                plain="false">Back to Candidates</a>
+                             <a href="<?= site_url('hr/listcandidate') ?>"
+         class="easyui-linkbutton fancy-link"
+         data-options="plain:true">Back to Candidates</a>
 
-                            <a href="javascript:void(0)" id="btn-edit-summary" class="easyui-linkbutton"
-                                iconCls="icon-edit" plain="false" data-options="disabled:true"
-                                onclick="editSummary()">Edit Summary</a>
-                            <a href="javascript:void(0)" id="btn-delete-summary" class="easyui-linkbutton"
-                                iconCls="icon-remove" plain="false" data-options="disabled:true"
-                                onclick="deleteSummary()">Delete Summary</a>
-                            <a href="javascript:void(0)" id="btn-toggle-active" class="easyui-linkbutton"
-                                iconCls="icon-remove" data-options="disabled:true" onclick="toggleActive()">Aktif / Non
-                                Aktif</a>
-                            <a href="javascript:void(0)" id="btn-export-pdf-summary" class="easyui-linkbutton" data-options="iconCls:'icon-print', disabled:true" onclick="exportSummaryToPdf()">Export PDF</a>
+      <a href="javascript:void(0)" id="btn-edit-summary"
+         class="easyui-linkbutton fancy-link"
+         data-options="plain:true,disabled:true"
+         onclick="editSummary()">Edit Summary</a>
+
+      <a href="javascript:void(0)" id="btn-delete-summary"
+         class="easyui-linkbutton fancy-link"
+         data-options="plain:true,disabled:true"
+         onclick="deleteSummary()">Delete Summary</a>
+
+      <a href="javascript:void(0)" id="btn-toggle-active"
+         class="easyui-linkbutton fancy-link"
+         data-options="plain:true,disabled:true"
+         onclick="toggleActive()">Aktif / Non Aktif</a>
+
+      <a href="javascript:void(0)" id="btn-promote-status-summary"
+         class="easyui-linkbutton fancy-link"
+         data-options="plain:true,disabled:true"
+         onclick="promoteSummaryStatus()">Promote Status</a> 
+    
+         <a href="javascript:void(0)" id="btn-export-pdf-summary"
+         class="easyui-linkbutton fancy-link"
+         data-options="plain:true,disabled:true"
+         onclick="exportSummaryToPdf()">Export PDF</a>
 
                         </div>
                         <div class="col-md-6 text-end">
@@ -147,6 +202,69 @@
 </div>
 
 <script>
+    $('#dgSummary').datagrid({
+    url: '<?= $data_url ?>',
+    });
+    function promoteSummaryStatus() {
+    // Pastikan ID grid sudah benar: #dgSummary
+    var row = $('#dgSummary').datagrid('getSelected');
+    if (row) {
+        var nextStatus = '';
+        
+        // Alur status untuk halaman ini
+        switch (row.candidate_status) {
+            case 'Approval employee':
+                nextStatus = 'Summary employee';
+                break;
+            default:
+                // Jika status sudah final atau tidak sesuai
+                $.messager.alert('Info', 'Status sudah final atau tidak dapat dinaikkan dari halaman ini.', 'info');
+                return;
+        }
+
+        $.messager.confirm('Confirm', `Naikkan status "${row.candidate_name}" menjadi "${nextStatus}"?`, function(r) {
+            if (r) {
+                // Panggil controller yang sama dengan sebelumnya
+                $.post('<?= site_url('hr/update_candidate_status') ?>', {
+                    id: row._id,
+                    current_status: row.candidate_status
+                }, function(result) {
+                    if (result.success) {
+                        $('#dgSummary').datagrid('load', {}); // Reload grid summary
+                        $.messager.show({
+                            title: 'Success',
+                            msg: `Status ${row.candidate_name} berhasil diubah menjadi ${nextStatus}.`,
+                            timeout: 4000,
+                            showType: 'slide'
+                        });
+                    } else {
+                        $.messager.show({ title: 'Error', msg: result.errorMsg });
+                    }
+                }, 'json');
+            }
+        });
+    }
+}
+
+function formatCandidateStatusSummary(value, row, index) {
+    switch(value) {
+        
+        case 'Interview':
+            return '<span class="badge bg-success">Interview</span>';
+        case 'Approval employee':
+            return '<span class="badge bg-primary">Approval Employee</span>';
+        case 'Summary employee':
+            return '<span class="badge bg-success">Summary Employee</span>';
+        // Ini sebagai cadangan jika ada status lain yang muncul
+        case 'Approval':
+            return '<span class="badge bg-info">Approval</span>';
+        default:
+            return value; // Tampilkan teks biasa jika status tidak dikenali
+    }
+}
+
+// UPDATE EVENT HANDLER DI BAGIAN PALING BAWAH SCRIPT ANDA
+
 // Fungsi untuk search box
 function doSearchSummary(value) {
     $('#dgSummary').datagrid('load', {
@@ -170,11 +288,11 @@ function exportSummaryToPdf() {
             ids.push(rows[i]._id);
         }
         
-        // Buat form sementara untuk mengirim ID ke controller BARU
         var form = document.createElement('form');
         form.method = 'POST';
-        // UBAH ACTION KE FUNGSI BARU INI
         form.action = '<?= site_url('hr/export_summary_pdf') ?>';
+
+        form.target = '_blank'; 
 
         var input = document.createElement('input');
         input.type = 'hidden';
@@ -308,8 +426,13 @@ function formatDocumentDetail(value, row, index) {
 
 //format family detail
 function formatFamilyAddressDetail(value, row, index) {
-    // value di sini adalah row._id
-    var url = '<?= site_url('hr/view_family_address_detail') ?>/' + value;
+    // 1. Dapatkan halaman saat ini (misal: 'list_active_employees')
+    var currentPath = window.location.pathname.split('/').pop();
+
+    // 2. Buat URL lengkap dengan parameter 'from'
+    var url = '<?= site_url('hr/view_family_address_detail') ?>/' + value + '?from=' + currentPath;
+
+    // 3. Kembalikan link HTML
     return '<a href="' + url +
         '" class="easyui-linkbutton" data-options="iconCls:\'icon-search\', plain:true">View Family</a>';
 }
@@ -369,24 +492,32 @@ function formatChronologyDetail(value, row, index) {
 $(function() {
     $('#dgSummary').datagrid({
         onSelect: function(index, row) {
-            // Aktifkan tombol saat baris dipilih
+            // Aktifkan tombol-tombol yang sudah ada
             $('#btn-edit-summary').linkbutton('enable');
             $('#btn-delete-summary').linkbutton('enable');
-            $('#btn-toggle-active').linkbutton('enable'); // Aktifkan tombol baru
+            $('#btn-toggle-active').linkbutton('enable');
+            
+            // Logika untuk tombol Promote Status:
+            // Aktifkan HANYA jika status BUKAN yang terakhir
+            if (row.candidate_status !== 'Summary employee') {
+                $('#btn-promote-status-summary').linkbutton('enable');
+            } else {
+                $('#btn-promote-status-summary').linkbutton('disable');
+            }
         },
         onUnselect: function(index, row) {
-            // Nonaktifkan tombol saat pilihan dibatalkan
+            // Nonaktifkan semua tombol saat pilihan dibatalkan
             $('#btn-edit-summary').linkbutton('disable');
             $('#btn-delete-summary').linkbutton('disable');
-            $('#btn-toggle-active').linkbutton('disable'); // Nonaktifkan tombol baru
+            $('#btn-toggle-active').linkbutton('disable');
+            $('#btn-promote-status-summary').linkbutton('disable'); // <-- Tambahkan ini
         },
         onLoadSuccess: function() {
-
-
-            // Pastikan tombol nonaktif saat data baru dimuat
+            // Nonaktifkan semua tombol saat data baru dimuat
             $('#btn-edit-summary').linkbutton('disable');
             $('#btn-delete-summary').linkbutton('disable');
-            $('#btn-toggle-active').linkbutton('disable'); // Nonaktifkan tombol baru
+            $('#btn-toggle-active').linkbutton('disable');
+            $('#btn-promote-status-summary').linkbutton('disable'); // <-- Tambahkan ini
         }
     });
 });

@@ -233,6 +233,7 @@ class Hr extends CI_Controller
 
         $data['title']  = 'List Candidates';
         $data['collapsed'] = '';
+         $data['data_url'] = site_url('hr/get_candidate_data');
         $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
         $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
         $data['js_files'][] = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
@@ -241,6 +242,106 @@ class Hr extends CI_Controller
         $this->template->load('template', 'hr/listcandidate', $data);
     }
 //end list candidate
+
+function list_preselected()
+{
+    // Cukup ubah judulnya
+    $data['title']   = 'Pre-selected Candidates';
+    $data['collapsed'] = '';
+
+    // Aset CSS dan JS tetap sama karena kita pakai view yang sama
+    $data['data_url'] = site_url('hr/get_preselected_data');
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
+    $data['js_files'][] = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+    $data['js_files'][] = base_url() . 'assets/admin/easyui/datagrid-groupview.js';
+    $data['js_files'][] = base_url() . 'assets/admin/easyui/plugins/datagrid-scrollview.js';
+    
+    // Kita tetap memuat view yang sama: 'hr/listcandidate'
+    $this->template->load('template', 'hr/listcandidate', $data);
+}
+
+function get_preselected_data()
+{
+    header('Content-Type: application/json');
+    // Panggil fungsi BARU dari model (yang akan kita buat di Langkah 3)
+    $data = $this->hr_model->get_preselected_for_datagrid();
+    echo json_encode($data);
+}
+//
+
+//
+function list_interview()
+{
+    $data['title']   = 'Interview Candidates';
+    $data['collapsed'] = '';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
+    $data['js_files'][] = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+    $data['js_files'][] = base_url() . 'assets/admin/easyui/datagrid-groupview.js';
+    $data['js_files'][] = base_url() . 'assets/admin/easyui/plugins/datagrid-scrollview.js';
+    $data['data_url'] = site_url('hr/get_interview_data'); // Arahkan ke fungsi data interview
+    $this->template->load('template', 'hr/listcandidate', $data);
+}
+
+// 2. Untuk menyediakan data JSON
+function get_interview_data()
+{
+    header('Content-Type: application/json');
+    $data = $this->hr_model->get_interview_for_datagrid(); // Panggil model interview
+    echo json_encode($data);
+}
+
+
+// --- FUNGSI-FUNGSI UNTUK HALAMAN APPROVAL ---
+
+// 1. Untuk memuat halaman
+function list_approval()
+{
+    $data['title']   = 'Approval Candidates';
+    $data['collapsed'] = '';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
+    $data['js_files'][] = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+    $data['js_files'][] = base_url() . 'assets/admin/easyui/datagrid-groupview.js';
+    $data['js_files'][] = base_url() . 'assets/admin/easyui/plugins/datagrid-scrollview.js';
+    $data['data_url'] = site_url('hr/get_approval_data'); // Arahkan ke fungsi data approval
+    $this->template->load('template', 'hr/listcandidate', $data);
+}
+
+// 2. Untuk menyediakan data JSON
+function get_approval_data()
+{
+    header('Content-Type: application/json');
+    $data = $this->hr_model->get_approval_for_datagrid(); // Panggil model approval
+    echo json_encode($data);
+}
+//
+
+//
+function list_history()
+{
+    $data['title']   = 'Approval History';
+    $data['collapsed'] = '';
+
+     $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
+    $data['js_files'][] = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+    $data['js_files'][] = base_url() . 'assets/admin/easyui/datagrid-groupview.js';
+    $data['js_files'][] = base_url() . 'assets/admin/easyui/plugins/datagrid-scrollview.js';
+    $data['data_url'] = site_url('hr/get_history_data');
+    // Kita bisa pakai view yang sama
+    $this->template->load('template', 'hr/listcandidate', $data);
+}
+
+// 2. Untuk menyediakan data JSON untuk halaman History
+function get_history_data()
+{
+    header('Content-Type: application/json');
+    $data = $this->hr_model->get_history_for_datagrid();
+    echo json_encode($data);
+}
+//
 
     //star 
     public function edit_candidate($id)
@@ -691,6 +792,8 @@ public function update_candidate($id)
     }
 // end
 
+//
+
 
 // public function test_table()
 // {
@@ -915,8 +1018,10 @@ public function submit_summary()
         'summary_career_months'      => $this->input->post('summary_career_months'),
           // Data untuk alamat dari textarea
         'alamat'                       => $this->input->post('address_home'),
-        'current_address'              => $this->input->post('address_current')
-        
+        'current_address'              => $this->input->post('address_current'),
+        'candidate_status'        => 'Approval employee',
+        'approval_employee_by'    => $user_id_updater,
+        'approval_employee_at'    => $now
     ];
 
     // --- LOGIKA BARU UNTUK APPLYING OCCUPATION ---
@@ -1304,12 +1409,12 @@ if (is_array($subjects)) {
     }
 
 
-    $this->hr_model->update_status($user_id, 'Employee');
+    $this->hr_model->update_status($user_id, 'Approval employee');
 
     // 5. Set notifikasi dan redirect
     $this->session->set_flashdata('swal_icon', 'success');
     $this->session->set_flashdata('swal_text', 'Summary has been saved successfully.');
-    redirect('hr/listsummary');
+    redirect('hr/list_approval_employee');
 }
 //end untuk bagian update data karyawan di add summary
 
@@ -1321,9 +1426,64 @@ public function listsummary()
     $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
     $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
     $data['js_files'][]  = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+    $data['data_url'] = site_url('hr/get_summaries_json'); 
 
     // Muat view baru melalui template utama
     $this->template->load('template', 'hr/listsummary', $data);
+}
+//
+
+//
+function list_candidate_employee()
+{
+    $data['title'] = 'List Candidate Employees';
+    
+    // Muat aset EasyUI
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
+    $data['js_files'][]  = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+
+    // Arahkan URL data ke fungsi JSON yang baru
+    $data['data_url'] = site_url('hr/get_candidate_employee_data');
+
+    // PENTING: Muat view 'listsummary' karena tampilannya sama
+    $this->template->load('template', 'hr/listsummary', $data);
+}
+
+// 2. FUNGSI UNTUK MENYEDIAKAN DATA JSON
+function get_candidate_employee_data()
+{
+    header('Content-Type: application/json');
+    // Panggil fungsi model yang baru kita buat
+    $data = $this->hr_model->get_candidate_employee_for_datagrid();
+    echo json_encode($data);
+}
+//
+
+//
+function list_approval_employee()
+{
+    $data['title'] = 'List Approval Employees';
+    
+    // Muat aset EasyUI
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
+    $data['js_files'][]  = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+
+    // Arahkan URL data ke fungsi JSON yang baru
+    $data['data_url'] = site_url('hr/get_approval_employee_data');
+
+    // Kita pakai lagi view 'listsummary' yang sudah ada
+    $this->template->load('template', 'hr/listsummary', $data);
+}
+
+// 2. FUNGSI UNTUK MENYEDIAKAN DATA JSON
+function get_approval_employee_data()
+{
+    header('Content-Type: application/json');
+    // Panggil fungsi model yang baru kita buat
+    $data = $this->hr_model->get_approval_employee_for_datagrid();
+    echo json_encode($data);
 }
 
 //star 
@@ -1340,6 +1500,8 @@ public function get_summaries_json()
     ];
     echo json_encode($response);
 }
+//
+
 
 
 //
@@ -1389,6 +1551,86 @@ public function toggle_active_status()
     } else {
         echo json_encode(['errorMsg' => 'Invalid status value.']);
     }
+}
+//
+
+//
+public function list_active_employees()
+{
+    $data['title'] = 'Active Employees';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
+    $data['js_files'][]  = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+
+    $data['data_url'] = site_url('hr/get_active_employees_data');
+    $this->template->load('template', 'hr/listsummary', $data);
+}
+
+public function get_active_employees_data()
+{
+    header('Content-Type: application/json');
+    $data = $this->hr_model->get_active_summaries_for_datagrid();
+    echo json_encode($data);
+}
+
+
+// --- FUNGSI UNTUK KARYAWAN NON-AKTIF ---
+public function list_inactive_employees()
+{
+    $data['title'] = 'Non-Active Employees';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
+    $data['js_files'][]  = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+
+    $data['data_url'] = site_url('hr/get_inactive_employees_data');
+    $this->template->load('template', 'hr/listsummary', $data);
+}
+
+public function get_inactive_employees_data()
+{
+    header('Content-Type: application/json');
+    $data = $this->hr_model->get_inactive_summaries_for_datagrid();
+    echo json_encode($data);
+}
+//
+
+//
+public function list_direct_employees()
+{
+    $data['title'] = 'Direct Employees';
+   $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
+    $data['js_files'][]  = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+
+    $data['data_url'] = site_url('hr/get_direct_employees_data');
+    $this->template->load('template', 'hr/listsummary', $data);
+}
+
+public function get_direct_employees_data()
+{
+    header('Content-Type: application/json');
+    $data = $this->hr_model->get_direct_employees_for_datagrid();
+    echo json_encode($data);
+}
+
+
+// --- FUNGSI UNTUK KARYAWAN INDIRECT ---
+public function list_indirect_employees()
+{
+    $data['title'] = 'Indirect Employees';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
+    $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
+    $data['js_files'][]  = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+    
+    $data['data_url'] = site_url('hr/get_indirect_employees_data');
+    $this->template->load('template', 'hr/listsummary', $data);
+}
+
+public function get_indirect_employees_data()
+{
+    header('Content-Type: application/json');
+    $data = $this->hr_model->get_indirect_employees_for_datagrid();
+    echo json_encode($data);
 }
 //
 
@@ -2514,38 +2756,71 @@ private function export_timesheet_to_pdf($data)
 public function export_pdf()
     {
         // Ambil ID yang dikirim sebagai string, lalu ubah menjadi array
-        $ids_string = $this->input->post('ids');
+         $ids_string = $this->input->post('ids');
         $ids = explode(',', $ids_string);
 
-        if (empty($ids)) {
+        if (empty($ids) || empty($ids_string)) {
+            // Sebaiknya berikan pesan error atau redirect dengan flashdata
             redirect('hr/listcandidate');
             return;
         }
 
-     $all_candidates_data = [];
-    foreach ($ids as $id) {
-        $profile = $this->hr_model->get_full_candidate_profile($id);
+        $all_candidates_data = [];
+        foreach ($ids as $id) {
+            $profile = $this->hr_model->get_full_candidate_profile($id);
 
-        // --- LOGIKA BARU UNTUK GAMBAR ---
-        $image_path = FCPATH . 'uploads/hr_file/' . $profile['main']['path_foto'];
-        if (file_exists($image_path) && !empty($profile['main']['path_foto'])) {
-            $image_type = pathinfo($image_path, PATHINFO_EXTENSION);
-            $image_data = file_get_contents($image_path);
-            // Ubah gambar menjadi teks Base64
-            $profile['main']['photo_base64'] = 'data:image/' . $image_type . ';base64,' . base64_encode($image_data);
-        } else {
-            $profile['main']['photo_base64'] = null;
+            // --- Logika Gambar Profil (sudah benar) ---
+            $image_path = FCPATH . 'uploads/hr_file/' . $profile['main']['path_foto'];
+            if (file_exists($image_path) && !empty($profile['main']['path_foto'])) {
+                $image_type = pathinfo($image_path, PATHINFO_EXTENSION);
+                $image_data = file_get_contents($image_path);
+                $profile['main']['photo_base64'] = 'data:image/' . $image_type . ';base64,' . base64_encode($image_data);
+            } else {
+                $profile['main']['photo_base64'] = null;
+            }
+
+            // --- LOGIKA BARU: MENGAMBIL DATA APPROVER ---
+            $approval_data = [];
+            
+            // 1. Kumpulkan semua ID user yang terlibat
+            $user_ids_to_fetch = array_filter([
+                $profile['main']['preselected_by'] ?? null,
+                $profile['main']['interviewed_by'] ?? null,
+                $profile['main']['approved_by'] ?? null
+            ]);
+
+            // 2. Ambil detail semua user tersebut dalam satu query
+            $user_details = $this->hr_model->get_user_details_by_ids($user_ids_to_fetch);
+
+            // 3. Siapkan data untuk dikirim ke view
+            $preselected_by_id = $profile['main']['preselected_by'] ?? null;
+            $approval_data['preselected_name'] = isset($user_details[$preselected_by_id]) ? $user_details[$preselected_by_id]['nama'] : '';
+            $approval_data['preselected_ttd'] = isset($user_details[$preselected_by_id]) ? $user_details[$preselected_by_id]['path_ttd'] : null;
+            $approval_data['preselected_at'] = $profile['main']['preselected_at'] ?? null; // <-- PASTIKAN BARIS INI ADA
+
+            $interviewed_by_id = $profile['main']['interviewed_by'] ?? null;
+            $approval_data['interviewed_name'] = isset($user_details[$interviewed_by_id]) ? $user_details[$interviewed_by_id]['nama'] : '';
+            $approval_data['interviewed_ttd'] = isset($user_details[$interviewed_by_id]) ? $user_details[$interviewed_by_id]['path_ttd'] : null;
+            $approval_data['interviewed_at'] = $profile['main']['interviewed_at'] ?? null; // <-- PASTIKAN BARIS INI ADA
+            
+            $approved_by_id = $profile['main']['approved_by'] ?? null;
+            $approval_data['approved_name'] = isset($user_details[$approved_by_id]) ? $user_details[$approved_by_id]['nama'] : '';
+            $approval_data['approved_ttd'] = isset($user_details[$approved_by_id]) ? $user_details[$approved_by_id]['path_ttd'] : null;
+            $approval_data['approved_at'] = $profile['main']['approved_at'] ?? null; // <-- PASTIKAN BARIS INI ADA
+            
+            // 4. Gabungkan data approval ke data profil utama
+            $profile['approval_data'] = $approval_data;
+            // --- AKHIR LOGIKA APPROVER ---
+
+            $all_candidates_data[] = $profile;
         }
-        // --- AKHIR LOGIKA GAMBAR ---
-
-        $all_candidates_data[] = $profile;
-    }
 
         $data['candidates'] = $all_candidates_data;
 
-        // Proses pembuatan PDF
+        // --- Proses pembuatan PDF (sudah benar) ---
         $options = new Options();
         $options->set('isRemoteEnabled', TRUE);
+        $options->set('chroot', FCPATH); // Penting agar bisa akses file lokal
         $dompdf = new Dompdf($options);
         
         $html = $this->load->view('hr/v_candidate_pdf', $data, TRUE);
@@ -2553,8 +2828,7 @@ public function export_pdf()
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
         
-        // Output PDF ke browser untuk di-download
-        $dompdf->stream('candidate_data.pdf', ['Attachment' => 1]);
+        $dompdf->stream('candidate_data.pdf', ['Attachment' => 0]);
     }
     //
 
@@ -2700,51 +2974,127 @@ public function export_summary_pdf()
     $all_summaries_data = [];
     foreach ($ids as $id) {
         if (!empty($id)) {
-            $all_summaries_data[] = $this->hr_model->get_full_summary_profile($id);
+            // Langkah 1: Ambil data summary profil seperti biasa
+            $summary = $this->hr_model->get_full_summary_profile($id);
+
+            // =======================================================
+            // SISIPKAN LOGIKA BARU UNTUK TANDA TANGAN DI SINI
+            // =======================================================
+            $approval_data = [];
+            
+            // a. Kumpulkan ID user yang melakukan approval
+            $user_ids = array_filter([
+                $summary['main']['approved_by'] ?? null,
+                $summary['main']['summary_employee_by'] ?? null
+            ]);
+            
+            // b. Ambil detail user (nama & ttd) dari model
+            $user_details = [];
+            if (!empty($user_ids)) {
+                $user_details = $this->hr_model->get_user_details_by_ids($user_ids);
+            }
+
+            // c. Siapkan data untuk view PDF
+            // Untuk status 'Approval'
+            $approved_by_id = $summary['main']['approved_by'] ?? null;
+            $approval_data['approved_name'] = $user_details[$approved_by_id]['nama'] ?? '';
+            $approval_data['approved_ttd'] = $user_details[$approved_by_id]['path_ttd'] ?? null;
+            $approval_data['approved_at'] = $summary['main']['approved_at'] ?? null;
+            
+            // Untuk status 'Summary Employee'
+            $summary_by_id = $summary['main']['summary_employee_by'] ?? null;
+            $approval_data['summary_employee_name'] = $user_details[$summary_by_id]['nama'] ?? '';
+            $approval_data['summary_employee_ttd'] = $user_details[$summary_by_id]['path_ttd'] ?? null;
+            $approval_data['summary_employee_at'] = $summary['main']['summary_employee_at'] ?? null;
+            
+            // d. Gabungkan data approval ke data summary utama
+            $summary['approval_data'] = $approval_data;
+            // =======================================================
+            // AKHIR DARI LOGIKA BARU
+            // =======================================================
+
+            // Langkah 2: Masukkan data summary yang SUDAH DILENGKAPI ke array utama
+            $all_summaries_data[] = $summary;
         }
     }
 
     $data['summaries'] = $all_summaries_data;
 
-    // Proses pembuatan PDF menggunakan Dompdf
+    // Proses pembuatan PDF menggunakan Dompdf (tidak perlu diubah)
     $options = new Options();
     $options->set('isRemoteEnabled', TRUE);
+    $options->set('chroot', FCPATH); // Tambahkan ini agar path FCPATH berfungsi
     $dompdf = new Dompdf($options);
     
+    // Pastikan nama view sudah benar: v_summary_pdf.php
     $html = $this->load->view('hr/v_summary_pdf', $data, TRUE);
     $dompdf->loadHtml($html);
     $dompdf->setPaper('A4', 'portrait');
     $dompdf->render();
     
-    // Output PDF ke browser untuk di-download
-    $dompdf->stream('summary_data.pdf', ['Attachment' => 1]);
+    // Output PDF ke browser
+    $dompdf->stream('summary_data.pdf', ['Attachment' => 0]); // Ganti ke 0 untuk preview
 }
 //
 
-//
+//buat update status candidate
 public function update_candidate_status()
 {
     header('Content-Type: application/json');
     $id = $this->input->post('id');
     $current_status = $this->input->post('current_status');
+    $user_id_updater = $this->session->userdata('_id');
+    
+    $success = false; // Inisialisasi variabel untuk menampung hasil
 
-    $new_status = '';
-    // Tentukan alur kerja status
-    if ($current_status === 'Candidate') {
-        $new_status = 'Pre-selected';
-    } elseif ($current_status === 'Pre-selected') {
-        $new_status = 'Interview';
+    // Panggil fungsi model baru yang akan MENYALIN data ke tabel baru
+        // dan mengupdate status di tbl_user menjadi 'Approval'.
+    if ($current_status === 'Interview') {
+        
+        $success = $this->hr_model->approve_and_copy_candidate($id,  $user_id_updater);
+    } 
+    // Untuk status-status lainnya, gunakan logika update biasa
+    else {
+        $next_status = '';
+        $update_data = [];
+        $now = date('Y-m-d H:i:s');
+
+        switch ($current_status) {
+            case 'Candidate':
+                $next_status = 'Pre-selected';
+                $update_data['preselected_by'] = $user_id_updater;
+                $update_data['preselected_at'] = $now;
+                break;
+            case 'Pre-selected':
+                $next_status = 'Interview';
+                $update_data['interviewed_by'] = $user_id_updater;
+                $update_data['interviewed_at'] = $now;
+                break;
+            // case 'Interview':
+            //     $next_status = 'Approval';
+            //     $update_data['approved_by'] = $user_id_updater;
+            //     $update_data['approved_at'] = $now;
+            //     break;
+            // Kasus 'Interview' sudah ditangani oleh blok IF di atas
+            case 'Approval employee':
+                $update_data['summary_employee_by'] = $user_id_updater;
+                $update_data['summary_employee_at'] = $now;
+                $next_status = 'Summary employee';
+                break;
+        }
+
+        // Lakukan update jika ada status berikutnya yang valid
+        if (!empty($next_status)) {
+            $update_data['candidate_status'] = $next_status;
+            $success = $this->hr_model->update_candidate_data($id, $update_data);
+        }
     }
 
-    if (!empty($new_status)) {
-        $success = $this->hr_model->update_status($id, $new_status);
-        if ($success) {
-            echo json_encode(['success' => true]);
-        } else {
-            echo json_encode(['errorMsg' => 'Gagal mengupdate status.']);
-        }
+    if ($success) {
+        echo json_encode(['success' => true]);
     } else {
-        echo json_encode(['errorMsg' => 'Status tidak bisa dinaikkan lagi.']);
+        // Beri pesan error yang lebih umum
+        echo json_encode(['errorMsg' => 'Gagal memproses status kandidat.']);
     }
 }
 //end

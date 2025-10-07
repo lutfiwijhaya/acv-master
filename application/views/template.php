@@ -208,11 +208,16 @@
 				<!-- Messages Dropdown Menu -->
 
 				<!-- Notifications Dropdown Menu -->
-				<li class="nav-item">
-					<a class="nav-link" data-widget="control-sidebar" data-slide="true" href="#" role="button">
-						<i class="fas fa-th-large"></i>
-					</a>
-				</li>
+				<!-- <li class="nav-item">
+    <a class="nav-link" data-widget="control-sidebar" data-slide="true" href="#" role="button">
+        <i class="fas fa-th-large"></i>
+    </a>
+</li> -->
+
+<li class="nav-item">
+    <a class="nav-link" href="<?= base_url() ?>admin/logout" role="button" title="Logout">
+        <i class="fas fa-sign-out-alt"></i> </a>
+</li>
 			</ul>
 		</nav>
 		<!-- /.navbar -->

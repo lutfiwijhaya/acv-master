@@ -22,6 +22,98 @@
     color: #ffffff !important;
     /* Paksa ikon menjadi putih */
 }
+
+/* base positioning (perlu untuk pseudo underline) */
+#toolbar a.fancy-link,
+#toolbar a.fancy-link .l-btn-left,
+#toolbarSummary a.fancy-link,
+#toolbarSummary a.fancy-link .l-btn-left{
+  position: relative;
+  overflow: visible !important;
+}
+
+/* hilangkan tampilan tombol biru EasyUI */
+#toolbar a.fancy-link.l-btn,
+#toolbar a.fancy-link .l-btn-left,
+#toolbarSummary a.fancy-link.l-btn,
+#toolbarSummary a.fancy-link .l-btn-left{
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+#toolbar a.fancy-link:hover,
+#toolbar a.fancy-link:focus,
+#toolbarSummary a.fancy-link:hover,
+#toolbarSummary a.fancy-link:focus{
+  background: transparent !important;
+}
+
+/* sembunyikan ikon easyui */
+#toolbar a.fancy-link .l-btn-icon,
+#toolbar a.fancy-link .l-btn-empty,
+#toolbarSummary a.fancy-link .l-btn-icon,
+#toolbarSummary a.fancy-link .l-btn-empty{
+  display: none !important;
+}
+
+/* gaya teks */
+#toolbar a.fancy-link .l-btn-text,
+#toolbarSummary a.fancy-link .l-btn-text{
+  color: #222 !important;
+  font-weight: 600;
+  opacity: 1 !important;
+  display: inline-block;
+  padding: 2px 0;
+}
+#toolbar a.fancy-link:hover .l-btn-text,
+#toolbarSummary a.fancy-link:hover .l-btn-text{
+  color: #1273EB !important;
+}
+
+/* underline biru saat hover/fokus */
+#toolbar a.fancy-link .l-btn-text::after,
+#toolbarSummary a.fancy-link .l-btn-text::after{
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  bottom: -6px;
+  height: 3px;
+  background: #1273EB;
+  border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .18s ease;
+}
+#toolbar a.fancy-link:hover .l-btn-text::after,
+#toolbar a.fancy-link:focus-visible .l-btn-text::after,
+#toolbarSummary a.fancy-link:hover .l-btn-text::after,
+#toolbarSummary a.fancy-link:focus-visible .l-btn-text::after{
+  transform: scaleX(1);
+}
+
+/* state disabled dari EasyUI */
+#toolbar a.fancy-link.l-btn-disabled .l-btn-text,
+#toolbarSummary a.fancy-link.l-btn-disabled .l-btn-text{
+  color: #9aa0a6 !important;
+  cursor: not-allowed;
+}
+#toolbar a.fancy-link.l-btn-disabled .l-btn-text::after,
+#toolbarSummary a.fancy-link.l-btn-disabled .l-btn-text::after{
+  display: none;
+}
+
+/* jarak antar link */
+#toolbar .fancy-link + .fancy-link,
+#toolbarSummary .fancy-link + .fancy-link{
+  margin-left: 24px;
+}
+
+/* optional: link aktif permanen */
+#toolbar a.fancy-link.is-active .l-btn-text::after,
+#toolbarSummary a.fancy-link.is-active .l-btn-text::after{
+  transform: scaleX(1);
+}
 </style>
 <section class="content-header"></section>
 <div class="col-12">
@@ -49,7 +141,7 @@
             $('#btn-toggle-active').linkbutton('enable');
             
             
-            if (row.candidate_status === 'Interview') {
+            if (row.candidate_status === 'Approval') {
                 // Jika sudah 'Interview', tombol summary aktif, tombol naik status nonaktif
                 var summaryUrl = '<?= site_url('hr/formsummary') ?>/' + row._id;
                 $('#btn-add-summary').linkbutton('enable').attr('href', summaryUrl);
@@ -129,17 +221,15 @@
                     <div id="toolbar" style="padding: 10px">
                         <div class="row ml-1">
                             <div class="col-sm-6">
-                                <a href="<?= site_url('hr/formCandidate') ?>" class="easyui-linkbutton"
-                                    iconCls="icon-add" plain="false">Input</a>
-                                <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-edit" plain="false"
-                                    onclick="editForm()">Edit</a>
-                                <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-remove"
-                                    plain="false" onclick="delete_item()">Delete</a>
-                                <a href="#" id="btn-add-summary" class="easyui-linkbutton" iconCls="icon-add" data-options="disabled:true">Input Summary</a>
-                                <a href="javascript:void(0)" id="btn-promote-status" class="easyui-linkbutton" iconCls="icon-add" data-options="disabled:true" onclick="promoteStatus()">Promote Status</a>
-                                <a href="javascript:void(0)" id="btn-export-pdf" class="easyui-linkbutton"
-                                    data-options="iconCls:'icon-print', disabled:true" onclick="exportToPdf()">Export
-                                    PDF</a>
+                                <a href="<?= site_url('hr/formCandidate') ?>" class="easyui-linkbutton fancy-link" plain="false">Input</a>
+      <a href="javascript:void(0)" class="easyui-linkbutton fancy-link" plain="false" onclick="editForm()">Edit</a>
+      <a href="javascript:void(0)" class="easyui-linkbutton fancy-link" plain="false" onclick="delete_item()">Delete</a>
+
+      <a href="#" id="btn-add-summary" class="easyui-linkbutton fancy-link" data-options="disabled:true">Input Summary</a>
+      <a href="javascript:void(0)" id="btn-promote-status" class="easyui-linkbutton fancy-link"
+         data-options="disabled:true" onclick="promoteStatus()">Promote Status</a>
+      <a href="javascript:void(0)" id="btn-export-pdf" class="easyui-linkbutton fancy-link"
+         data-options="disabled:true" onclick="exportToPdf()">Export PDF</a>
                             </div>
                             <div class="col-sm-6 pull-right">
                                 <input id="search" placeholder="Please Enter Search Term" style="width:60%;"
@@ -255,6 +345,11 @@
 
 <script type="text/javascript">
 // FUNGSI BARU UNTUK FORMAT TOTAL KARIR
+ $(function() {
+        $('#dgGrid').datagrid({
+            url: '<?= $data_url ?>',
+             });
+    });
 function formatTotalCareer(value, row, index) {
     if (value && value > 0) {
         const totalMonths = parseInt(value);
@@ -279,6 +374,8 @@ function exportToPdf() {
         form.method = 'POST';
         form.action = '<?= site_url('hr/export_pdf') ?>';
 
+        form.target = '_blank';
+
         var input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'ids';
@@ -292,6 +389,7 @@ function exportToPdf() {
     } else {
         $.messager.alert('Info', 'Please select at least one candidate to export.');
     }
+    
 }
 //
 
@@ -454,8 +552,8 @@ function formatCandidateStatus(value, row, index) {
         return '<span class="badge bg-primary">Pre-selected</span>';
     } else if (value === 'Interview') {
         return '<span class="badge bg-success">Interview</span>';
-    } else if (value === 'Employee') {
-        return '<span class="badge bg-info">Employee</span>';
+    } else if (value === 'Approval') {
+        return '<span class="badge bg-info">Approval</span>';
     }
     return value;
 }
@@ -466,8 +564,23 @@ function promoteStatus() {
     var row = $('#dgGrid').datagrid('getSelected');
     if (row) {
         var nextStatus = '';
-        if (row.candidate_status === 'Candidate') nextStatus = 'Pre-selected';
-        if (row.candidate_status === 'Pre-selected') nextStatus = 'Interview';
+        
+        // Sederhanakan alur statusnya
+        switch (row.candidate_status) {
+            case 'Candidate':
+                nextStatus = 'Pre-selected';
+                break;
+            case 'Pre-selected':
+                nextStatus = 'Interview';
+                break;
+            case 'Interview':
+                nextStatus = 'Approval';
+                break;
+            default:
+                // Status ini adalah 'Approval' atau status lain yang tidak terdefinisi
+                $.messager.alert('Info', 'Status sudah final dan tidak bisa dinaikkan lagi.', 'info');
+                return; // Hentikan fungsi
+        }
 
         $.messager.confirm('Confirm', `Naikkan status "${row.nama}" menjadi "${nextStatus}"?`, function(r) {
             if (r) {
@@ -477,6 +590,12 @@ function promoteStatus() {
                 }, function(result) {
                     if (result.success) {
                         $('#dgGrid').datagrid('reload');
+                        $.messager.show({
+                            title: 'Success',
+                            msg: `Status ${row.nama} berhasil diubah menjadi ${nextStatus}.`,
+                            timeout: 4000,
+                            showType: 'slide'
+                        });
                     } else {
                         $.messager.show({ title: 'Error', msg: result.errorMsg });
                     }

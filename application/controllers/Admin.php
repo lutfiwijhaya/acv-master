@@ -1,4 +1,7 @@
 <?php
+
+use PhpOffice\PhpSpreadsheet\Calculation\Category;
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 
@@ -1496,6 +1499,20 @@ class Admin extends CI_Controller
         $this->template->load('template', 'warehouse/items-management-at-warehouse', $data);
     }
 
+    function stockwarehousecategory($idwarehouse,$category)
+    {
+        $data['title']  = 'Items Managements';
+        $data['collapsed'] = '';
+        $data['idwarehouse']  = $idwarehouse;
+        $data['category']  = $category;
+        $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
+        $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
+        $data['js_files'][] = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+        $data['js_files'][] = base_url() . 'assets/admin/easyui/datagrid-groupview.js';
+        $data['js_files'][] = base_url() . 'assets/admin/easyui/plugins/datagrid-scrollview.js';
+        $this->template->load('template', 'warehouse/items-management-at-warehouse-category', $data);
+    }
+
 
     function stockemployee()
     {
@@ -1520,6 +1537,13 @@ class Admin extends CI_Controller
     {
         $this->output->set_content_type('application/json');
         $stock = $this->backend_model->getStockwarehouse($idwarehouse);
+        echo json_encode($stock);
+    }
+
+    function getStockwarehousecategory($idwarehouse , $category)
+    {
+        $this->output->set_content_type('application/json');
+        $stock = $this->backend_model->getStockwarehousecategory($idwarehouse,$category);
         echo json_encode($stock);
     }
 
@@ -3443,4 +3467,23 @@ class Admin extends CI_Controller
             'message' => "$deletedCount file(s) successfully deleted."
         ]);
     }
+
+
+
+
+
+    function wcsout()
+    {
+        $data['title']  = 'Warehouse Control Sheet Out';
+        $data['collapsed'] = '';
+        $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
+        $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
+        $data['js_files'][] = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+        $data['js_files'][] = base_url() . 'assets/admin/easyui/datagrid-groupview.js';
+        $data['js_files'][] = base_url() . 'assets/admin/easyui/plugins/datagrid-scrollview.js';
+        $this->template->load('template', 'warehouse/wcs-out', $data);
+    }
+
+
+    
 }

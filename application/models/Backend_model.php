@@ -473,6 +473,99 @@ class Backend_model extends CI_Model
     }
 
 
+    function getStockwarehousecategory($idwarehouse,$category)
+    {
+        $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+        $rows = isset($_POST['rows']) ? intval($_POST['rows']) : 20;
+        $sort = isset($_POST['sort']) ? strval($_POST['sort']) : 'wh_items.id';
+        $order = isset($_POST['order']) ? strval($_POST['order']) : 'ASC';
+        $search = isset($_POST['search_data']) ? strval($_POST['search_data']) : '';
+        $filter_qty = isset($_POST['filter_qty']) ? intval($_POST['filter_qty']) : 0;
+        $offset = ($page - 1) * $rows;
+        $result = array();
+
+        // Query to get total number of items
+        $this->db->select('COUNT(DISTINCT wh_items.id) AS total');
+        $this->db->from('wh_items');
+        $this->db->join('wh_items_stock', 'wh_items.id = wh_items_stock.item_id', 'left');
+        $this->db->where('wh_items.is_deleted', '0');
+        if ($filter_qty) {
+            $this->db->where('wh_items_stock.warehouse_id', $idwarehouse);
+            $this->db->where('wh_items_stock.quantity >', 0);
+        }
+
+        if (!empty($search)) {
+            $this->db->group_start();
+            $this->db->like('wh_items.category', $search, 'both');
+            $this->db->or_like('wh_items.level_1', $search, 'both');
+            $this->db->or_like('wh_items.level_2', $search, 'both');
+            $this->db->or_like('wh_items.level_3', $search, 'both');
+            $this->db->or_like('wh_items.level_4', $search, 'both');
+            $this->db->or_like('wh_items.kode_barang', $search, 'both');
+            $this->db->or_like('wh_items.remark', $search, 'both');
+            $this->db->group_end();
+        }
+
+        $query = $this->db->get();
+        $result['total'] = $query->row()->total;
+
+        // Query to get actual item data with warehouse-specific quantity
+        $this->db->select("
+        wh_items.id,
+        wh_items.kode_barang,
+        wh_items.category,
+        wh_items.inisial_kuantitas,
+        wh_items.Level_1,
+        wh_items.level_2,
+        wh_items.level_3,
+        wh_items.level_4,
+        wh_items.path_foto,
+        wh_items.remark,
+        COALESCE(SUM(CASE WHEN wh_items_stock.warehouse_id = {$idwarehouse} THEN wh_items_stock.quantity ELSE 0 END), 0) AS total_quantity
+    ", false); // false agar tidak di-escape otomatis
+
+        $this->db->from('wh_items');
+        $this->db->join('wh_items_stock', 'wh_items.id = wh_items_stock.item_id', 'left');
+        $this->db->where('wh_items.is_deleted', '0');
+        if ($filter_qty) {
+            $this->db->where('wh_items_stock.warehouse_id', $idwarehouse);
+            $this->db->where('wh_items_stock.quantity >', 0);
+        }
+
+        if (!empty($search)) {
+            $this->db->group_start();
+            $this->db->like('wh_items.category', $search, 'both');
+            $this->db->or_like('wh_items.level_1', $search, 'both');
+            $this->db->or_like('wh_items.level_2', $search, 'both');
+            $this->db->or_like('wh_items.level_3', $search, 'both');
+            $this->db->or_like('wh_items.level_4', $search, 'both');
+            $this->db->or_like('wh_items.kode_barang', $search, 'both');
+            $this->db->or_like('wh_items.remark', $search, 'both');
+            $this->db->group_end();
+        }
+
+        $this->db->group_by([
+            'wh_items.id',
+            'wh_items.kode_barang',
+            'wh_items.category',
+            'wh_items.inisial_kuantitas',
+            'wh_items.Level_1',
+            'wh_items.level_2',
+            'wh_items.level_3',
+            'wh_items.level_4',
+            'wh_items.path_foto',
+            'wh_items.remark'
+        ]);
+        $this->db->order_by($sort, $order);
+        $this->db->limit($rows, $offset);
+
+        $query = $this->db->get();
+        $result['rows'] = $query->result_array();
+
+        return $result;
+    }
+
+
     function getserials($item_id, $id_from)
     {
         $page  = isset($_POST['page']) ? intval($_POST['page']) : 1;

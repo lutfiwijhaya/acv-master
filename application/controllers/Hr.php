@@ -92,8 +92,8 @@ class Hr extends CI_Controller
             $nama_kandidat = $this->input->post('nama');
 
             $this->email->from('emailanda@gmail.com', 'Sistem HR CKA');
-            $this->email->to('abni4250@gmail.com'); // GANTI DENGAN EMAIL TUJUAN
-            
+            $this->email->to('admin@achivon.co.id'); // GANTI DENGAN EMAIL TUJUAN
+
             $this->email->subject('Pendaftaran Kandidat Baru: ' . $nama_kandidat);
             $this->email->message(
                 '<h3>Pendaftaran Kandidat Baru</h3>' .
@@ -2317,7 +2317,7 @@ public function promote_daily_status()
         $this->load->library('email');
         
         $this->email->from('no-reply@sistem.com', 'Sistem HR');
-        $this->email->to('abni4250@gmail.com'); // Ganti dengan email tujuan
+        $this->email->to('admin@achivon.co.id'); // Ganti dengan email tujuan
         // Anda bisa menambahkan penerima lain: $this->email->cc('penerima_lain@email.com');
         
         $this->email->subject($subject);

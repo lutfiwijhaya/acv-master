@@ -20,7 +20,7 @@ class Rpa extends CI_Controller {
 
     public function list()
     {
-       $data['title'] = 'RPA List';
+       $data['title'] = 'Proposal Payment List';
         $data['sidebar']  = 'sidebar';
         $data['collapsed'] = '';
         $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material/easyui.css';
@@ -68,7 +68,7 @@ class Rpa extends CI_Controller {
             $details = json_decode($this->input->post("rpa_details"), true);
 
             $this->Rpa_model->insert($data, $details);
-            echo json_encode(["message" => "RPA created successfully","success" => true]);
+            echo json_encode(["message" => "Proposal Payment created successfully","success" => true]);
         } else {
             $this->load->view("rpa/form");
         }
@@ -81,7 +81,7 @@ class Rpa extends CI_Controller {
             $details = json_decode($this->input->post("rpa_details"), true);
 
             $this->Rpa_model->update($id, $data, $details);
-            echo json_encode(["message" => "RPA updated successfully"]);
+            echo json_encode(["message" => "Proposal Payment updated successfully"]);
         } else {
             $data['rpa'] = $this->Rpa_model->get_by_id($id);
             $this->load->view("rpa/form", $data);
@@ -91,7 +91,7 @@ class Rpa extends CI_Controller {
     public function delete($id)
     {
         $this->Rpa_model->delete($id);
-        echo json_encode(["message" => "RPA deleted successfully"]);
+        echo json_encode(["message" => "Proposal Payment deleted successfully"]);
     }
 
     public function save() 
@@ -105,7 +105,7 @@ class Rpa extends CI_Controller {
             ];
             $details = json_decode($this->input->post('details'), true);
             $this->Rpa_model->insert($data, $details);
-            echo json_encode(['message' => 'RPA saved successfully']);
+            echo json_encode(['message' => 'Proposal Payment saved successfully']);
         } else {
             $this->load->view("rpa/form");
         }
@@ -123,7 +123,7 @@ class Rpa extends CI_Controller {
             $details = json_decode($this->input->post('details'), true);
 
             $this->Rpa_model->update($id, $data, $details);
-            echo json_encode(['message' => 'RPA updated successfully']);
+            echo json_encode(['message' => 'Proposal Payment updated successfully']);
         } else {
             $data['rpa'] = $this->Rpa_model->get_by_id($id);
             $this->load->view("rpa/form", $data);
@@ -152,7 +152,7 @@ class Rpa extends CI_Controller {
         } else {
             echo json_encode([
                 'success' => false,
-                'message' => 'RPA not found'
+                'message' => 'Proposal Payment not found'
             ]);
         }
     }
@@ -190,7 +190,7 @@ class Rpa extends CI_Controller {
         if ($result) {
             echo json_encode([
                 'success' => true,
-                'message' => 'RPA has been approved successfully'
+                'message' => 'Proposal Payment has been approved successfully'
             ]);
         } else {
             echo json_encode([
@@ -228,7 +228,7 @@ class Rpa extends CI_Controller {
         if ($result) {
             echo json_encode([
                 'success' => true,
-                'message' => 'RPA has been rejected'
+                'message' => 'Proposal Payment has been rejected'
             ]);
         } else {
             echo json_encode([

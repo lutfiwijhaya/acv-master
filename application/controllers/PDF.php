@@ -20,6 +20,12 @@ class PDF extends CI_Controller {
         // Validasi ID
         if (!$rpa_id) {
             show_404();
+            return;
+        }
+
+        // Clear any previous output buffer
+        if (ob_get_length()) {
+            ob_end_clean();
         }
 
         // Get data RPA header (parent table)
@@ -27,6 +33,7 @@ class PDF extends CI_Controller {
         
         if (!$data['rpa']) {
             show_404();
+            return;
         }
 
         // Get detail RPA dengan join ke COA (child table)
@@ -49,6 +56,7 @@ class PDF extends CI_Controller {
         $options->set('isHtml5ParserEnabled', true);
         $options->set('defaultFont', 'Arial');
         $options->set('isFontSubsettingEnabled', true);
+        $options->set('chroot', realpath(base_url()));
         
         // Instantiate Dompdf
         $dompdf = new Dompdf($options);
@@ -65,9 +73,19 @@ class PDF extends CI_Controller {
         // Render HTML ke PDF
         $dompdf->render();
         
+        // Clear output buffer again before streaming
+        if (ob_get_length()) {
+            ob_end_clean();
+        }
+        
         // Output PDF (0 = preview, 1 = download)
         $filename = 'RPA_' . $data['rpa']->invoice_no . '_' . date('Ymd') . '.pdf';
+        
+        // Stream the PDF
         $dompdf->stream($filename, array("Attachment" => 0));
+        
+        // CRITICAL: Stop execution after streaming
+        exit();
     }
 
     /**
@@ -76,12 +94,19 @@ class PDF extends CI_Controller {
     public function download_rpa($rpa_id) {
         if (!$rpa_id) {
             show_404();
+            return;
+        }
+
+        // Clear any previous output buffer
+        if (ob_get_length()) {
+            ob_end_clean();
         }
 
         $data['rpa'] = $this->Rpa_model->print_rpa_by_id($rpa_id);
         
         if (!$data['rpa']) {
             show_404();
+            return;
         }
 
         $data['rpa_details'] = $this->Rpa_model->get_rpa_details_for_print($rpa_id);
@@ -100,6 +125,7 @@ class PDF extends CI_Controller {
         $options->set('isHtml5ParserEnabled', true);
         $options->set('defaultFont', 'Arial');
         $options->set('isFontSubsettingEnabled', true);
+        $options->set('chroot', realpath(base_url()));
         
         $dompdf = new Dompdf($options);
         $html = $this->load->view('pdf/rpa_pdf', $data, true);
@@ -107,7 +133,18 @@ class PDF extends CI_Controller {
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
         
+        // Clear output buffer before streaming
+        if (ob_get_length()) {
+            ob_end_clean();
+        }
+        
         $filename = 'RPA_' . $data['rpa']->invoice_no . '_' . date('Ymd') . '.pdf';
-        $dompdf->stream($filename, array("Attachment" => 1)); // Force download
+        
+        // Force download
+        $dompdf->stream($filename, array("Attachment" => 1));
+        
+        // CRITICAL: Stop execution after streaming
+        exit();
     }
 }
+          

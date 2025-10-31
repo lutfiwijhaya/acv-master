@@ -95,26 +95,26 @@ $query_builder = TRUE;
 // 	'save_queries' => TRUE
 // );
 
-// $db['default'] = array(
-// 	'dsn'	=> '',
-// 	'hostname' => 'localhost:3306',
-// 	'username' => 'root',
-// 	'password' => '',
-// 	'database' => 'db_achivon',
-// 	'dbdriver' => 'mysqli',
-// 	'dbprefix' => '',
-// 	'pconnect' => false,
-// 	'db_debug' => TRUE,
-// 	'cache_on' => FALSE,
-// 	'cachedir' => '',
-// 	'char_set' => 'utf8',
-// 	'dbcollat' => 'utf8_general_ci',
-// 	'swap_pre' => '',
-// 	'encrypt' => FALSE,
-// 	'compress' => FALSE,
-// 	'stricton' => FALSE,
-// 	'failover' => array(),
-// 	'save_queries' => TRUE
-// );
+$db['default'] = array(
+	'dsn'	=> '',
+	'hostname' => 'localhost:3306',
+	'username' => 'root',
+	'password' => '',
+	'database' => 'db_achivon',
+	'dbdriver' => 'mysqli',
+	'dbprefix' => '',
+	'pconnect' => false,
+	'db_debug' => TRUE,
+	'cache_on' => FALSE,
+	'cachedir' => '',
+	'char_set' => 'utf8',
+	'dbcollat' => 'utf8_general_ci',
+	'swap_pre' => '',
+	'encrypt' => FALSE,
+	'compress' => FALSE,
+	'stricton' => FALSE,
+	'failover' => array(),
+	'save_queries' => TRUE
+);
 
 

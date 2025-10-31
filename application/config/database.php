@@ -73,12 +73,34 @@ defined('BASEPATH') or exit('No direct script access allowed');
 $active_group = 'default';
 $query_builder = TRUE;
 
+// $db['default'] = array(
+// 	'dsn'	=> '',
+// 	'hostname' => '31.97.111.183:3306',
+// 	'username' => 'achivon',
+// 	'password' => 'password',
+// 	'database' => 'achivon',
+// 	'dbdriver' => 'mysqli',
+// 	'dbprefix' => '',
+// 	'pconnect' => false,
+// 	'db_debug' => TRUE,
+// 	'cache_on' => FALSE,
+// 	'cachedir' => '',
+// 	'char_set' => 'utf8',
+// 	'dbcollat' => 'utf8_general_ci',
+// 	'swap_pre' => '',
+// 	'encrypt' => FALSE,
+// 	'compress' => FALSE,
+// 	'stricton' => FALSE,
+// 	'failover' => array(),
+// 	'save_queries' => TRUE
+// );
+
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => '31.97.111.183:3306',
-	'username' => 'achivon',
-	'password' => 'password',
-	'database' => 'achivon',
+	'hostname' => 'localhost:3306',
+	'username' => 'root',
+	'password' => '',
+	'database' => 'db_achivon',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => false,
@@ -95,24 +117,4 @@ $db['default'] = array(
 	'save_queries' => TRUE
 );
 
-// $db['default'] = array(
-// 	'dsn'	=> '',
-// 	'hostname' => 'localhost',
-// 	'username' => 'root',
-// 	'password' => '',
-// 	'database' => 'db_abni',
-// 	'dbdriver' => 'mysqli',
-// 	'dbprefix' => '',
-// 	'pconnect' => false,
-// 	'db_debug' => TRUE,
-// 	'cache_on' => FALSE,
-// 	'cachedir' => '',
-// 	'char_set' => 'utf8',
-// 	'dbcollat' => 'utf8_general_ci',
-// 	'swap_pre' => '',
-// 	'encrypt' => FALSE,
-// 	'compress' => FALSE,
-// 	'stricton' => FALSE,
-// 	'failover' => array(),
-// 	'save_queries' => TRUE
-// );
+

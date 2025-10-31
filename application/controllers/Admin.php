@@ -247,7 +247,8 @@ class Admin extends CI_Controller
             'uri'           => $uri,
             'icon'          => $icon,
             'is_main'       => $is_main,
-            'ordinal'       => $order
+            'ordinal'       => $order,
+            'is_aktif' => 1,
         );
         $result = $this->global_model->insert('tbl_menus', $data);
         if ($result) {
@@ -1627,6 +1628,57 @@ class Admin extends CI_Controller
         echo json_encode($stock);
     }
 
+    public function getSupplierOption()
+    {
+        $search = $this->input->get('q'); // Parameter search dari combogrid
+        
+        // Query langsung di controller
+        $this->db->select('id, nama, rek_bank, bank_account, PIC_name, phone');
+        $this->db->from('tbl_supplier');
+        
+        // Jika ada parameter search
+        if (!empty($search)) {
+            $this->db->group_start();
+            $this->db->like('nama', $search, 'both');
+            $this->db->or_like('PIC_name', $search, 'both');
+            $this->db->or_like('rek_bank', $search, 'both');
+            $this->db->or_like('bank_account', $search, 'both');
+            $this->db->group_end();
+        }
+        
+        // Filter hanya yang aktif (jika ada field status)
+        // $this->db->where('status', 'active'); // Uncomment jika perlu
+        
+        $this->db->order_by('nama', 'ASC');
+        $this->db->limit(100); // Batasi hasil untuk performa
+        
+        $query = $this->db->get();
+        $suppliers = $query->result();
+        
+        // Format data untuk EasyUI combogrid
+        $result = [];
+        foreach ($suppliers as $supplier) {
+            $result[] = [
+                'supplier_id'   => $supplier->id,
+                'supplier_name' => $supplier->nama,
+                'rek_bank'      => $supplier->rek_bank ?? '-',
+                'bank_account'  => $supplier->bank_account ?? '-',
+                'pic_name'      => $supplier->PIC_name ?? '-',
+                'phone'         => $supplier->phone ?? '-'
+            ];
+        }
+        
+        // Format untuk combogrid (harus pakai 'total' dan 'rows')
+        $output = [
+            'total' => count($result),
+            'rows'  => $result
+        ];
+        
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode($output));
+    }
+
     function saveSupplier()
     {
         // Mendapatkan input dari form
@@ -2716,7 +2768,7 @@ class Admin extends CI_Controller
 
         $segment = preg_replace('/[^a-zA-Z0-9]+/', ' ', $segment);
         $segment = trim($segment);
-
+        
         if (!$segment || !$idUser) {
             show_error("segment dan user_id wajib dikirim", 400);
         }

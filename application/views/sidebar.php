@@ -14,7 +14,7 @@
         </div>
 
         <!-- Sidebar Menu with jsTree -->
-        <nav class="mt-2">
+        <nav class="mt-2"  >
             <div id="sidebar-tree"></div>
 
             <!-- <ul class="nav nav-pills nav-sidebar flex-column">

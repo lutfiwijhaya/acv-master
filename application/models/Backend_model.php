@@ -187,13 +187,59 @@ class Backend_model extends CI_Model
             $this->db->group_end();
         }
 
+        // Adding the JOIN with coa table
+        $this->db->select('accounting_bank.*, coa.name as coa_name');  // Selecting all columns from accounting_bank and coa.name as coa_name
+        $this->db->join('coa', 'accounting_bank.coa_id = coa.id', 'left');  // Left join with coa table
+
         $this->db->order_by($sort, $order);
         $this->db->limit($rows, $offset);
         $query = $this->db->get('accounting_bank');
 
         $item = $query->result_array();
         $result = array_merge($result, ['rows' => $item]);
+
         return $result;
+    }
+
+
+    public function insert_bank($table, $data)
+    {
+        $this->cache->file->clean();
+        $this->db->trans_start();
+        $this->db->insert($table, $data);
+        $insert_id = $this->db->insert_id();
+        $this->db->trans_complete();
+
+        return $this->db->trans_status() ? $insert_id : false;
+    }
+
+    public function update_bank($table, $data, $id)
+    {
+        $this->cache->file->clean();
+
+        $this->db->trans_start();
+        $this->db->where('id', $id);
+        $this->db->update($table, $data);
+        $this->db->trans_complete();
+
+        if (!$this->db->trans_status()) {
+            log_message('error', 'Update failed on ' . $table . ' for ID: ' . $id);
+            return false;
+        }
+
+        log_message('debug', 'Executed SQL: ' . $this->db->last_query());
+        return true;
+    }
+
+
+    public function delete_bank($table, $where)
+    {
+        $this->cache->file->clean();
+        $this->db->trans_start();
+        $this->db->where($where)->delete($table);
+        $this->db->trans_complete();
+
+        return $this->db->trans_status();
     }
 
 
@@ -2202,8 +2248,9 @@ class Backend_model extends CI_Model
 
     public function getAllBanks()
     {
-        return $this->db->select('id, name, account_bank, balance') // Pastikan ID Bank diambil
-            ->from('accounting_bank') // Sesuaikan dengan nama tabel di database
+        return $this->db->select('id, name, account_bank, balance','coa.name as coa_name') // Pastikan ID Bank diambil
+            ->from('accounting_bank') // Sesuaikan dengan nama tabel di database 
+            ->join('coa' , 'accounting_bank.coa_id = coa.id', 'left') // Gabungkan dengan tabel COA
             ->get()
             ->result_array();
     }

@@ -5,6 +5,20 @@ class Journal_model extends CI_Model {
 
     private $table = "journal";
 
+
+    public function insert_journal($data)
+    {
+        $this->db->insert('journal', $data);  // Insert into journal table
+        return $this->db->insert_id();  // Return the ID of the inserted journal
+    }
+
+    // Method to insert journal details into the journal_details table
+    public function insert_journal_detail($data)
+    {
+        $this->db->insert('journal_details', $data);  // Insert into journal_details table
+    }
+
+
     public function get_paginated_parent_child($limit, $offset, $search = null) {
         // Get parent journals first
         $this->db->select("journal.id, journal.journal_date, journal.reference, journal.description, 
@@ -201,4 +215,103 @@ class Journal_model extends CI_Model {
             'expenses' => $expenses         // Category ID 6 (Expenditure)
         ];
     }
+
+    public function get_buku_besar_data($start_date, $end_date, $coa_id, $rows, $offset) {
+        $this->db->select('j.id as journal_id, j.journal_no, j.journal_date, j.reference, j.description, j.tax_invoice, 
+                        SUM(jd.debit) as total_debit, SUM(jd.credit) as total_credit, c.code as coa_code');
+        $this->db->from('journal j');
+        $this->db->join('journal_details jd', 'jd.journal_id = j.id', 'left');
+        $this->db->join('coa c','c.id = jd.coa_id');
+        $this->db->where('j.journal_date >=', $start_date);
+        $this->db->where('j.journal_date <=', $end_date);
+
+        if ($coa_id !== null) {
+            $this->db->where('jd.coa_id', $coa_id);
+        }
+
+        $this->db->group_by('j.id, jd.coa_id');
+        $this->db->limit($rows, $offset); // Pagination: limit rows with offset
+
+        $query = $this->db->get();
+
+        return $query->result();
+    }
+
+    public function count_buku_besar_data($start_date, $end_date, $coa_id) {
+        $this->db->select('COUNT(*) as total');
+        $this->db->from('journal j');
+        $this->db->join('journal_details jd', 'jd.journal_id = j.id', 'left');
+        $this->db->where('j.journal_date >=', $start_date);
+        $this->db->where('j.journal_date <=', $end_date);
+
+        if ($coa_id !== null) {
+            $this->db->where('jd.coa_id', $coa_id);
+        }
+
+        $query = $this->db->get();
+        $result = $query->row();
+
+        return $result->total; // Return total row count
+    }
+
+
+// Function to get the current balance for a COA (Chart of Accounts)
+    public function get_balance($coa_id)
+    {
+        // Example query to fetch the current balance
+        $this->db->select('balance');
+        $this->db->from('accounting_bank'); // Assuming balance is in the accounting_bank table
+        $this->db->where('coa_id', $coa_id);
+        $query = $this->db->get();
+
+        // Return the current balance if available, otherwise return null
+        if ($query->num_rows() > 0) {
+            return $query->row()->balance;
+        }
+
+        return null; // Return null if no balance found
+    }
+
+    // Function to update the balance for a specific COA
+    public function update_balance($coa_id, $new_balance)
+    {
+        // Example query to update the balance in the accounting_bank table
+        $data = array('balance' => $new_balance);
+        $this->db->where('coa_id', $coa_id);
+        return $this->db->update('accounting_bank', $data);
+    }
+
+
+    public function get_category_id($coa_id)
+    {
+        $this->db->select('category_id');
+        $this->db->from('coa');
+        $this->db->where('id', $coa_id);
+        $query = $this->db->get();
+
+        // Return category ID if found, otherwise return null
+        if ($query->num_rows() > 0) {
+            return $query->row()->category_id;
+        }
+
+        return null;  // Return null if no category ID is found
+    }
+
+    // Method to get category name based on category ID
+    public function get_category($category_id)
+    {
+        $this->db->select('name');
+        $this->db->from('coa_category');
+        $this->db->where('id', $category_id);
+        $query = $this->db->get();
+
+        // Return category name if found, otherwise return null
+        if ($query->num_rows() > 0) {
+            return $query->row()->name;
+        }
+
+        return null;  // Return null if no category name is found
+    }
+
+
 }

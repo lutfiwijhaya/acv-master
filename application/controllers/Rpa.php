@@ -16,6 +16,7 @@ class Rpa extends CI_Controller {
         $this->load->model('Menu_model', 'menu_model');
         $this->load->model('Global_model', 'global_model');
         $this->load->helper('file'); 
+        $this->load->helper('accounting_helper');
     }
 
     public function list()
@@ -101,7 +102,8 @@ class Rpa extends CI_Controller {
                 'invoice_no'    => $this->input->post('invoice_no'),
                 'request_date'  => $this->input->post('request_date'),
                 'bill_date'  => $this->input->post('bill_date'),
-                'supplier_id'   => $this->input->post('supplier_id')
+                'supplier_id'   => $this->input->post('supplier_id'),
+                'charge_code'   => $this->input->post('reference_no')
             ];
             $details = json_decode($this->input->post('details'), true);
             $this->Rpa_model->insert($data, $details);
@@ -173,6 +175,7 @@ class Rpa extends CI_Controller {
     // Approve RPA
     public function approve()
     {
+        // Retrieve RPA ID and note from POST
         $rpa_id = $this->input->post('rpa_id');
         $note = $this->input->post('note');
         
@@ -184,21 +187,76 @@ class Rpa extends CI_Controller {
             return;
         }
         
+        // Get the user ID from session
         $user_id = $this->session->userdata('user_id');
-        $result = $this->Rpa_model->approve($rpa_id, $note, $user_id);
         
-        if ($result) {
+        // Start transaction
+        $this->db->trans_start(); // Start the transaction
+
+        try {
+            // Approve the RPA
+            $result = $this->Rpa_model->approve($rpa_id, $note, $user_id);
+
+            // If approval failed, rollback and return an error
+            if (!$result) {
+                throw new Exception('Failed to approve RPA');
+            }
+
+            // Fetch RPA details from the database
+            $rpa = $this->Rpa_model->get_by_id($rpa_id);
+            $rpa_details = $this->Rpa_model->get_rpa_details($rpa_id); // Assuming this function fetches the details
+
+            // Prepare journal details for the journal entry
+            $journal_details = [];
+            foreach ($rpa_details as $detail) {
+                $journal_details[] = [
+                    'coa_id' => $detail['coa_id'],
+                    'debit' => $detail['debit_amount'],
+                    'credit' => $detail['credit_amount'],
+                    'description' => $detail['supplementary_desc'],
+                ];
+            }
+
+            // Prepare journal data
+            $journal_data = [
+                'project_code' => 'RPA-' . $rpa_id, // Custom project code
+                'journal_date' => date('Y-m-d'), // Current date
+                'reference' => $rpa['charge_code'],
+                'description' => 'RPA Approval Journal for RPA ID ' . $rpa_id,
+                'status' => 'Approved',
+                'created_by' => $user_id,
+            ];
+
+            // Call the helper function to create the journal entry
+            $journal_id = create_journal_entry($journal_data, $journal_details);
+
+            // Optionally update the RPA table with the created journal ID
+            $this->Rpa_model->update_journal_id($rpa_id, $journal_id);
+
+            // Commit transaction if all operations were successful
+            $this->db->trans_complete(); // Commit the transaction
+
+            // Check transaction status
+            if ($this->db->trans_status() === FALSE) {
+                throw new Exception('Transaction failed. Rolling back.');
+            }
+
+            // Return success message
             echo json_encode([
                 'success' => true,
-                'message' => 'Proposal Payment has been approved successfully'
+                'message' => 'Proposal Payment has been approved and journal entry created successfully'
             ]);
-        } else {
+        } catch (Exception $e) {
+            // Rollback if an exception occurs
+            $this->db->trans_rollback();
+            
             echo json_encode([
                 'success' => false,
-                'message' => 'Failed to approve RPA'
+                'message' => 'Error: ' . $e->getMessage()
             ]);
         }
     }
+
 
     // Reject RPA
     public function reject()

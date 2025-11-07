@@ -24,7 +24,7 @@
                             <tr>
                                 <th field="row_number" width="5%" align="center">No</th>
                                 <th field="invoice_no" width="12%">Invoice No</th>
-                                <th field="charge_code" width="10%">Charge Code</th>
+                                <th field="charge_code" width="10%">Reference Code</th>
                                 <th field="bill_date" width="10%">Bill Date</th>
                                 <th field="request_date" width="10%">Request Date</th>
                                 <th field="approval_date" width="10%">Approval Date</th>
@@ -88,11 +88,11 @@
     <form id="formRpa" class="easyui-form" method="post" data-options="novalidate:false">
         <input type="hidden" name="rpa_id" id="rpa_id">
         <div style="margin-bottom:10px">
-            <input class="easyui-textbox" name="invoice_no" id="invoice_no" style="width:48%" data-options="label:'Invoice No:',required:true">
+            <input class="easyui-textbox" name="invoice_no" id="invoice_no" style="width:48%" data-options="label:'Invoice No:'">
             <input class="easyui-datebox ml-3" name="request_date" id="request_date" style="width:48%" data-options="label:'Request Date:',required:true,formatter:dateFormatter,parser:dateParser">
         </div>
         <div style="margin-bottom:10px">
-            <input class="easyui-datebox" name="bill_date" id="bill_date" style="width:48%" data-options="label:'Bill Date:',required:true,formatter:dateFormatter,parser:dateParser">
+            <input class="easyui-datebox" name="bill_date" id="bill_date" style="width:48%" data-options="label:'Invoice Date:',formatter:dateFormatter,parser:dateParser">
 
 
             <!-- Supplier Combogrid -->
@@ -128,6 +128,9 @@
                         }
                     }
                 ">
+        </div>
+        <div>
+            <input class="easyui-textbox" name="invoice_no" id="invoice_no" style="width:48%" data-options="label:'Reference No:'">
         </div>
     </form>
  
@@ -175,8 +178,12 @@
 
                 <th field="name" width="20%" editor="{type:'textbox',options:{required:true,readonly:true}}">COA Name</th> 
                 <th field="currency" width="8%" editor="{type:'textbox',options:{required:true,readonly:true}}">Currency</th>
-                <th field="debit" width="15%" align="right" editor="{type:'numberbox',options:{precision:2}}">Debit</th>
-                <th field="credit" width="15%" align="right" editor="{type:'numberbox',options:{precision:2}}">Credit</th>
+                <th field="debit" width="15%" align="right" 
+                    editor="{type:'numberbox',options:{precision:2,groupSeparator:'.',decimalSeparator:','}}"
+                    formatter="formatNumber">Debit</th>
+                <th field="credit" width="15%" align="right" 
+                    editor="{type:'numberbox',options:{precision:2,groupSeparator:'.',decimalSeparator:','}}"
+                    formatter="formatNumber">Credit</th>
                 <th field="remark" width="27%" editor="{type:'textbox'}">Remark</th>
             </tr>
         </thead>
@@ -213,7 +220,7 @@
             <tr>
                 <td class="label-col"><strong>Supplier:</strong></td>
                 <td class="value-col" id="detail_supplier_name"></td>
-                <td class="label-col"><strong>Charge Code:</strong></td>
+                <td class="label-col"><strong>Reference Code:</strong></td>
                 <td class="value-col" id="detail_charge_code"></td>
             </tr>
             <tr>
@@ -279,10 +286,11 @@
 
 
 <div id="detail-buttons" style="text-align:right;padding:10px;">
-    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-ok" onclick="approveRpa()" style="width:100px;background:#27ae60;color:white;">Approve</a>
-    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="rejectRpa()" style="width:100px;background:#e74c3c;color:white;margin-left:10px;">Reject</a>
+    <a href="javascript:void(0)" id="approveRpaBtn" class="easyui-linkbutton" iconCls="icon-ok" onclick="approveRpa()" style="width:100px;background:#27ae60;color:white;">Approve</a>
+    <a href="javascript:void(0)" id="rejectRpaBtn" class="easyui-linkbutton" iconCls="icon-cancel" onclick="rejectRpa()" style="width:100px;background:#e74c3c;color:white;margin-left:10px;">Reject</a>
     <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-back" onclick="$('#dialog-view-detail').dialog('close')" style="width:100px;margin-left:10px;">Close</a>
 </div>
+
 
 
 <!-- NEW: Rejection Reason Dialog -->
@@ -808,13 +816,11 @@ function viewDetail() {
                 remark: ''
             }];
 
-
             $('#dgViewDetail').datagrid('loadData', {
                 total: data.length,
                 rows: data,
                 footer: footerData
             });
-
 
             // Update summary section
             $('#detail_total_debit').text(formatCurrency(totalDebit));
@@ -829,7 +835,15 @@ function viewDetail() {
                 $('#detail_balance_check').text('✗ Unbalanced (Diff: ' + formatCurrency(balance) + ')').css('color', '#e74c3c');
             }
 
-
+            // Disable the Approve and Reject buttons if the status is "approved"
+            if (statusText.toLowerCase() === 'approved') {
+                $('#approveRpaBtn').linkbutton('disable');
+                $('#rejectRpaBtn').linkbutton('disable');
+            } else {
+                $('#approveRpaBtn').linkbutton('enable');
+                $('#rejectRpaBtn').linkbutton('enable');
+            }
+            
             // Open dialog
             $('#dialog-view-detail').dialog('open');
             
@@ -840,6 +854,7 @@ function viewDetail() {
         $.messager.alert('Warning', 'Please select a parent record to view details', 'warning');
     }
 }
+
 
 
 // Approve RPA Function
@@ -941,6 +956,14 @@ $(document).on('input', '#reject-reason-input', function() {
         counter.removeClass('valid');
     }
 });
+
+function formatNumber(value) {
+    if (value == null || value === '') return '';
+    return parseFloat(value).toLocaleString('id-ID', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
 
 
 // NEW: Submit Rejection Function

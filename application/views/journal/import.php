@@ -13,7 +13,7 @@
                 <div>
                     <button type="submit" class="btn btn-primary">Upload & Preview</button>
                     <!-- Download Template Button -->
-                    <a href="<?= base_url('uploads/template_import_journal.xlsx'); ?>" download>
+                    <a href="<?= base_url('uploads/Template_Import_Journal.xlsx'); ?>" download>
                         <button type="button" class="btn btn-success" style="margin-left: 10px;"> <i class="fas fa-file-excel"></i> Download Template</button>
                     </a>
                 </div>

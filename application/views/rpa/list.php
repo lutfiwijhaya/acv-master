@@ -45,7 +45,6 @@
                         </thead>
                     </table>
 
-
                     <!-- Toolbar -->
                     <div id="toolbar" style="padding: 10px">
                         <div class="row ml-1 d-flex justify-content-between align-items-center">
@@ -60,30 +59,33 @@
                                 </nav>
                             </div>
 
-
                             <!-- Right search and view detail -->
                             <div class="col-sm-6 text-right">
+                                <!-- Dropdown filter for status -->
+                                <select id="statusFilter" class="easyui-combobox" style="width:150px; margin-right:10px;" data-options="panelHeight:'auto'">
+                                    <option value="">All Status</option>
+                                    <option value="new">New</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+
                                 <a href="javascript:void(0);" class="easyui-linkbutton" iconCls="icon-search" onclick="viewDetail()" style="margin-right:10px;">View Detail</a>
                                 <input id="searchRpa" placeholder="Search RPA..." style="width:50%;" />
                                 <a href="javascript:void(0);" id="btn_search" onclick="doSearch()">Search</a>
                             </div>
                         </div>
                     </div>
-
-
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-
 <!-- Form RPA Dialog -->
 <div id="dialog-rpa" class="easyui-window" title="Form RPA"
     data-options="modal:true,closed:true,iconCls:'icon-save',inline:false,onResize:function(){$(this).window('hcenter');}"
     style="width:90%;max-width:1000px;padding:20px;max-height:600px;overflow-y:auto;">
-
-
+    
     <!-- Header form -->
     <form id="formRpa" class="easyui-form" method="post" data-options="novalidate:false">
         <input type="hidden" name="rpa_id" id="rpa_id">
@@ -93,7 +95,6 @@
         </div>
         <div style="margin-bottom:10px">
             <input class="easyui-datebox" name="bill_date" id="bill_date" style="width:48%" data-options="label:'Invoice Date:',formatter:dateFormatter,parser:dateParser">
-
 
             <!-- Supplier Combogrid -->
             <input class="easyui-combogrid ml-3" name="supplier_id" id="supplier_id" style="width:48%" 
@@ -130,14 +131,16 @@
                 ">
         </div>
         <div>
-            <input class="easyui-textbox" name="invoice_no" id="invoice_no" style="width:48%" data-options="label:'Reference No:'">
+            <input class="easyui-textbox" name="reference_no" id="reference_no" style="width:48%" data-options="label:'Reference No:'">
         </div>
     </form>
  
     <hr>
     <h4>RPA Details</h4>
+    
+    <!-- Table with Footer like in the image -->
     <table id="dgRpaDetail" class="easyui-datagrid" style="width:100%;height:300px" 
-        data-options="singleSelect:false,rownumbers:false,fitColumns:true,toolbar:'#toolbarDetail'">
+        data-options="singleSelect:false,rownumbers:true,fitColumns:true,toolbar:'#toolbarDetail',showFooter:true">
         <thead>
             <tr>
                 <th field="ck" checkbox="true"></th>
@@ -174,8 +177,6 @@
                             }
                         }
                     }">COA Code</th>
-
-
                 <th field="name" width="20%" editor="{type:'textbox',options:{required:true,readonly:true}}">COA Name</th> 
                 <th field="currency" width="8%" editor="{type:'textbox',options:{required:true,readonly:true}}">Currency</th>
                 <th field="debit" width="15%" align="right" 
@@ -184,24 +185,22 @@
                 <th field="credit" width="15%" align="right" 
                     editor="{type:'numberbox',options:{precision:2,groupSeparator:'.',decimalSeparator:','}}"
                     formatter="formatNumber">Credit</th>
-                <th field="remark" width="27%" editor="{type:'textbox'}">Remark</th>
+                <th field="" width="15%" align="right" formatter="formatNumber">Difference</th>
+                <th field="remark" width="12%" editor="{type:'textbox'}">Remark</th>
             </tr>
         </thead>
     </table>
-
 
     <div id="toolbarDetail"> 
         <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="addDetailRow()">Add Row</a>
         <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-remove" plain="true" onclick="removeDetailRow()">Delete Row</a>
     </div>
 
-
     <div style="margin-top:20px;text-align:right">
         <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveRpa()">Simpan</a>
         <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="$('#dialog-rpa').window('close')">Batal</a>
     </div>
 </div>
-
 
 <!-- View Detail Dialog with Approve/Reject -->
 <div id="dialog-view-detail" class="easyui-dialog" title="RPA Detail"
@@ -238,7 +237,6 @@
         </table>
     </div>
 
-
     <div style="margin-bottom:20px;">
         <h3 style="margin-bottom:15px;border-bottom:2px solid #ddd;padding-bottom:10px;">Detail Items</h3>
         <table id="dgViewDetail" class="easyui-datagrid" style="width:100%;height:300px"
@@ -251,12 +249,11 @@
                     <th field="debit_amount" width="13%" align="right" formatter="formatCurrency">Debit</th>
                     <th field="credit_amount" width="13%" align="right" formatter="formatCurrency">Credit</th>
                     <th field="difference_amount" width="13%" align="right" formatter="formatCurrency">Difference</th>
-                    <th field="remark" width="13%">Remark</th>
+                    <th field="remark_tax_income" width="13%">Remark</th>
                 </tr>
             </thead>
         </table>
     </div>
-
 
     <div style="margin-bottom:20px;">
         <h3 style="margin-bottom:15px;border-bottom:2px solid #ddd;padding-bottom:10px;">Summary</h3>
@@ -276,7 +273,6 @@
         </table>
     </div>
 
-
     <div style="margin-bottom:15px;">
         <label for="approval_remarks"><strong>Approval Remarks:</strong></label>
         <textarea id="approval_remarks" style="width:100%;height:80px;padding:8px;border:1px solid #ddd;border-radius:4px;" 
@@ -284,16 +280,13 @@
     </div>
 </div>
 
-
 <div id="detail-buttons" style="text-align:right;padding:10px;">
     <a href="javascript:void(0)" id="approveRpaBtn" class="easyui-linkbutton" iconCls="icon-ok" onclick="approveRpa()" style="width:100px;background:#27ae60;color:white;">Approve</a>
     <a href="javascript:void(0)" id="rejectRpaBtn" class="easyui-linkbutton" iconCls="icon-cancel" onclick="rejectRpa()" style="width:100px;background:#e74c3c;color:white;margin-left:10px;">Reject</a>
     <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-back" onclick="$('#dialog-view-detail').dialog('close')" style="width:100px;margin-left:10px;">Close</a>
 </div>
 
-
-
-<!-- NEW: Rejection Reason Dialog -->
+<!-- Rejection Reason Dialog -->
 <div id="dialog-reject-reason" class="easyui-dialog" title="Rejection Reason"
     data-options="modal:true,closed:true,iconCls:'icon-cancel',buttons:'#reject-buttons'"
     style="width:550px;padding:20px;">
@@ -333,7 +326,6 @@
         style="width:100px;margin-left:10px;">Cancel</a>
 </div>
 
-
 <style>
     /* Text menu style */
     .text-menu a,
@@ -344,25 +336,21 @@
         text-decoration: none;
     } 
 
-
     .text-menu a:hover,
     #btn_search:hover {
         color: #007bff;
         text-decoration: underline;
     }
 
-
     /* Detail info table styles */
     .detail-info-table {
         border-collapse: collapse;
     }
 
-
     .detail-info-table td {
         padding: 8px 12px;
         border-bottom: 1px solid #f0f0f0;
     }
-
 
     .detail-info-table .label-col {
         width: 18%;
@@ -370,14 +358,12 @@
         font-size: 14px;
     }
 
-
     .detail-info-table .value-col {
         width: 32%;
         color: #333;
         font-size: 14px;
         font-weight: 500;
     }
-
 
     .status-badge {
         padding: 4px 12px;
@@ -387,24 +373,20 @@
         text-transform: uppercase;
     }
 
-
     .status-badge.pending {
         background-color: #ffeaa7;
         color: #d63031;
     }
-
 
     .status-badge.approved {
         background-color: #55efc4;
         color: #00b894;
     }
 
-
     .status-badge.rejected {
         background-color: #fab1a0;
         color: #d63031;
     }
-
 
     /* Print button style */
     .btn-print {
@@ -419,19 +401,17 @@
         transition: background-color 0.3s;
     }
 
-
     .btn-print:hover {
         background-color: #2980b9;
         color: white;
         text-decoration: none;
     }
 
-
     .btn-print i {
         margin-right: 3px;
     }
 
-    /* NEW: Rejection Dialog Styling */
+    /* Rejection Dialog Styling */
     #dialog-reject-reason .dialog-content {
         padding: 20px;
     }
@@ -467,18 +447,31 @@
         color: #27ae60;
         font-weight: bold;
     }
+
+    /* Footer styling for datagrid */
+    .datagrid-footer {
+        background-color: #f5f5f5;
+        font-weight: bold;
+        border-top: 2px solid #333;
+    }
+
+    .datagrid-footer td {
+        font-weight: bold;
+    }
 </style>
 
-
 <script>
+// Global variables
+var currentEditingRow = -1;
+
 // Date formatter untuk datebox
 function dateFormatter(date) {
+    if(!date) return '';
     var y = date.getFullYear();
     var m = date.getMonth() + 1;
     var d = date.getDate();
     return y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
 }
-
 
 function dateParser(s) {
     if (!s) return new Date();
@@ -493,200 +486,22 @@ function dateParser(s) {
     }
 }
 
-
-// Action column formatter - tampilkan Print button hanya jika status approved
+// Action column formatter
 function actionFormatter(value, row, index) {
-    // Hanya tampilkan tombol Print untuk parent row (yang memiliki rpa_id) dan status approved
-    if (row.rpa_id && row.status && row.status.toLowerCase() === 'approved') {
-        return '<a href="javascript:void(0)" class="btn-print" onclick="printRpa(' + row.rpa_id + ')"><i class="fa fa-print"></i>Print</a>';
-    }
-    return ''; // Tidak tampilkan apapun jika bukan parent atau status bukan approved
+    return '<a href="javascript:void(0)" class="btn-print" onclick="printRpa(' + row.rpa_id + ')"><i class="fa fa-print"></i>Print</a>';
 }
 
-
-// Function untuk print RPA
+// Print RPA
 function printRpa(rpaId) {
     if (!rpaId) {
         $.messager.alert('Warning', 'Invalid RPA ID', 'warning');
         return;
     }
-    
-    // Buka PDF di tab baru
     var printUrl = "<?= base_url('pdf/generate_rpa/') ?>" + rpaId;
     window.open(printUrl, '_blank');
 }
 
-
-// Function untuk download RPA (alternative)
-function downloadRpa(rpaId) {
-    if (!rpaId) {
-        $.messager.alert('Warning', 'Invalid RPA ID', 'warning');
-        return;
-    }
-    
-    // Download PDF
-    var downloadUrl = "<?= base_url('pdf/download_rpa/') ?>" + rpaId;
-    window.location.href = downloadUrl;
-}
-
-
-// TreeGrid initialization dengan custom loader dan custom row numbering
-$('#dgRpa').treegrid({
-    method: 'get',
-    animate: true,
-    rownumbers: false, // Matikan default rownumbers
-    loader: function(param, success, error) {
-        $.ajax({
-            url: "<?= base_url('rpa/getRpaData') ?>",
-            type: "GET",
-            data: {
-                page: param.page,
-                rows: param.rows,
-                search_data: $('#searchRpa').val()
-            },
-            dataType: "json",
-            success: function(data) {
-                var transformedData = [];
-                var parentCounter = 0;
-
-
-                // Fungsi rekursif untuk memproses children dengan penomoran hierarki
-                function processChildren(children, parentId, parentNumber) {
-                    children.forEach(function(child, index) {
-                        var childId = 'child_' + child.child_id;
-                        var childNumber = parentNumber + '.' + (index + 1);
-
-
-                        var childRow = {
-                            id: childId,
-                            row_number: childNumber,
-                            invoice_no: 'Detail - ' + child.coa_code,
-                            charge_code: '',
-                            bill_date: '',
-                            request_date: '',
-                            approval_date: '',
-                            company_payment_date: '',
-                            status: '',
-                            supplier_name: '',
-                            coa_code: child.coa_code || '',
-                            coa_name: child.coa_name || '',
-                            currency: child.currency || '',
-                            request_amount: parseFloat(child.debit_amount) || 0,
-                            approved_amount: parseFloat(child.credit_amount) || 0,
-                            difference_amount: parseFloat(child.difference_amount) || 0,
-                            remark_tax_income: child.remark_tax_income || '',
-                            to_be_paid_internal: child.to_be_paid_internal || '',
-                            actual_expenditure: child.actual_expenditure || '',
-                            _parentId: parentId,
-                            child_id: child.child_id,
-                            action: '' // Child row tidak punya action
-                        };
-                        transformedData.push(childRow);
-
-
-                        // Jika ada sub-children (nested)
-                        if(child.children && child.children.length > 0) {
-                            processChildren(child.children, childId, childNumber);
-                        }
-                    });
-                }
-
-
-                if(data.rows) {
-                    data.rows.forEach(function(parent) {
-                        parentCounter++;
-                        var parentId = 'parent_' + parent.rpa_id;
-                        var parentNumber = parentCounter.toString();
-                        
-                        // Hitung total dari children
-                        var totalDebit = 0;
-                        var totalCredit = 0;
-                        var totalDifference = 0;
-                        
-                        if(parent.children && parent.children.length > 0) {
-                            parent.children.forEach(function(child) {
-                                totalDebit += parseFloat(child.debit_amount) || 0;
-                                totalCredit += parseFloat(child.credit_amount) || 0;
-                                totalDifference += parseFloat(child.difference_amount) || 0;
-                            });
-                        }
-
-
-                        var parentRow = {
-                            id: parentId,
-                            row_number: parentNumber,
-                            invoice_no: parent.invoice_no,
-                            charge_code: parent.charge_code || '',
-                            bill_date: parent.bill_date || '',
-                            request_date: parent.request_date || '',
-                            approval_date: parent.approval_date || '',
-                            company_payment_date: parent.company_payment_date || '',
-                            status: parent.status || '',
-                            supplier_name: parent.supplier_name || '',
-                            coa_code: '',
-                            coa_name: 'Total: ' + (parent.children ? parent.children.length : 0) + ' entries',
-                            currency: '',
-                            request_amount: totalDebit,
-                            approved_amount: totalCredit,
-                            difference_amount: totalDifference,
-                            remark_tax_income: '',
-                            to_be_paid_internal: '',
-                            actual_expenditure: '',
-                            state: 'closed',
-                            _parentId: null,
-                            rpa_id: parent.rpa_id,
-                            action: '' // Will be formatted by actionFormatter
-                        };
-                        transformedData.push(parentRow);
-
-
-                        // Proses children secara rekursif
-                        if(parent.children && parent.children.length > 0) {
-                            processChildren(parent.children, parentId, parentNumber);
-                        }
-                    });
-                }
-
-
-                success({
-                    total: data.total,
-                    rows: transformedData
-                });
-            },
-            error: function() {
-                error.apply(this, arguments);
-            }
-        });
-    }
-});
-
-
-// Enter key untuk search
-$('#searchRpa').keypress(function(e) {
-    if (e.which == 13) {
-        doSearch();
-    }
-});
-
-
-function doSearch() {
-    $('#dgRpa').treegrid('load', {
-        page: 1,
-        rows: $('#dgRpa').treegrid('options').pageSize
-    });
-}
-
-
-function expandAll() {
-    $('#dgRpa').treegrid('expandAll');
-}
-
-
-function collapseAll() {
-    $('#dgRpa').treegrid('collapseAll');
-}
-
-
+// Format currency
 function formatCurrency(value) {
     if (value == null || value === '') return '';
     return 'Rp ' + parseFloat(value).toLocaleString('id-ID', {
@@ -695,6 +510,233 @@ function formatCurrency(value) {
     });
 }
 
+// Format number
+function formatNumber(value) {
+    if (value == null || value === '') return '';
+    return parseFloat(value).toLocaleString('id-ID', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+// ==== REAL-TIME UPDATE FOOTER SAAT INPUT DEBIT/CREDIT ====
+function updateDetailFooter() {
+    try {
+        var rows = $('#dgRpaDetail').datagrid('getRows');
+        var totalDebit = 0;
+        var totalCredit = 0;
+        
+        if(rows && rows.length > 0) {
+            rows.forEach(function(row, index) {
+                // Get current editing values if row is being edited
+                var debitEditor = $('#dgRpaDetail').datagrid('getEditor', {index: index, field: 'debit'});
+                var creditEditor = $('#dgRpaDetail').datagrid('getEditor', {index: index, field: 'credit'});
+                
+                var debit = 0;
+                var credit = 0;
+                
+                if(debitEditor) {
+                    // Row is being edited, get value from editor
+                    debit = parseFloat($(debitEditor.target).numberbox('getValue')) || 0;
+                } else {
+                    // Row is not being edited, get value from data
+                    debit = parseFloat(row.debit) || 0;
+                }
+                
+                if(creditEditor) {
+                    // Row is being edited, get value from editor
+                    credit = parseFloat($(creditEditor.target).numberbox('getValue')) || 0;
+                } else {
+                    // Row is not being edited, get value from data
+                    credit = parseFloat(row.credit) || 0;
+                }
+                
+                totalDebit += debit;
+                totalCredit += credit;
+            });
+        }
+        
+        var totalDifference = totalDebit - totalCredit;
+        
+        // Update footer row dengan format seperti di gambar
+        $('#dgRpaDetail').datagrid('reloadFooter', [{
+            coa_code: 'TOTAL',
+            name: '',
+            currency: '',
+            debit: totalDebit,
+            credit: totalCredit,
+            difference: totalDifference,
+            remark: ''
+        }]);
+        
+    } catch(e) {
+        console.error('Error updating footer:', e);
+    }
+}
+
+// TreeGrid initialization
+$(function() {
+    $('#dgRpa').treegrid({
+        method: 'get',
+        animate: true,
+        rownumbers: false,
+        loader: function(param, success, error) {
+            var status = $('#statusFilter').combobox('getValue');
+            var searchQuery = $('#searchRpa').val();
+            
+            $.ajax({
+                url: "<?= base_url('rpa/getRpaData') ?>",
+                type: "GET",
+                data: {
+                    page: param.page || 1,
+                    rows: param.rows || 50,
+                    search_data: searchQuery || '',
+                    status: status || ''
+                },
+                dataType: "json",
+                success: function(data) {
+                    var transformedData = [];
+                    var parentCounter = 0;
+
+                    function processChildren(children, parentId, parentNumber) {
+                        if(!children || children.length === 0) return;
+                        
+                        children.forEach(function(child, index) {
+                            var childId = 'child_' + child.child_id;
+                            var childNumber = parentNumber + '.' + (index + 1);
+                            
+                            var childRow = {
+                                id: childId,
+                                row_number: childNumber,
+                                invoice_no: 'Detail - ' + (child.coa_code || ''),
+                                charge_code: '',
+                                bill_date: '',
+                                request_date: '',
+                                approval_date: '',
+                                company_payment_date: '',
+                                status: '',
+                                supplier_name: '',
+                                coa_code: child.coa_code || '',
+                                coa_name: child.coa_name || '',
+                                currency: child.currency || '',
+                                request_amount: parseFloat(child.debit_amount) || 0,
+                                approved_amount: parseFloat(child.credit_amount) || 0,
+                                difference_amount: parseFloat(child.difference_amount) || 0,
+                                remark_tax_income: child.remark || '',
+                                to_be_paid_internal: child.to_be_paid_internal || '',
+                                actual_expenditure: child.actual_expenditure || '',
+                                _parentId: parentId,
+                                child_id: child.child_id,
+                                action: ''
+                            };
+                            transformedData.push(childRow);
+
+                            if(child.children && child.children.length > 0) {
+                                processChildren(child.children, childId, childNumber);
+                            }
+                        });
+                    }
+
+                    if(data.rows && data.rows.length > 0) {
+                        data.rows.forEach(function(parent) {
+                            parentCounter++;
+                            var parentId = 'parent_' + parent.rpa_id;
+                            var parentNumber = parentCounter.toString();
+                            
+                            var totalDebit = 0;
+                            var totalCredit = 0;
+                            var totalDifference = 0;
+                            
+                            if(parent.children && parent.children.length > 0) {
+                                parent.children.forEach(function(child) {
+                                    totalDebit += parseFloat(child.debit_amount) || 0;
+                                    totalCredit += parseFloat(child.credit_amount) || 0;
+                                    totalDifference += parseFloat(child.difference_amount) || 0;
+                                });
+                            }
+
+                            var parentRow = {
+                                id: parentId,
+                                row_number: parentNumber,
+                                invoice_no: parent.invoice_no || '',
+                                charge_code: parent.charge_code || '',
+                                bill_date: parent.bill_date || '',
+                                request_date: parent.request_date || '',
+                                approval_date: parent.approval_date || '',
+                                company_payment_date: parent.company_payment_date || '',
+                                status: parent.status || '',
+                                supplier_name: parent.supplier_name || '',
+                                coa_code: '',
+                                coa_name: 'Total: ' + (parent.children ? parent.children.length : 0) + ' entries',
+                                currency: '',
+                                request_amount: totalDebit,
+                                approved_amount: totalCredit,
+                                difference_amount: totalDifference,
+                                remark_tax_income: '',
+                                to_be_paid_internal: '',
+                                actual_expenditure: '',
+                                state: 'closed',
+                                _parentId: null,
+                                rpa_id: parent.rpa_id,
+                                action: ''
+                            };
+                            transformedData.push(parentRow);
+
+                            if(parent.children && parent.children.length > 0) {
+                                processChildren(parent.children, parentId, parentNumber);
+                            }
+                        });
+                    }
+
+                    success({
+                        total: data.total || 0,
+                        rows: transformedData
+                    });
+                },
+                error: function(xhr, status, err) {
+                    console.error('TreeGrid load error:', err);
+                    error.apply(this, arguments);
+                }
+            });
+        }
+    });
+    
+    // Event handler untuk status filter change
+    $('#statusFilter').combobox({
+        onChange: function(newValue, oldValue) {
+            doSearch();
+        }
+    });
+});
+
+// Enter key untuk search
+$('#searchRpa').keypress(function(e) {
+    if (e.which == 13) {
+        doSearch();
+    }
+});
+
+function doSearch() {
+    var status = $('#statusFilter').combobox('getValue');
+    var searchQuery = $('#searchRpa').val();
+    
+    console.log('Searching - Status:', status, 'Query:', searchQuery);
+    
+    $('#dgRpa').treegrid('load', {
+        page: 1,
+        rows: $('#dgRpa').treegrid('options').pageSize,
+        search_data: searchQuery,
+        status: status
+    });
+}
+
+function expandAll() {
+    $('#dgRpa').treegrid('expandAll');
+}
+
+function collapseAll() {
+    $('#dgRpa').treegrid('collapseAll');
+}
 
 function getEditingIndex(){
     var dg = $('#dgRpaDetail');
@@ -708,14 +750,13 @@ function getEditingIndex(){
     return undefined;
 }
 
-
 function newRpa() {
     $('#dialog-rpa').window('open').window('setTitle', 'Create RPA');
     $('#formRpa').form('clear');
     $('#rpa_id').val('');
     $('#dgRpaDetail').datagrid('loadData', []);
+    updateDetailFooter();
 }
-
 
 function editRpa() {
     var row = $('#dgRpa').treegrid('getSelected');
@@ -724,10 +765,22 @@ function editRpa() {
         $('#formRpa').form('load', row);
         $('#rpa_id').val(row.rpa_id);
 
-
-        // Load detail data
         $.get("<?= base_url('rpa/getRpaDetail/') ?>" + row.rpa_id, function(data) {
-            $('#dgRpaDetail').datagrid('loadData', data);
+            // Map data untuk include difference column
+            var mappedData = data.map(function(item) {
+                return {
+                    coa_code: item.coa_code,
+                    name: item.coa_name || item.name,
+                    currency: item.currency,
+                    debit: parseFloat(item.debit_amount || item.debit) || 0,
+                    credit: parseFloat(item.credit_amount || item.credit) || 0,
+                    difference: (parseFloat(item.debit_amount || item.debit) || 0) - (parseFloat(item.credit_amount || item.credit) || 0),
+                    remark: item.remark || ''
+                };
+            });
+            
+            $('#dgRpaDetail').datagrid('loadData', mappedData);
+            updateDetailFooter();
         }, 'json').fail(function() {
             $.messager.alert('Error', 'Failed to load RPA details', 'error');
         });
@@ -735,7 +788,6 @@ function editRpa() {
         $.messager.alert('Warning', 'Please select a parent record to edit', 'warning');
     }
 }
-
 
 function destroyRpa() {
     var row = $('#dgRpa').treegrid('getSelected');
@@ -762,12 +814,9 @@ function destroyRpa() {
     }
 }
 
-
-// View Detail Function with all information
 function viewDetail() {
     var row = $('#dgRpa').treegrid('getSelected');
     if (row && row.rpa_id) {
-        // Populate header information
         $('#detail_invoice_no').text(row.invoice_no || '-');
         $('#detail_supplier_name').text(row.supplier_name || '-');
         $('#detail_charge_code').text(row.charge_code || '-');
@@ -776,7 +825,6 @@ function viewDetail() {
         $('#detail_approval_date').text(row.approval_date || '-');
         $('#detail_payment_date').text(row.company_payment_date || '-');
         
-        // Set status with badge
         var statusText = row.status || 'Pending';
         var statusClass = 'pending';
         if(statusText.toLowerCase() === 'approved') {
@@ -786,26 +834,21 @@ function viewDetail() {
         }
         $('#detail_status').text(statusText).removeClass().addClass('status-badge ' + statusClass);
         
-        // Clear remarks
         $('#approval_remarks').val('');
 
-
-        // Load detail items with footer totals
         $.get("<?= base_url('rpa/getRpaDetail/') ?>" + row.rpa_id, function(data) {
             var totalDebit = 0;
             var totalCredit = 0;
             var totalDifference = 0;
 
+            if(data && data.length > 0) {
+                data.forEach(function(item) {
+                    totalDebit += parseFloat(item.debit_amount) || 0;
+                    totalCredit += parseFloat(item.credit_amount) || 0;
+                    totalDifference += parseFloat(item.difference_amount) || 0;
+                });
+            }
 
-            // Calculate totals
-            data.forEach(function(item) {
-                totalDebit += parseFloat(item.debit_amount) || 0;
-                totalCredit += parseFloat(item.credit_amount) || 0;
-                totalDifference += parseFloat(item.difference_amount) || 0;
-            });
-
-
-            // Add footer row for totals
             var footerData = [{
                 coa_code: '<strong>TOTAL</strong>',
                 coa_name: '',
@@ -822,12 +865,10 @@ function viewDetail() {
                 footer: footerData
             });
 
-            // Update summary section
             $('#detail_total_debit').text(formatCurrency(totalDebit));
             $('#detail_total_credit').text(formatCurrency(totalCredit));
             $('#detail_total_difference').text(formatCurrency(totalDifference));
             
-            // Balance check
             var balance = totalDebit - totalCredit;
             if(Math.abs(balance) < 0.01) {
                 $('#detail_balance_check').text('✓ Balanced').css('color', '#27ae60');
@@ -835,7 +876,6 @@ function viewDetail() {
                 $('#detail_balance_check').text('✗ Unbalanced (Diff: ' + formatCurrency(balance) + ')').css('color', '#e74c3c');
             }
 
-            // Disable the Approve and Reject buttons if the status is "approved"
             if (statusText.toLowerCase() === 'approved') {
                 $('#approveRpaBtn').linkbutton('disable');
                 $('#rejectRpaBtn').linkbutton('disable');
@@ -844,7 +884,6 @@ function viewDetail() {
                 $('#rejectRpaBtn').linkbutton('enable');
             }
             
-            // Open dialog
             $('#dialog-view-detail').dialog('open');
             
         }, 'json').fail(function() {
@@ -855,9 +894,6 @@ function viewDetail() {
     }
 }
 
-
-
-// Approve RPA Function
 function approveRpa() {
     var row = $('#dgRpa').treegrid('getSelected');
     var remarks = $('#approval_remarks').val();
@@ -866,7 +902,6 @@ function approveRpa() {
         $.messager.alert('Warning', 'No RPA selected', 'warning');
         return;
     }
-
 
     $.messager.confirm('Confirm', 'Are you sure you want to approve this RPA: ' + row.invoice_no + '?', function(r) {
         if (r) {
@@ -908,8 +943,6 @@ function approveRpa() {
     });
 }
 
-
-// NEW: Reject RPA Function with Mandatory Reason Popup
 function rejectRpa() {
     var row = $('#dgRpa').treegrid('getSelected');
     
@@ -918,31 +951,19 @@ function rejectRpa() {
         return;
     }
     
-    // Set invoice number in rejection dialog
     $('#reject-invoice-no').text(row.invoice_no);
-    
-    // Clear previous input and error
     $('#reject-reason-input').val('');
     $('#reject-reason-error').hide();
     $('#reject-char-count').text('0 / 10 characters (minimum)').removeClass('valid');
-    
-    // Store current row data for submission
     $('#dialog-reject-reason').data('currentRow', row);
-    
-    // Close view detail dialog
     $('#dialog-view-detail').dialog('close');
-    
-    // Open rejection reason dialog
     $('#dialog-reject-reason').dialog('open');
     
-    // Focus on textarea
     setTimeout(function() {
         $('#reject-reason-input').focus();
     }, 300);
 }
 
-
-// NEW: Character counter for rejection textarea
 $(document).on('input', '#reject-reason-input', function() {
     var length = $(this).val().length;
     var counter = $('#reject-char-count');
@@ -957,21 +978,10 @@ $(document).on('input', '#reject-reason-input', function() {
     }
 });
 
-function formatNumber(value) {
-    if (value == null || value === '') return '';
-    return parseFloat(value).toLocaleString('id-ID', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
-}
-
-
-// NEW: Submit Rejection Function
 function submitRejection() {
     var reason = $('#reject-reason-input').val().trim();
     var row = $('#dialog-reject-reason').data('currentRow');
     
-    // Validate reason (minimum 10 characters)
     if (!reason || reason.length < 10) {
         $('#reject-error-text').text('Rejection reason must be at least 10 characters long (current: ' + reason.length + ')');
         $('#reject-reason-error').show();
@@ -979,13 +989,9 @@ function submitRejection() {
         return;
     }
     
-    // Hide error if validation passes
     $('#reject-reason-error').hide();
-    
-    // Close rejection dialog
     $('#dialog-reject-reason').dialog('close');
     
-    // Confirm rejection with preview of reason
     var reasonPreview = reason.length > 100 ? reason.substring(0, 100) + '...' : reason;
     
     $.messager.confirm('Confirm Rejection', 
@@ -996,7 +1002,6 @@ function submitRejection() {
         '</div></div>',
         function(r) {
             if (r) {
-                // Show loading
                 $.messager.progress({
                     title: 'Please wait',
                     msg: 'Rejecting RPA...'
@@ -1031,16 +1036,62 @@ function submitRejection() {
                     }
                 });
             } else {
-                // If user cancels confirmation, reopen rejection dialog
                 $('#dialog-reject-reason').dialog('open');
             }
         }
     );
 }
 
+// ==== REAL-TIME INPUT MONITORING ====
+// Attach event listener untuk input debit/credit secara real-time
+function attachRealtimeListeners(index) {
+    var debitEditor = $('#dgRpaDetail').datagrid('getEditor', {index: index, field: 'debit'});
+    var creditEditor = $('#dgRpaDetail').datagrid('getEditor', {index: index, field: 'credit'});
+    
+    if(debitEditor) {
+        $(debitEditor.target).numberbox({
+            onChange: function(newValue, oldValue) {
+                // Update difference for current row
+                var row = $('#dgRpaDetail').datagrid('getRows')[index];
+                var debit = parseFloat(newValue) || 0;
+                var credit = parseFloat(row.credit) || 0;
+                
+                var creditEd = $('#dgRpaDetail').datagrid('getEditor', {index: index, field: 'credit'});
+                if(creditEd) {
+                    credit = parseFloat($(creditEd.target).numberbox('getValue')) || 0;
+                }
+                
+                row.difference = debit - credit;
+                
+                // Real-time update footer
+                updateDetailFooter();
+            }
+        });
+    }
+    
+    if(creditEditor) {
+        $(creditEditor.target).numberbox({
+            onChange: function(newValue, oldValue) {
+                // Update difference for current row
+                var row = $('#dgRpaDetail').datagrid('getRows')[index];
+                var credit = parseFloat(newValue) || 0;
+                var debit = parseFloat(row.debit) || 0;
+                
+                var debitEd = $('#dgRpaDetail').datagrid('getEditor', {index: index, field: 'debit'});
+                if(debitEd) {
+                    debit = parseFloat($(debitEd.target).numberbox('getValue')) || 0;
+                }
+                
+                row.difference = debit - credit;
+                
+                // Real-time update footer
+                updateDetailFooter();
+            }
+        });
+    }
+}
 
 function addDetailRow() {
-    // End editing pada row sebelumnya
     var editingIndex = getEditingIndex();
     if (editingIndex !== undefined) {
         if (!$('#dgRpaDetail').datagrid('endEdit', editingIndex)) {
@@ -1048,26 +1099,24 @@ function addDetailRow() {
         }
     }
     
-    // Append row baru
     $('#dgRpaDetail').datagrid('appendRow', {
         coa_code: '',
         name: '',
         currency: 'IDR',
         debit: 0,
         credit: 0,
+        difference: 0,
         remark: ''
     });
     
     var newIndex = $('#dgRpaDetail').datagrid('getRows').length - 1;
     $('#dgRpaDetail').datagrid('beginEdit', newIndex);
     
-    // Setup event handler untuk combogrid di row ini
     setTimeout(function(){
         var ed = $('#dgRpaDetail').datagrid('getEditor', {index: newIndex, field: 'coa_code'});
         if (ed) {
             var target = $(ed.target);
             
-            // Bind event onSelect untuk row ini
             target.combogrid('grid').datagrid({
                 onClickRow: function(rowIndex, rowData) {
                     target.combogrid('setValue', rowData.code);
@@ -1089,48 +1138,74 @@ function addDetailRow() {
             
             target.combogrid('textbox').focus();
         }
+        
+        // Attach real-time listeners untuk row baru
+        attachRealtimeListeners(newIndex);
     }, 100);
+    
+    updateDetailFooter();
 }
-
 
 function removeDetailRow() {
     var row = $('#dgRpaDetail').datagrid('getSelected');
     if (row) {
         var index = $('#dgRpaDetail').datagrid('getRowIndex', row);
         $('#dgRpaDetail').datagrid('deleteRow', index);
+        updateDetailFooter();
     } else {
         $.messager.alert('Warning', 'Pilih detail yang mau dihapus', 'warning');
     }
 }
 
+// Event handlers for datagrid
+$('#dgRpaDetail').datagrid({
+    onBeginEdit: function(index, row) {
+        // Attach real-time listeners saat mulai edit
+        setTimeout(function() {
+            attachRealtimeListeners(index);
+        }, 50);
+    },
+    onEndEdit: function(index, row) {
+        // Calculate difference for this row
+        var debit = parseFloat(row.debit) || 0;
+        var credit = parseFloat(row.credit) || 0;
+        row.difference = debit - credit;
+        
+        $('#dgRpaDetail').datagrid('refreshRow', index);
+        updateDetailFooter();
+    },
+    onLoadSuccess: function(data) {
+        updateDetailFooter();
+    },
+    onAfterEdit: function(index, row) {
+        // Calculate difference for this row
+        var debit = parseFloat(row.debit) || 0;
+        var credit = parseFloat(row.credit) || 0;
+        row.difference = debit - credit;
+        
+        updateDetailFooter();
+    }
+});
 
 function saveRpa() {
-    // Validate form
     var isValid = $('#formRpa').form('validate');
     if (!isValid) {
         $.messager.alert('Warning', 'Mohon lengkapi semua field yang wajib diisi', 'warning');
         return false;
     }
 
-
-    // End all editing rows
     var rows = $('#dgRpaDetail').datagrid('getRows');
     for (var i = 0; i < rows.length; i++) {
         $('#dgRpaDetail').datagrid('endEdit', i);
     }
 
-
-    // Get detail data
     var detailData = $('#dgRpaDetail').datagrid('getRows');
     
-    // Validate detail
     if (detailData.length === 0) {
         $.messager.alert('Warning', 'Minimal harus ada 1 detail RPA', 'warning');
         return false;
     }
 
-
-    // Validate each detail row
     for (var i = 0; i < detailData.length; i++) {
         if (!detailData[i].coa_code || !detailData[i].name) {
             $.messager.alert('Warning', 'Detail baris ke-' + (i + 1) + ' - COA Code belum dipilih', 'warning');
@@ -1151,13 +1226,9 @@ function saveRpa() {
         }
     }
 
-
-    // Serialize form data
     var formData = $('#formRpa').serialize();
     formData += '&details=' + encodeURIComponent(JSON.stringify(detailData));
 
-
-    // Submit data
     $.ajax({
         url: "<?= base_url('rpa/save') ?>",
         type: 'POST',

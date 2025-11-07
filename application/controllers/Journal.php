@@ -313,7 +313,7 @@ class Journal extends CI_Controller {
                 'description'  => $description,
                 'debit'        => $debit,
                 'credit'       => $credit,
-                'status'       => $status
+                'status'       => $status ?? 'Approve'
             ];
         }
 

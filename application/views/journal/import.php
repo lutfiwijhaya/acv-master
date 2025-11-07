@@ -1,15 +1,27 @@
-<div class="col-12">
-    <div class="card">
-        <div class="card-body">
+<section class="content-header">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><?= $title; ?></h3>
+            </div>
+            <div class="card-body">
             <!-- Upload Form -->
-            <form id="importForm" enctype="multipart/form-data" method="post">
-                <input type="file" name="file_excel" id="file_excel" accept=".xls,.xlsx" required>
-                <button type="submit" class="btn btn-primary">Upload & Preview</button>
+            <form id="importForm" enctype="multipart/form-data" method="post" style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="flex: 1;">
+                    <input type="file" name="file_excel" id="file_excel" accept=".xls,.xlsx" required>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary">Upload & Preview</button>
+                    <!-- Download Template Button -->
+                    <a href="<?= base_url('uploads/template_import_journal.xlsx'); ?>" download>
+                        <button type="button" class="btn btn-success" style="margin-left: 10px;"> <i class="fas fa-file-excel"></i> Download Template</button>
+                    </a>
+                </div>
             </form>
 
             <!-- Loading -->
             <div id="loading" style="display:none;text-align:center;margin:15px;">
-                <img src="<?= base_url('assets/images /loading.gif') ?>" width="50">
+                <img src="<?= base_url('assets/images/loading.gif') ?>" width="50">
                 <p>Processing file, please wait...</p>
             </div>
 
@@ -38,8 +50,11 @@
                 <button onclick="saveImport()" class="btn btn-success">Save Valid Data</button>
             </div>
         </div>
+        </div>
     </div>
-</div>
+</section>
+
+
 
 <script>
     // Styling invalid row

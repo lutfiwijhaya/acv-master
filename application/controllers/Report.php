@@ -706,4 +706,83 @@ class Report extends CI_Controller {
         exit;
     }
 
+
+    function buku_besar() {
+        $data['title']  = 'Buku Besar';
+        $data['sidebar']   = 'sidebar';
+        $data['collapsed'] = '';
+        $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/material-blue/easyui.css';
+        $data['css_files'][] = base_url() . 'assets/admin/easyui/themes/icon.css';
+        $data['css_files'][] = base_url() . 'assets/admin/plugins/daterangepicker/daterangepicker-bs3.css';
+        $data['js_files'][] = base_url() . 'assets/admin/easyui/jquery.easyui.min.js';
+        $data['js_files'][] = base_url() . 'assets/admin/easyui/datagrid-groupview.js';
+        $data['js_files'][] = base_url() . 'assets/admin/easyui/plugins/datagrid-scrollview.js';
+        $data['js_files'][] = base_url() . 'assets/admin/easyui/datagrid-export.js';
+        $data['js_files'][] = base_url() . 'assets/admin/plugins/daterangepicker/daterangepicker.js';
+        $data['js_files'][] = base_url() . 'assets/admin/plugins/accounting/accounting.min.js';
+        $data['js_files'][] = base_url() . 'assets/admin/chartjs/Chart.bundle.js';
+
+        // Render the Buku Besar template
+        $this->template->load('template', 'report/buku_besar', $data);
+    }
+
+    public function get_buku_besar_data() {
+        // Fetch input from the AJAX request
+        $start_date = $this->input->get('start_date');
+        $end_date   = $this->input->get('end_date');
+        $coa_id     = $this->input->get('coa_id'); // COA filter (optional)
+        $page       = $this->input->get('page', 1); // Page default is 1
+        $rows       = $this->input->get('rows', 10); // Rows default is 10
+
+         // Pastikan coa_id dapat kosong atau null
+        if (empty($coa_id)) {
+            $coa_id = null; // Set to null jika tidak ada COA ID
+        }
+        
+        $start_date = date('Y-m-d', strtotime(str_replace('/', '-', $start_date)));
+        $end_date = date('Y-m-d', strtotime(str_replace('/', '-', $end_date)));
+
+
+        // Ensure start and end date are provided
+        if (empty($start_date) || empty($end_date)) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['errorMsg' => 'Start Date and End Date are mandatory']));
+            return;
+        }
+
+        // Calculate offset for pagination
+        $offset = ($page - 1) * $rows;
+
+        // Get data from the Journal model
+        $result = $this->Journal_model->get_buku_besar_data($start_date, $end_date, $coa_id, $rows, $offset);
+
+        // Get total rows for pagination
+        $total = $this->Journal_model->count_buku_besar_data($start_date, $end_date, $coa_id);
+
+        // Initialize variables for total debit, credit, and balance
+        $total_debit = 0;
+        $total_credit = 0;
+        $total_balance = 0;
+
+        // Calculate totals for debit, credit, and balance
+        foreach ($result as $row) {
+            $total_debit += $row->total_debit;
+            $total_credit += $row->total_credit;
+        }
+
+        // Calculate balance
+        $total_balance = $total_debit - $total_credit;
+
+        // Return JSON response
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'total' => $total,
+                'rows'  => $result,
+                'footer' => [['journal_no' => 'TOTAL', 'debit' => $total_debit, 'credit' => $total_credit, 'saldo' => $total_balance]]
+            ]));
+    }
+
+
 }

@@ -853,4 +853,33 @@ class Rpa_model extends CI_Model {
         
         return $this->db->get()->result_array();
     }
+
+    public function get_rpa_details($rpa_id)
+    {
+        // Select necessary columns from the rpa_detail table
+        $this->db->select('rpa_detail.coa_id, rpa_detail.debit_amount, rpa_detail.credit_amount, rpa_detail.supplementary_desc');
+        $this->db->from('rpa_detail');
+        $this->db->where('rpa_detail.rpa_id', $rpa_id);
+
+        // Optionally, you can join with other tables if needed, for example:
+        // $this->db->join('coa', 'coa.id = rpa_detail.coa_id');
+
+        // Execute the query and return the results
+        $query = $this->db->get();
+
+        return $query->result_array();  // Return the result as an array
+    }
+
+
+     // Function to update the journal_id for a specific RPA
+    public function update_journal_id($rpa_id, $journal_id)
+    {
+        // Update the journal_id for the specified RPA ID
+        $data = ['posted_journal_id' => $journal_id];
+        
+        // Apply the update query
+        $this->db->where('id', $rpa_id);
+        return $this->db->update('rpa', $data);
+    }
+
 }

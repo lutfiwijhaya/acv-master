@@ -3,7 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Rpa_model extends CI_Model {
 
-    public function get_all($search = null, $limit = 100, $offset = 0)
+    public function get_all($search = null, $status = null, $limit = 100, $offset = 0)
     {
         $this->db->select("
             r.id as rpa_id,
@@ -20,6 +20,7 @@ class Rpa_model extends CI_Model {
         $this->db->from("rpa r");
         $this->db->join("tbl_supplier s", "s.id = r.supplier_id", "left");
 
+        // Filter pencarian berdasarkan invoice_no, charge_code, atau supplier_name
         if (!empty($search)) {
             $this->db->group_start();
             $this->db->like("r.invoice_no", $search);
@@ -28,11 +29,18 @@ class Rpa_model extends CI_Model {
             $this->db->group_end();
         }
 
+        // Filter berdasarkan status
+        if (!empty($status)) {
+            $this->db->where("r.status", $status);
+        }
+
         $this->db->limit($limit, $offset);
         $this->db->order_by("r.id", "DESC");
 
+        // Ambil data utama
         $main_records = $this->db->get()->result_array();
 
+        // Ambil data detail untuk setiap RPA
         foreach ($main_records as &$record) {
             $this->db->select("
                 d.id as child_id,
@@ -55,18 +63,21 @@ class Rpa_model extends CI_Model {
             $this->db->where("d.rpa_id", $record['rpa_id']);
             $children = $this->db->get()->result_array();
 
+            // Menambahkan data anak ke dalam record utama
             $record['children'] = $children;
         }
 
         return $main_records;
     }
 
-    public function count_all($search = null)
+
+   public function count_all($search = null, $status = null)
     {
         $this->db->from("rpa r");
         $this->db->join("rpa_detail d", "d.rpa_id = r.id", "left");
         $this->db->join("tbl_supplier s", "s.id = r.supplier_id", "left");
 
+        // Filter pencarian berdasarkan invoice_no, charge_code, atau supplier_name
         if (!empty($search)) {
             $this->db->group_start();
             $this->db->like("r.invoice_no", $search);
@@ -75,11 +86,18 @@ class Rpa_model extends CI_Model {
             $this->db->group_end();
         }
 
+        // Filter berdasarkan status
+        if (!empty($status)) {
+            $this->db->where("r.status", $status);
+        }
+
         $this->db->distinct();
         $this->db->select("r.id");
 
+        // Hitung jumlah data yang ditemukan
         return $this->db->count_all_results();
     }
+
     
     public function get_by_id($id)
     {
@@ -154,10 +172,11 @@ class Rpa_model extends CI_Model {
     {
         $this->db->insert("rpa", $data);
         $rpa_id = $this->db->insert_id();
-        
         if (is_array($details)) {
             foreach ($details as $detail) {
                 $detail['rpa_id'] = $rpa_id;
+                 // Remove 'difference' if it exists in the array
+                unset($detail['difference']);
                 if (isset($detail['coa_code'])) {
                     $coa = $this->db->get_where('coa', ['code' => $detail['coa_code']])->row();
                     $detail['coa_id'] = $coa ? $coa->id : null;

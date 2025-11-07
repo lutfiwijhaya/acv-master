@@ -32,16 +32,17 @@ class Rpa extends CI_Controller {
         $this->template->load('template',"rpa/list", $data);
     }
 
-    public function getRpaData()
-    {
+    public function getRpaData() {
         $page  = (int) $this->input->get("page");
         $rows  = (int) $this->input->get("rows");
         $search = $this->input->get("search_data");
+        $status = $this->input->get("status");  // Get the filter status
 
         $offset = ($page - 1) * $rows;
 
-        $dataRows = $this->Rpa_model->get_all($search, $rows, $offset);
-        $total    = $this->Rpa_model->count_all($search);
+        // Pass the status filter to the model query
+        $dataRows = $this->Rpa_model->get_all($search, $status, $rows, $offset);
+        $total    = $this->Rpa_model->count_all($search, $status);
 
         echo json_encode([
             "total" => $total,

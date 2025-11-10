@@ -211,6 +211,7 @@ class Rpa_model extends CI_Model {
         $this->db->where("rpa_id", $id)->delete("rpa_detail");
         foreach ($details as $detail) {
             $detail['rpa_id'] = $id;
+            unset($detail['difference']);
             $this->db->insert("rpa_detail", $detail);
         }
 
@@ -516,8 +517,6 @@ class Rpa_model extends CI_Model {
         
         return 'cash';
     }
-
-    // ========== DAILY REPORT METHODS ==========
 
     public function get_daily_report($date, $date_field = 'request_date')
     {

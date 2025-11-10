@@ -497,7 +497,7 @@ function printRpa(rpaId) {
         $.messager.alert('Warning', 'Invalid RPA ID', 'warning');
         return;
     }
-    var printUrl = "<?= base_url('pdf/generate_rpa/') ?>" + rpaId;
+    var printUrl = "<?= base_url('PDF/generate_rpa/') ?>" + rpaId;
     window.open(printUrl, '_blank');
 }
 

@@ -34,13 +34,15 @@
                 style="width:100%;height:400px;display:none;">
                 <thead>
                     <tr>
-                        <th field="journal_date" width="15%">Date</th>
-                        <th field="coa_code" width="15%">COA Code</th>
-                        <th field="coa_name" width="20%">COA Name</th>
-                        <th field="description" width="30%">Description</th>
+                         <th field="journal_date" width="15%">Date</th>
+                        <th field="project_code" width="10%">Project Code</th>
+                        <th field="coa_code" width="10%">COA Code</th>
+                        <th field="coa_name" width="15%">COA Name</th>
+                        <th field="description" width="20%">Description</th>
                         <th field="debit" width="10%" align="right">Debit</th>
                         <th field="credit" width="10%" align="right">Credit</th>
-                        <th field="status" width="10%" styler="statusStyler">Status</th>
+                        <th field="status" width="10%">Status</th>
+                        <th field="status_journal" width="10%" align="center">Status Journal</th>
                     </tr>
                 </thead>
             </table>
@@ -53,8 +55,6 @@
         </div>
     </div>
 </section>
-
-
 
 <script>
     // Styling invalid row
@@ -118,3 +118,18 @@
         });
     }
 </script>
+
+<style>
+    /* Fix the styling issue with the Status Journal column */
+    .datagrid-cell[field="status_journal"] {
+        text-align: center;
+        color: #000;
+        font-weight: bold;
+        background-color: transparent; /* Fix background color issue */
+    }
+
+    /* Make sure the rest of the table is aligned properly */
+    .datagrid-cell {
+        padding: 5px 10px;
+    }
+</style>

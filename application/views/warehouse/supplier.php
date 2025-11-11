@@ -24,7 +24,7 @@
 	                      <th field="address" width="20%">Address</th>
 	                      <th field="bank_account" width="10%">Bank Account</th>
 	                      <th field="rek_bank" width="10%">Rekening Bank</th>
-	                      <th field="tax" width="10%">Tax</th>
+	                      <th field="tax" width="10%">NPWP</th>
 	                      <th field="status" width="10%">Status</th>
 	                      <th field="created_at" width="10%">Created At</th>
 	                      <th field="updated_at" width="10%">Updated At</th>
@@ -60,13 +60,13 @@
 					<input class="easyui-textbox" id="PIC_name" name="PIC_name" style="width:100%" data-options="label:'PIC Name:',required:true">
 				</div>
 				<div style="margin-bottom:20px">
-					<input class="easyui-textbox" id="email" name="email" style="width:100%" data-options="label:'Email:',required:true,validType:'email'">
+					<input class="easyui-textbox" id="email" name="email" style="width:100%" data-options="label:'Email:',validType:'email'">
 				</div>
 				<div style="margin-bottom:20px">
-					<input class="easyui-textbox" id="phone" name="phone" style="width:100%" data-options="label:'Phone:',required:true">
+					<input class="easyui-textbox" id="phone" name="phone" style="width:100%" data-options="label:'Phone:'">
 				</div>
 				<div style="margin-bottom:20px">
-					<input class="easyui-textbox" id="address" name="address" style="width:100%" data-options="label:'Address:',required:true">
+					<input class="easyui-textbox" id="address" name="address" style="width:100%" data-options="label:'Address:'">
 				</div>
 				<div style="margin-bottom:20px">
 					<input class="easyui-textbox" id="bank_account" name="bank_account" style="width:100%" data-options="label:'Bank Account:',required:true">
@@ -75,7 +75,7 @@
 					<input class="easyui-textbox" id="rek_bank" name="rek_bank" style="width:100%" data-options="label:'Rekening Bank:',required:true">
 				</div>
 				<div style="margin-bottom:20px">
-					<input class="easyui-textbox" id="tax" name="tax" style="width:100%" data-options="label:'Tax:',required:true">
+					<input class="easyui-textbox" id="tax" name="tax" style="width:100%" data-options="label:'NPWP:',required:true">
 				</div>
 				<div style="margin-bottom:20px">
 					<input class="easyui-combobox" id="status" name="status" style="width:100%" data-options="label:'Status:',required:true,valueField:'value',textField:'label',data:[{label:'Active',value:'1'},{label:'Inactive',value:'0'}]">

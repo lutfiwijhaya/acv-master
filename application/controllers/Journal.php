@@ -229,7 +229,7 @@ class Journal extends CI_Controller {
             echo json_encode(['error' => 'Tidak ada file yang diupload atau terjadi error saat upload.']);
             return;
         }
-
+    
         // Validasi tipe file
         $allowed_types = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
         $file_type = $_FILES['file_excel']['type'];
@@ -239,54 +239,54 @@ class Journal extends CI_Controller {
             echo json_encode(['error' => 'Tipe file tidak diizinkan. Hanya file Excel (.xls, .xlsx) yang diperbolehkan.']);
             return;
         }
-
+    
         // Validasi ukuran file (maksimal 5MB)
         $max_size = 5 * 1024 * 1024; // 5MB
         if ($_FILES['file_excel']['size'] > $max_size) {
             echo json_encode(['error' => 'Ukuran file terlalu besar. Maksimal 5MB.']);
             return;
         }
-
+    
         try {
             // Baca file langsung dari temporary location tanpa menyimpan
             $filePath = $_FILES['file_excel']['tmp_name'];
             
             $spreadsheet = IOFactory::load($filePath);
             $sheet = $spreadsheet->getActiveSheet();
-
+    
             $rows = [];
             $highestRow = $sheet->getHighestRow();
-
+    
             // Validasi apakah ada data
             if ($highestRow < 2) {
                 echo json_encode(['error' => 'File Excel tidak memiliki data. Minimal harus ada 1 baris data setelah header.']);
                 return;
             }
-
+    
             for ($r = 2; $r <= $highestRow; $r++) {
                 // Kolom A: journal_date
                 $cellA = $sheet->getCell('A'.$r);
                 $rawDate = $cellA->getValue();
-
+    
                 // Parse tanggal
                 $journal_date = null;
                 try {
                     if (Date::isDateTime($cellA)) {
-                        $journal_date = Date::excelToDateTimeObject($rawDate)->format('Y-m-d');
+                        $journal_date = Date::excelToDateTimeObject($rawDate)->format('d-m-Y');
                     } elseif (is_numeric($rawDate) && $rawDate > 0) {
-                        $journal_date = Date::excelToDateTimeObject((float)$rawDate)->format('Y-m-d');
+                        $journal_date = Date::excelToDateTimeObject((float)$rawDate)->format('d-m-Y');
                     } else {
                         $str = trim((string)$rawDate);
                         if ($str !== '') {
                             $ts = strtotime(str_replace('.', '-', $str));
                             if ($ts !== false && $ts > 0) {
-                                $journal_date = date('Y-m-d', $ts);
+                                $journal_date = date('d-m-Y', $ts);
                             } else {
                                 $formats = ['Y-m-d', 'd-m-Y', 'd/m/Y', 'd.m.Y', 'm/d/Y', 'Y/m/d'];
                                 foreach ($formats as $fmt) {
                                     $dt = \DateTime::createFromFormat($fmt, $str);
                                     if ($dt && $dt->format($fmt) === $str) {
-                                        $journal_date = $dt->format('Y-m-d');
+                                        $journal_date = $dt->format('d-m-Y');
                                         break;
                                     }
                                 }
@@ -296,7 +296,7 @@ class Journal extends CI_Controller {
                 } catch (\Exception $e) {
                     $journal_date = null;
                 }
-
+    
                 // Kolom B: project_code
                 $project_code = trim((string)$sheet->getCell('B'.$r)->getValue());
                 
@@ -323,15 +323,15 @@ class Journal extends CI_Controller {
                 $invoice_date = null;
                 try {
                     if (Date::isDateTime($cellH)) {
-                        $invoice_date = Date::excelToDateTimeObject($rawInvoiceDate)->format('Y-m-d');
+                        $invoice_date = Date::excelToDateTimeObject($rawInvoiceDate)->format('d-m-Y');
                     } elseif (is_numeric($rawInvoiceDate) && $rawInvoiceDate > 0) {
-                        $invoice_date = Date::excelToDateTimeObject((float)$rawInvoiceDate)->format('Y-m-d');
+                        $invoice_date = Date::excelToDateTimeObject((float)$rawInvoiceDate)->format('d-m-Y');
                     } else {
                         $str = trim((string)$rawInvoiceDate);
                         if ($str !== '') {
                             $ts = strtotime(str_replace('.', '-', $str));
                             if ($ts !== false && $ts > 0) {
-                                $invoice_date = date('Y-m-d', $ts);
+                                $invoice_date = date('d-m-Y', $ts);
                             }
                         }
                     }
@@ -350,36 +350,36 @@ class Journal extends CI_Controller {
                 
                 // Kolom L: status
                 $journal_status = trim((string)$sheet->getCell('L'.$r)->getValue());
-
+    
                 // Skip baris kosong
                 if (empty($project_code) && empty($reference) && empty($coa_code)) {
                     continue;
                 }
-
+    
                 $debit  = is_numeric($debit_raw) ? (float)$debit_raw : floatval(str_replace([',',' '], ['', ''], $debit_raw));
                 $credit = is_numeric($credit_raw) ? (float)$credit_raw : floatval(str_replace([',',' '], ['', ''], $credit_raw));
-
+    
                 // Validasi COA
                 $coa = $this->db->where('code', $coa_code)->get('coa')->row();
                 $status = $coa ? 'VALID' : 'INVALID';
-
+    
                 // Validasi Project Code
                 $code_project = $this->db->where('code', $project_code)->get('project_code')->row();
                 $code_project_name = $code_project ? $code_project->name : '-';
                 
                 // Jika project code atau COA tidak ditemukan, tandai sebagai INVALID
-                if (!$coa) {
+                if (!$coa || !$code_project) {
                     $status = 'INVALID';
                 }
-
+    
                 // Validasi tanggal
                 if (empty($journal_date)) {
                     $status = 'INVALID_DATE';
                 }
-
+    
                 // Validasi status journal
                 $status_journal = (strtolower($journal_status) === 'new') ? 'New' : 'Approved';
-
+    
                 $rows[] = [
                     'journal_date'   => $journal_date,
                     'project_code'   => $code_project_name,
@@ -397,15 +397,15 @@ class Journal extends CI_Controller {
                     'status_journal' => $status_journal
                 ];
             }
-
+    
             // Validasi apakah ada data yang berhasil dibaca
             if (empty($rows)) {
                 echo json_encode(['error' => 'Tidak ada data valid yang dapat dibaca dari file Excel.']);
                 return;
             }
-
+    
             echo json_encode(['rows' => $rows]);
-
+    
         } catch (\Exception $e) {
             echo json_encode(['error' => 'Terjadi kesalahan saat membaca file Excel: ' . $e->getMessage()]);
         }

@@ -34,20 +34,20 @@
                 style="width:100%;height:400px;display:none;">
                 <thead>
                     <tr>
-                        <th field="journal_date" width="8%">Date</th>
-                        <th field="project_code" width="8%">Project Code</th>
+                        <th field="journal_date" width="7%">Date</th>
+                        <th field="project_code" width="10%">Project Code</th>
                         <th field="reference" width="8%">Reference</th>
-                        <th field="coa_code" width="7%">COA Code</th>
+                        <th field="coa_code" width="6%">COA Code</th>
                         <th field="coa_name" width="10%">COA Name</th>
-                        <th field="npwp" width="10%">NPWP</th>
-                        <th field="supplier" width="10%">Supplier</th>
-                        <th field="invoice_number" width="9%">Invoice Number</th>
-                        <th field="invoice_date" width="8%">Invoice Date</th>
+                        <th field="npwp" width="8%">NPWP</th>
+                        <th field="supplier" width="9%">Supplier</th>
+                        <th field="invoice_number" width="8%">Invoice Number</th>
+                        <th field="invoice_date" width="7%">Invoice Date</th>
                         <th field="description" width="12%">Description</th>
-                        <th field="debit" width="7%" align="right">Debit</th>
-                        <th field="credit" width="7%" align="right">Credit</th>
-                        <th field="status" width="6%" align="center">Status</th>
-                        <th field="status_journal" width="7%" align="center">Status Journal</th>
+                        <th field="debit" width="6%" align="right">Debit</th>
+                        <th field="credit" width="6%" align="right">Credit</th>
+                        <th field="status" width="5%" align="center">Status</th>
+                        <th field="status_journal" width="6%" align="center">Status Journal</th>
                     </tr>
                 </thead>
             </table>
@@ -103,20 +103,20 @@
                     $("#dgPreview").datagrid({
                         data: result.rows,
                         columns: [[
-                            {field:'journal_date', title:'Date', width:'8%'},
-                            {field:'project_code', title:'Project Code', width:'8%'},
+                            {field:'journal_date', title:'Date', width:'7%'},
+                            {field:'project_code', title:'Project Code', width:'10%'},
                             {field:'reference', title:'Reference', width:'8%'},
-                            {field:'coa_code', title:'COA Code', width:'7%'},
+                            {field:'coa_code', title:'COA Code', width:'6%'},
                             {field:'coa_name', title:'COA Name', width:'10%'},
-                            {field:'npwp', title:'NPWP', width:'10%'},
-                            {field:'supplier', title:'Supplier', width:'10%'},
-                            {field:'invoice_number', title:'Invoice Number', width:'9%'},
-                            {field:'invoice_date', title:'Invoice Date', width:'8%'},
+                            {field:'npwp', title:'NPWP', width:'8%'},
+                            {field:'supplier', title:'Supplier', width:'9%'},
+                            {field:'invoice_number', title:'Invoice Number', width:'8%'},
+                            {field:'invoice_date', title:'Invoice Date', width:'7%'},
                             {field:'description', title:'Description', width:'12%'},
-                            {field:'debit', title:'Debit', width:'7%', align:'right', formatter: formatCurrency},
-                            {field:'credit', title:'Credit', width:'7%', align:'right', formatter: formatCurrency},
-                            {field:'status', title:'Status', width:'6%', align:'center', styler: statusStyler},
-                            {field:'status_journal', title:'Status Journal', width:'7%', align:'center'}
+                            {field:'debit', title:'Debit', width:'6%', align:'right', formatter: formatCurrency},
+                            {field:'credit', title:'Credit', width:'6%', align:'right', formatter: formatCurrency},
+                            {field:'status', title:'Status', width:'5%', align:'center', styler: statusStyler},
+                            {field:'status_journal', title:'Status Journal', width:'6%', align:'center'}
                         ]],
                         rowStyler: function(index, row) {
                             if (row.status === 'INVALID' || row.status === 'INVALID_DATE') {

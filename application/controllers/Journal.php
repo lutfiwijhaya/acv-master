@@ -220,172 +220,6 @@ class Journal extends CI_Controller {
         $this->template->load('template',"journal/import", $data);
     } 
 
-    // public function importPreview()
-    // {
-    //     $config['upload_path']   = './uploads/';
-    //     $config['allowed_types'] = 'xls|xlsx';
-    //     $config['encrypt_name']  = TRUE;
-
-    //     $this->load->library('upload', $config);
-
-    //     if (!$this->upload->do_upload('file_excel')) {
-    //         echo json_encode(['error' => $this->upload->display_errors()]);
-    //         return;
-    //     }
-
-    //     $file = $this->upload->data();
-    //     $filePath = $file['full_path'];
-
-    //     $spreadsheet = IOFactory::load($filePath);
-    //     $sheet = $spreadsheet->getActiveSheet();
-
-    //     $rows = [];
-    //     $highestRow = $sheet->getHighestRow();
-
-    //     for ($r = 2; $r <= $highestRow; $r++) {
-    //         // ambil cell object untuk kolom A..H sesuai format:
-    //         // A=journal_date, B=project_code, C=reference, D=coa_code, E=faktur_pajak, F=description, G=debit, H=credit
-    //         $cellA = $sheet->getCell('A'.$r); // tanggal
-    //         $rawDate = $cellA->getValue();
-
-    //         // parse tanggal (handle excel date serial / Date cell / string)
-    //         $journal_date = null;
-    //         try {
-    //             if (Date::isDateTime($cellA)) {
-    //                 // jika cell bertipe date atau berformat date
-    //                 $journal_date = Date::excelToDateTimeObject($rawDate)->format('Y-m-d');
-    //             } elseif (is_numeric($rawDate) && $rawDate > 0) {
-    //                 // fallback: numeric excel serial
-    //                 $journal_date = Date::excelToDateTimeObject((float)$rawDate)->format('Y-m-d');
-    //             } else {
-    //                 // string -> coba konversi dengan strtotime atau DateTime
-    //                 $str = trim((string)$rawDate);
-    //                 if ($str !== '') {
-    //                     // beberapa kemungkinan format, kita coba strtotime
-    //                     $ts = strtotime(str_replace('.', '-', $str));
-    //                     if ($ts !== false && $ts > 0) {
-    //                         $journal_date = date('Y-m-d', $ts);
-    //                     } else {
-    //                         // coba beberapa format eksplisit
-    //                         $formats = ['Y-m-d','d-m-Y','d/m/Y','d.m.Y','m/d/Y','Y/m/d'];
-    //                         foreach ($formats as $fmt) {
-    //                             $dt = \DateTime::createFromFormat($fmt, $str);
-    //                             if ($dt && $dt->format($fmt) === $str) {
-    //                                 $journal_date = $dt->format('Y-m-d');
-    //                                 break;
-    //                             }
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         } catch (\Exception $e) {
-    //             $journal_date = null;
-    //         }
-
-    //         $project_code = trim((string)$sheet->getCell('B'.$r)->getValue());
-    //         $reference    = trim((string)$sheet->getCell('C'.$r)->getValue());
-    //         $coa_code     = trim((string)$sheet->getCell('D'.$r)->getValue());
-    //         $faktur_pajak = trim((string)$sheet->getCell('E'.$r)->getValue());
-    //         $description  = trim((string)$sheet->getCell('F'.$r)->getValue());
-    //         $debit_raw    = $sheet->getCell('G'.$r)->getValue();
-    //         $credit_raw   = $sheet->getCell('H'.$r)->getValue();
-
-    //         // coba ubah debit/credit jadi numeric (hilangkan tanda ribuan jika ada)
-    //         $debit  = is_numeric($debit_raw) ? (float)$debit_raw : floatval(str_replace([',',' '], ['', ''], $debit_raw));
-    //         $credit = is_numeric($credit_raw) ? (float)$credit_raw : floatval(str_replace([',',' '], ['', ''], $credit_raw));
-
-    //         // cek coa
-    //         $coa = $this->db->where('code', $coa_code)->get('coa')->row();
-    //         $status = $coa ? 'VALID' : 'INVALID';
-
-    //         // jika tanggal tidak valid, tandai INVALID_DATE (opsional)
-    //         if (empty($journal_date)) {
-    //             $status = 'INVALID_DATE';
-    //         }
-
-    //         $rows[] = [
-    //             'journal_date' => $journal_date,        // sudah Y-m-d atau null
-    //             'project_code' => $project_code,
-    //             'reference'    => $reference,
-    //             'coa_code'     => $coa_code,
-    //             'faktur_pajak' => $faktur_pajak,
-    //             'coa_name'     => $coa ? $coa->name : '-',
-    //             'description'  => $description,
-    //             'debit'        => $debit,
-    //             'credit'       => $credit,
-    //             'status'       => $status ?? 'Approve'
-    //         ];
-    //     }
-
-    //     echo json_encode(['rows' => $rows]);
-    // }
-
-    // public function importSave()
-    // {
-    //     $rows = json_decode($this->input->post('rows'), true);
-
-    //     // 🔍 cek apakah ada data invalid
-    //     $invalidRows = array_filter($rows, function ($r) {
-    //         return ($r['status'] !== 'VALID');
-    //     });
-
-    //     if (count($invalidRows) > 0) {
-    //         echo json_encode([
-    //             'success' => false,
-    //             'message' => 'Masih ada data yang INVALID atau tanggal tidak valid. Harap perbaiki sebelum menyimpan.'
-    //         ]);
-    //         return;
-    //     }
-
-    //     $success = 0;
-
-    //     $this->db->trans_start();
-
-    //     foreach ($rows as $r) {
-    //         // di sini pasti sudah VALID semua
-    //         $journal = $this->db->where('reference', $r['reference'])
-    //                             ->where('project_code', $r['project_code'])
-    //                             ->get('journal')
-    //                             ->row();
-
-    //         if (!$journal) {
-    //             $dataJournal = [
-    //                 'project_code' => $r['project_code'],
-    //                 'journal_date' => $r['journal_date'],
-    //                 'reference'    => $r['reference'],
-    //                 'description'  => $r['description'],
-    //                 'tax_invoice'  => $r['faktur_pajak']
-    //             ];
-    //             $this->db->insert('journal', $dataJournal);
-    //             $journal_id = $this->db->insert_id();
-    //         } else {
-    //             $journal_id = $journal->id;
-    //         }
-
-    //         // ambil coa
-    //         $coa = $this->db->where('code', $r['coa_code'])->get('coa')->row();
-
-    //         // insert journal detail
-    //         $dataDetail = [
-    //             'journal_id'   => $journal_id,
-    //             'coa_id'       => $coa->id,
-    //             'description'  => $r['description'],
-    //             'debit'        => (float)$r['debit'],
-    //             'credit'       => (float)$r['credit']
-    //         ];
-    //         $this->db->insert('journal_details', $dataDetail);
-    //         $success++;
-    //     }
-
-    //     $this->db->trans_complete();
-
-    //     if ($this->db->trans_status() === FALSE) {
-    //         echo json_encode(['success' => false, 'message' => 'Gagal menyimpan data.']);
-    //     } else {
-    //         echo json_encode(['success' => true, 'message' => "$success data berhasil disimpan."]);
-    //     }
-    // }
-
     public function importPreview()
     {
         header('Content-Type: application/json');
@@ -395,7 +229,7 @@ class Journal extends CI_Controller {
             echo json_encode(['error' => 'Tidak ada file yang diupload atau terjadi error saat upload.']);
             return;
         }
-    
+
         // Validasi tipe file
         $allowed_types = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
         $file_type = $_FILES['file_excel']['type'];
@@ -405,34 +239,35 @@ class Journal extends CI_Controller {
             echo json_encode(['error' => 'Tipe file tidak diizinkan. Hanya file Excel (.xls, .xlsx) yang diperbolehkan.']);
             return;
         }
-    
+
         // Validasi ukuran file (maksimal 5MB)
         $max_size = 5 * 1024 * 1024; // 5MB
         if ($_FILES['file_excel']['size'] > $max_size) {
             echo json_encode(['error' => 'Ukuran file terlalu besar. Maksimal 5MB.']);
             return;
         }
-    
+
         try {
             // Baca file langsung dari temporary location tanpa menyimpan
             $filePath = $_FILES['file_excel']['tmp_name'];
             
             $spreadsheet = IOFactory::load($filePath);
             $sheet = $spreadsheet->getActiveSheet();
-    
+
             $rows = [];
             $highestRow = $sheet->getHighestRow();
-    
+
             // Validasi apakah ada data
             if ($highestRow < 2) {
                 echo json_encode(['error' => 'File Excel tidak memiliki data. Minimal harus ada 1 baris data setelah header.']);
                 return;
             }
-    
+
             for ($r = 2; $r <= $highestRow; $r++) {
+                // Kolom A: journal_date
                 $cellA = $sheet->getCell('A'.$r);
                 $rawDate = $cellA->getValue();
-    
+
                 // Parse tanggal
                 $journal_date = null;
                 try {
@@ -461,51 +296,99 @@ class Journal extends CI_Controller {
                 } catch (\Exception $e) {
                     $journal_date = null;
                 }
-    
+
+                // Kolom B: project_code
                 $project_code = trim((string)$sheet->getCell('B'.$r)->getValue());
-                $reference    = trim((string)$sheet->getCell('C'.$r)->getValue());
-                $coa_code     = trim((string)$sheet->getCell('D'.$r)->getValue());
-                $faktur_pajak = trim((string)$sheet->getCell('E'.$r)->getValue());
-                $description  = trim((string)$sheet->getCell('F'.$r)->getValue());
-                $debit_raw    = $sheet->getCell('G'.$r)->getValue();
-                $credit_raw   = $sheet->getCell('H'.$r)->getValue();
-                $journal_status = trim((string)$sheet->getCell('I'.$r)->getValue());
-    
+                
+                // Kolom C: reference
+                $reference = trim((string)$sheet->getCell('C'.$r)->getValue());
+                
+                // Kolom D: coa_code
+                $coa_code = trim((string)$sheet->getCell('D'.$r)->getValue());
+                
+                // Kolom E: NPWP
+                $npwp = trim((string)$sheet->getCell('E'.$r)->getValue());
+                
+                // Kolom F: SUPPLIER
+                $supplier = trim((string)$sheet->getCell('F'.$r)->getValue());
+                
+                // Kolom G: INVOICE NUMBER
+                $invoice_number = trim((string)$sheet->getCell('G'.$r)->getValue());
+                
+                // Kolom H: INVOICE DATE
+                $cellH = $sheet->getCell('H'.$r);
+                $rawInvoiceDate = $cellH->getValue();
+                
+                // Parse invoice date
+                $invoice_date = null;
+                try {
+                    if (Date::isDateTime($cellH)) {
+                        $invoice_date = Date::excelToDateTimeObject($rawInvoiceDate)->format('Y-m-d');
+                    } elseif (is_numeric($rawInvoiceDate) && $rawInvoiceDate > 0) {
+                        $invoice_date = Date::excelToDateTimeObject((float)$rawInvoiceDate)->format('Y-m-d');
+                    } else {
+                        $str = trim((string)$rawInvoiceDate);
+                        if ($str !== '') {
+                            $ts = strtotime(str_replace('.', '-', $str));
+                            if ($ts !== false && $ts > 0) {
+                                $invoice_date = date('Y-m-d', $ts);
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    $invoice_date = null;
+                }
+                
+                // Kolom I: description
+                $description = trim((string)$sheet->getCell('I'.$r)->getValue());
+                
+                // Kolom J: debit
+                $debit_raw = $sheet->getCell('J'.$r)->getValue();
+                
+                // Kolom K: credit
+                $credit_raw = $sheet->getCell('K'.$r)->getValue();
+                
+                // Kolom L: status
+                $journal_status = trim((string)$sheet->getCell('L'.$r)->getValue());
+
                 // Skip baris kosong
                 if (empty($project_code) && empty($reference) && empty($coa_code)) {
                     continue;
                 }
-    
+
                 $debit  = is_numeric($debit_raw) ? (float)$debit_raw : floatval(str_replace([',',' '], ['', ''], $debit_raw));
                 $credit = is_numeric($credit_raw) ? (float)$credit_raw : floatval(str_replace([',',' '], ['', ''], $credit_raw));
-    
+
                 // Validasi COA
                 $coa = $this->db->where('code', $coa_code)->get('coa')->row();
                 $status = $coa ? 'VALID' : 'INVALID';
-    
+
                 // Validasi Project Code
                 $code_project = $this->db->where('code', $project_code)->get('project_code')->row();
                 $code_project_name = $code_project ? $code_project->name : '-';
                 
-                // Jika project code tidak ditemukan, tandai sebagai INVALID
+                // Jika project code atau COA tidak ditemukan, tandai sebagai INVALID
                 if (!$coa) {
                     $status = 'INVALID';
                 }
-    
+
                 // Validasi tanggal
                 if (empty($journal_date)) {
                     $status = 'INVALID_DATE';
                 }
-    
+
                 // Validasi status journal
                 $status_journal = (strtolower($journal_status) === 'new') ? 'New' : 'Approved';
-    
+
                 $rows[] = [
                     'journal_date'   => $journal_date,
                     'project_code'   => $code_project_name,
                     'reference'      => $reference,
                     'coa_code'       => $coa_code,
-                    'faktur_pajak'   => $faktur_pajak,
+                    'npwp'           => $npwp,
+                    'supplier'       => $supplier,
+                    'invoice_number' => $invoice_number,
+                    'invoice_date'   => $invoice_date,
                     'coa_name'       => $coa ? $coa->name : '-',
                     'description'    => $description,
                     'debit'          => $debit,
@@ -514,21 +397,19 @@ class Journal extends CI_Controller {
                     'status_journal' => $status_journal
                 ];
             }
-    
+
             // Validasi apakah ada data yang berhasil dibaca
             if (empty($rows)) {
                 echo json_encode(['error' => 'Tidak ada data valid yang dapat dibaca dari file Excel.']);
                 return;
             }
-    
+
             echo json_encode(['rows' => $rows]);
-    
+
         } catch (\Exception $e) {
             echo json_encode(['error' => 'Terjadi kesalahan saat membaca file Excel: ' . $e->getMessage()]);
         }
     }
-
-
 
     public function importSave()
     {
@@ -578,6 +459,22 @@ class Journal extends CI_Controller {
         foreach ($groupedByReference as $reference => $refRows) {
             $status_journal = $refRows[0]['status_journal'];
     
+            // Get supplier_id from tbl_supplier by nama
+            $supplier_id = null;
+            if (!empty($refRows[0]['supplier'])) {
+                $supplier = $this->db->where('nama', strtoupper($refRows[0]['supplier']))->get('tbl_supplier')->row();
+                if ($supplier) {
+                    $supplier_id = $supplier->id;
+                } else {
+                    $this->db->trans_rollback();
+                    echo json_encode([
+                        'success' => false,
+                        'message' => "Supplier '{$refRows[0]['supplier']}' tidak ditemukan di database. Harap periksa kembali nama supplier."
+                    ]);
+                    return;
+                }
+            }
+    
             if ($status_journal === 'New') {
                 // Get COA ID from coa_code first
                 $coaIds = [];
@@ -590,22 +487,25 @@ class Journal extends CI_Controller {
                 
                 // Insert into RPA and RPA Details
                 $dataRPA = [
-                    'category' => $refRows[0]['project_code'],
-                    'request_date' => $refRows[0]['journal_date'],
+                    'category'       => $refRows[0]['project_code'],
+                    'bill_date'      => $refRows[0]['journal_date'],
                     'charge_code'    => $reference,
-                    'note'  => $refRows[0]['description'],
-                    'faktur_pajak'  => $refRows[0]['faktur_pajak']
+                    'note'           => $refRows[0]['description'],
+                    'npwp'           => $refRows[0]['npwp'],
+                    'supplier_id'    => $supplier_id,
+                    'invoice_no'     => $refRows[0]['invoice_number'],
+                    'request_date'   => $refRows[0]['invoice_date']
                 ];
                 $this->db->insert('rpa', $dataRPA);
                 $rpa_id = $this->db->insert_id();
     
                 foreach ($refRows as $r) {
                     $dataRpaDetail = [
-                        'rpa_id'              => $rpa_id,
-                        'coa_id'              => $coaIds[$r['coa_code']],
-                        'remark'              => $r['description'],
-                        'debit_amount'        => $r['debit'],
-                        'credit_amount'       => $r['credit']
+                        'rpa_id'         => $rpa_id,
+                        'coa_id'         => $coaIds[$r['coa_code']],
+                        'remark'         => $r['description'],
+                        'debit_amount'   => $r['debit'],
+                        'credit_amount'  => $r['credit']
                     ];
                     $this->db->insert('rpa_detail', $dataRpaDetail);
                     $success++;
@@ -619,11 +519,14 @@ class Journal extends CI_Controller {
     
                 if (!$journal) {
                     $dataJournal = [
-                        'project_code' => $refRows[0]['project_code'],
-                        'journal_date' => $refRows[0]['journal_date'],
-                        'reference'    => $reference,
-                        'description'  => $refRows[0]['description'],
-                        'tax_invoice'  => $refRows[0]['faktur_pajak']
+                        'project_code'   => $refRows[0]['project_code'],
+                        'journal_date'   => $refRows[0]['journal_date'],
+                        'reference'      => $reference,
+                        'description'    => $refRows[0]['description'],
+                        'npwp'           => $refRows[0]['npwp'],
+                        'supplier_id'    => $supplier_id,
+                        'invoice_number' => $refRows[0]['invoice_number'],
+                        'invoice_date'   => $refRows[0]['invoice_date']
                     ];
                     $this->db->insert('journal', $dataJournal);
                     $journal_id = $this->db->insert_id();
@@ -656,5 +559,4 @@ class Journal extends CI_Controller {
             echo json_encode(['success' => true, 'message' => "$success data berhasil disimpan."]);
         }
     }
-
 }

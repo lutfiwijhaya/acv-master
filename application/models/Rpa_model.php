@@ -170,53 +170,171 @@ class Rpa_model extends CI_Model {
 
     public function insert($data, $details)
     {
-        $this->db->insert("rpa", $data);
-        $rpa_id = $this->db->insert_id();
-        if (is_array($details)) {
-            foreach ($details as $detail) {
-                $detail['rpa_id'] = $rpa_id;
-                 // Remove 'difference' if it exists in the array
-                unset($detail['difference']);
-                if (isset($detail['coa_code'])) {
-                    $coa = $this->db->get_where('coa', ['code' => $detail['coa_code']])->row();
-                    $detail['coa_id'] = $coa ? $coa->id : null;
-                    unset($detail['coa_code']);
-                }
-                if (isset($detail['debit'])) {
-                    $detail['debit_amount'] = $detail['debit'];
-                    unset($detail['debit']);
-                }
-                if (isset($detail['credit'])) {
-                    $detail['credit_amount'] = $detail['credit'];
-                    unset($detail['credit']);
-                }
-                if (isset($detail['name'])) {
-                    unset($detail['name']);
-                }
-                if (isset($detail['remark'])) {
-                    $detail['remark_tax_income'] = $detail['remark'];
-                    unset($detail['remark']);
-                }
-                $this->db->insert("rpa_detail", $detail); 
+        // Start transaction
+        $this->db->trans_start();
+        
+        try {
+            // Insert main RPA record (termasuk biaya_bank)
+            $this->db->insert("rpa", $data);
+            $rpa_id = $this->db->insert_id();
+            
+            // Validasi jika insert rpa gagal
+            if (!$rpa_id) {
+                throw new Exception('Failed to insert RPA header');
             }
+            
+            // Insert detail records
+            if (is_array($details) && count($details) > 0) {
+                foreach ($details as $detail) {
+                    $detail['rpa_id'] = $rpa_id;
+                    
+                    // Remove 'difference' if it exists
+                    unset($detail['difference']);
+                    
+                    // Handle COA code to COA ID conversion
+                    if (isset($detail['coa_code'])) {
+                        $coa = $this->db->get_where('coa', ['code' => $detail['coa_code']])->row();
+                        $detail['coa_id'] = $coa ? $coa->id : null;
+                        unset($detail['coa_code']);
+                    }
+                    
+                    // Handle debit amount conversion
+                    if (isset($detail['debit'])) {
+                        $detail['debit_amount'] = $detail['debit'];
+                        unset($detail['debit']);
+                    }
+                    
+                    // Handle credit amount conversion
+                    if (isset($detail['credit'])) {
+                        $detail['credit_amount'] = $detail['credit'];
+                        unset($detail['credit']);
+                    }
+                    
+                    // Remove 'name' field
+                    if (isset($detail['name'])) {
+                        unset($detail['name']);
+                    }
+                    
+                    // Handle remark conversion
+                    if (isset($detail['remark'])) {
+                        $detail['remark_tax_income'] = $detail['remark'];
+                        unset($detail['remark']);
+                    }
+                    
+                    // Insert detail
+                    $this->db->insert("rpa_detail", $detail);
+                }
+            }
+            
+            // Complete transaction
+            $this->db->trans_complete();
+            
+            // Check if transaction was successful
+            if ($this->db->trans_status() === FALSE) {
+                // Rollback will be done automatically
+                log_message('error', 'Transaction failed during RPA insert');
+                return false;
+            }
+            
+            return $rpa_id;
+            
+        } catch (Exception $e) {
+            // Rollback transaction on exception
+            $this->db->trans_rollback();
+            log_message('error', 'Exception during RPA insert: ' . $e->getMessage());
+            return false;
         }
-        return $rpa_id;
     }
+
 
     public function update($id, $data, $details)
     {
-        $this->db->where("id", $id);
-        $this->db->update("rpa", $data);
+        // Start transaction
+        $this->db->trans_start();
+        
+        try {
+            // Validasi apakah RPA dengan ID tersebut exists
+            $existing = $this->db->get_where('rpa', ['id' => $id])->row();
+            if (!$existing) {
+                throw new Exception('RPA not found with ID: ' . $id);
+            }
+            
+            // Update main RPA record (termasuk biaya_bank)
+            $this->db->where("id", $id);
+            $this->db->update("rpa", $data);
+            
+            // Check if update was successful
+            if ($this->db->affected_rows() === FALSE) {
+                throw new Exception('Failed to update RPA header');
+            }
 
-        $this->db->where("rpa_id", $id)->delete("rpa_detail");
-        foreach ($details as $detail) {
-            $detail['rpa_id'] = $id;
-            unset($detail['difference']);
-            $this->db->insert("rpa_detail", $detail);
+            // Delete existing detail records
+            $this->db->where("rpa_id", $id);
+            $this->db->delete("rpa_detail");
+            
+            // Insert new detail records with transformations
+            if (is_array($details) && count($details) > 0) {
+                foreach ($details as $detail) {
+                    $detail['rpa_id'] = $id;
+                    
+                    // Remove 'difference'
+                    unset($detail['difference']);
+                    
+                    // Handle COA code to COA ID conversion
+                    if (isset($detail['coa_code'])) {
+                        $coa = $this->db->get_where('coa', ['code' => $detail['coa_code']])->row();
+                        $detail['coa_id'] = $coa ? $coa->id : null;
+                        unset($detail['coa_code']);
+                    }
+                    
+                    // Handle debit amount conversion
+                    if (isset($detail['debit'])) {
+                        $detail['debit_amount'] = $detail['debit'];
+                        unset($detail['debit']);
+                    }
+                    
+                    // Handle credit amount conversion
+                    if (isset($detail['credit'])) {
+                        $detail['credit_amount'] = $detail['credit'];
+                        unset($detail['credit']);
+                    }
+                    
+                    // Remove 'name' field
+                    if (isset($detail['name'])) {
+                        unset($detail['name']);
+                    }
+                    
+                    // Handle remark conversion
+                    if (isset($detail['remark'])) {
+                        $detail['remark_tax_income'] = $detail['remark'];
+                        unset($detail['remark']);
+                    }
+                    
+                    // Insert detail
+                    $this->db->insert("rpa_detail", $detail);
+                }
+            }
+            
+            // Complete transaction
+            $this->db->trans_complete();
+            
+            // Check if transaction was successful
+            if ($this->db->trans_status() === FALSE) {
+                // Rollback will be done automatically
+                log_message('error', 'Transaction failed during RPA update for ID: ' . $id);
+                return false;
+            }
+            
+            return true;
+            
+        } catch (Exception $e) {
+            // Rollback transaction on exception
+            $this->db->trans_rollback();
+            log_message('error', 'Exception during RPA update: ' . $e->getMessage());
+            return false;
         }
-
-        return true;
     }
+
 
     public function update_status($id, $status)
     {
@@ -289,6 +407,7 @@ class Rpa_model extends CI_Model {
             r.posted_journal_id,
             r.approved_by,
             r.created_by,
+            r.biaya_bank,
             s.nama as supplier_name,
             s.PIC_name as supplier_pic,
             s.email as supplier_email,
@@ -578,76 +697,31 @@ class Rpa_model extends CI_Model {
     /**
      * Get RPA summary for a specific date
      */
-    public function get_rpa_summary($date, $date_field = 'request_date')
+    public function get_rpa_summary($rpa_id)
     {
-        $allowed_date_fields = ['request_date', 'bill_date', 'approval_date', 'company_payment_date'];
-        if (!in_array($date_field, $allowed_date_fields)) {
-            $date_field = 'request_date';
-        }
+        $this->db->select('
+            COALESCE(SUM(debit_amount), 0) as total_debit,
+            COALESCE(SUM(credit_amount), 0) as total_credit,
+            COALESCE(SUM(difference_amount), 0) as total_difference,
+            COALESCE(SUM(to_be_paid_internal), 0) as total_to_be_paid,
+            COALESCE(SUM(actual_expenditure), 0) as total_actual_expenditure
+        ');
+        $this->db->from('rpa_detail');
+        $this->db->where('rpa_id', $rpa_id);
         
-        // Get all RPAs for the date
-        $rpas = $this->get_daily_report($date, $date_field);
+        $result = $this->db->get()->row();
         
-        if (empty($rpas)) {
-            return [
-                'total_rpa' => 0,
-                'total_income' => 0,
-                'total_expense' => 0,
-                'by_status' => [],
-                'by_bank' => []
+        if (!$result) {
+            return (object)[
+                'total_debit' => 0,
+                'total_credit' => 0,
+                'total_difference' => 0,
+                'total_to_be_paid' => 0,
+                'total_actual_expenditure' => 0
             ];
         }
         
-        $summary = [
-            'total_rpa' => count($rpas),
-            'total_income' => 0,
-            'total_expense' => 0,
-            'by_status' => [],
-            'by_bank' => []
-        ];
-        
-        // Process each RPA
-        foreach ($rpas as $rpa) {
-            // Count by status
-            $status = strtolower($rpa['status']);
-            if (!isset($summary['by_status'][$status])) {
-                $summary['by_status'][$status] = 0;
-            }
-            $summary['by_status'][$status]++;
-            
-            // Sum income and expense by bank
-            if (!empty($rpa['details'])) {
-                foreach ($rpa['details'] as $detail) {
-                    $debit = (float)($detail['debit_amount'] ?? 0);
-                    $credit = (float)($detail['credit_amount'] ?? 0);
-                    
-                    // Identify payment method
-                    $payment_method = $this->identify_payment_method(
-                        $detail['payment_by'] ?? '',
-                        $detail['coa_id'] ?? null
-                    );
-                    
-                    // Initialize bank totals if not exists
-                    if (!isset($summary['by_bank'][$payment_method])) {
-                        $summary['by_bank'][$payment_method] = [
-                            'income' => 0,
-                            'expense' => 0
-                        ];
-                    }
-                    
-                    // Add to totals
-                    if ($debit > 0) {
-                        $summary['total_income'] += $debit;
-                        $summary['by_bank'][$payment_method]['income'] += $debit;
-                    } elseif ($credit > 0) {
-                        $summary['total_expense'] += $credit;
-                        $summary['by_bank'][$payment_method]['expense'] += $credit;
-                    }
-                }
-            }
-        }
-        
-        return $summary;
+        return $result;
     }
 
     public function get_daily_report_summary($date, $date_field = 'request_date')
@@ -899,5 +973,47 @@ class Rpa_model extends CI_Model {
         $this->db->where('id', $rpa_id);
         return $this->db->update('rpa', $data);
     }
+
+
+    public function get_rpa_details_for_print_enhanced($rpa_id)
+    {
+        $this->db->select("
+            d.id as detail_id,
+            d.rpa_id,
+            d.seq_no,
+            d.coa_id,
+            d.payment_by,
+            d.currency,
+            d.debit_amount,
+            d.credit_amount,
+            d.difference_amount,
+            d.remark_tax_income,
+            d.to_be_paid_internal,
+            d.actual_expenditure,
+            d.tax_income_classification,
+            d.key_text,
+            d.supplementary_desc,
+            d.remark,
+            c.code as coa_code,
+            c.name as coa_name,
+            c.category_id as coa_category_id,
+            cc.name as coa_category_name
+        ");
+        $this->db->from("rpa_detail d");
+        $this->db->join("coa c", "c.id = d.coa_id", "left");
+        $this->db->join("coa_category cc", "cc.id = c.category_id", "left");
+        $this->db->where("d.rpa_id", $rpa_id);
+        $this->db->order_by("d.seq_no", "ASC");
+        
+        return $this->db->get()->result();
+    }
+
+    /**
+     * Get RPA summary totals for a specific RPA ID
+     * @param int $rpa_id
+     * @return object
+     */
+    
+
 
 }

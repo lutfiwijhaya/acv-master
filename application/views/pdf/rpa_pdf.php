@@ -20,6 +20,27 @@
             margin-bottom: 15px;
             border-bottom: 2px solid #000;
             padding-bottom: 10px;
+            position: relative;
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .logo {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 60px;
+            width: auto;
+        }
+        
+        .company-info {
+            flex: 1;
+            text-align: center;
         }
         
         .company-name {
@@ -36,6 +57,15 @@
         
         .info-section {
             margin-bottom: 15px;
+            display: table;
+            width: 100%;
+        }
+        
+        .info-column {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+            padding-right: 10px;
         }
         
         .info-row {
@@ -44,7 +74,7 @@
         
         .info-label {
             display: inline-block;
-            width: 150px;
+            width: 120px;
             font-weight: bold;
         }
         
@@ -171,50 +201,76 @@
 <body>
     <!-- Header -->
     <div class="header">
-        <div class="company-name">PT. ACHIVON PRESTASI ABADI</div>
-        <div class="document-title">PROPOSAL PAYMENT</div>
-        <div style="font-size: 9px; margin-top: 5px;">
-            NOMOR DOKUMEN AKUNTING: <?php echo $rpa->invoice_no; ?>
+        <div class="header-content">
+            <!-- Logo -->
+            <?php
+            $logo_path = FCPATH . 'assets/images/image.png';
+            if (file_exists($logo_path)) {
+                $logo_data = base64_encode(file_get_contents($logo_path));
+                ?>
+                <img src="data:image/png;base64,<?php echo $logo_data; ?>" class="logo" alt="Company Logo">
+            <?php } ?>
+            
+            <!-- Company Info -->
+            <div class="company-info">
+                <div class="company-name">PT. ACHIVON PRESTASI ABADI</div>
+                <div class="document-title">PROPOSAL PAYMENT</div>
+                <div style="font-size: 9px; margin-top: 5px;">
+                    NOMOR DOKUMEN AKUNTING: <?php echo $rpa->charge_code; ?>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Info Section -->
+    <!-- Info Section - 2 Columns -->
     <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Location:</span>
-            <span class="info-value">Project KN</span>
+        <!-- Left Column -->
+        <div class="info-column">
+            <div class="info-row">
+                <span class="info-label">Invoice No:</span>
+                <span class="info-value"><?php echo $rpa->invoice_no; ?></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Location:</span>
+                <span class="info-value">Project KN</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Section:</span>
+                <span class="info-value">Accounting &amp; Finance</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Invoice Date:</span>
+                <span class="info-value"><?php echo date('d-M-y', strtotime($rpa->bill_date)); ?></span>
+            </div>
         </div>
-        <div class="info-row">
-            <span class="info-label">Section:</span>
-            <span class="info-value">Accounting &amp; Finance</span>
+        
+        <!-- Right Column -->
+        <div class="info-column">
+            <div class="info-row">
+                <span class="info-label">Request Date:</span>
+                <span class="info-value"><?php echo date('d-M-y', strtotime($rpa->request_date)); ?></span>
+            </div>
+            <?php if (isset($rpa->approval_date) && $rpa->approval_date): ?>
+            <div class="info-row">
+                <span class="info-label">Approval Date:</span>
+                <span class="info-value"><?php echo date('d-M-y', strtotime($rpa->approval_date)); ?></span>
+            </div>
+            <?php endif; ?>
+            <?php if (isset($rpa->company_payment_date) && $rpa->company_payment_date): ?>
+            <div class="info-row">
+                <span class="info-label">Payment Date:</span>
+                <span class="info-value"><?php echo date('d-M-y', strtotime($rpa->company_payment_date)); ?></span>
+            </div>
+            <?php endif; ?>
         </div>
-        <div class="info-row">
-            <span class="info-label">Date:</span>
-            <span class="info-value"><?php echo date('d-M-y', strtotime($rpa->bill_date)); ?></span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Request Date:</span>
-            <span class="info-value"><?php echo date('d-M-y', strtotime($rpa->request_date)); ?></span>
-        </div>
-        <?php if ($rpa->approval_date): ?>
-        <div class="info-row">
-            <span class="info-label">Approval Date:</span>
-            <span class="info-value"><?php echo date('d-M-y', strtotime($rpa->approval_date)); ?></span>
-        </div>
-        <?php endif; ?>
-        <?php if ($rpa->company_payment_date): ?>
-        <div class="info-row">
-            <span class="info-label">Payment Date:</span>
-            <span class="info-value"><?php echo date('d-M-y', strtotime($rpa->company_payment_date)); ?></span>
-        </div>
-        <?php endif; ?>
     </div>
+
+    <div class="clearfix"></div>
 
     <!-- Purpose Section -->
     <div style="margin-bottom: 10px;">
         <strong>PURPOSE:</strong><br>
         <?php 
-        // Gunakan supplementary_desc dari detail pertama atau key_text sebagai purpose
         echo isset($rpa_details[0]->supplementary_desc) && $rpa_details[0]->supplementary_desc 
             ? $rpa_details[0]->supplementary_desc 
             : (isset($rpa_details[0]->key_text) ? $rpa_details[0]->key_text : 'Payment Request'); 
@@ -230,8 +286,6 @@
                 <th style="width: 10%;">ACCOUNT CODE</th>
                 <th style="width: 13%;">AMOUNT DEBIT</th>
                 <th style="width: 13%;">AMOUNT CREDIT</th>
-                <th style="width: 13%;">TO BE PAID</th>
-                <th style="width: 13%;">ACTUAL EXP</th>
             </tr>
         </thead>
         <tbody>
@@ -245,8 +299,6 @@
                 <td class="text-center"><?php echo $detail->coa_code; ?></td>
                 <td class="text-right"><?php echo number_format($detail->debit_amount, 0, ',', '.'); ?></td>
                 <td class="text-right"><?php echo number_format($detail->credit_amount, 0, ',', '.'); ?></td>
-                <td class="text-right"><?php echo number_format($detail->to_be_paid_internal, 0, ',', '.'); ?></td>
-                <td class="text-right"><?php echo number_format($detail->actual_expenditure, 0, ',', '.'); ?></td>
             </tr>
             <?php endforeach; ?>
             
@@ -255,8 +307,6 @@
                 <td colspan="3" class="text-center">TOTAL</td>
                 <td class="text-right"><?php echo number_format($total_debit, 0, ',', '.'); ?></td>
                 <td class="text-right"><?php echo number_format($total_credit, 0, ',', '.'); ?></td>
-                <td class="text-right"><?php echo number_format($total_to_be_paid, 0, ',', '.'); ?></td>
-                <td class="text-right"><?php echo number_format($total_actual_expenditure, 0, ',', '.'); ?></td>
             </tr>
         </tbody>
     </table>
@@ -269,11 +319,11 @@
             <span class="info-value"><?php echo $rpa->supplier_name ?: '-'; ?></span>
         </div>
         <div class="info-row">
-            <span class="info-label">Account No.:</span>
+            <span class="info-label">Account Name:</span>
             <span class="info-value"><?php echo $rpa->rek_bank ?: '-'; ?></span>
         </div>
         <div class="info-row">
-            <span class="info-label">Bank:</span>
+            <span class="info-label">Bank No:</span>
             <span class="info-value"><?php echo $rpa->bank_account ?: '-'; ?></span>
         </div>
         <?php if (isset($rpa->supplier_address) && $rpa->supplier_address): ?>
@@ -282,17 +332,49 @@
             <span class="info-value"><?php echo $rpa->supplier_address; ?></span>
         </div>
         <?php endif; ?>
+        <?php 
+        if($rpa->biaya_bank !== null && $rpa->biaya_bank !== 0):?>
         <div class="info-row">
             <span class="info-label">Biaya Bank:</span>
-            <span class="info-value">IDR 5.000</span>
+            <span class="info-value">Rp. <?php echo number_format($rpa->biaya_bank, 0, ',', '.'); ?></span>
         </div>
+        <?php endif; ?>
         
         <div class="amount-box">
-            TOTAL HARUS DIBAYAR: Rp. <?php echo number_format($total_to_be_paid, 0, ',', '.'); ?>
+            <?php
+            // Default label untuk pembayaran
+            $payment_label = "TOTAL HARUS DIBAYAR";
+            $payment_amount = $total_to_be_paid;
+        
+            // Loop melalui detail RPA untuk mengecek kode COA
+            if (!empty($rpa_details)) {
+                foreach ($rpa_details as $detail) {
+                    // Cek jika coa_code diawali dengan "10"
+                    if (isset($detail->coa_code) && substr($detail->coa_code, 0, 2) === '10') {
+                        $debit = floatval($detail->debit_amount ?? 0);
+                        $credit = floatval($detail->credit_amount ?? 0);
+        
+                        // Jika ditemukan di debit (masuk uang) dan lebih besar dari 0, maka harus kembali/refund
+                        if ($debit > 0) {
+                            $payment_label = "TOTAL HARUS KEMBALI";
+                            $payment_amount = $debit;
+                            break;
+                        }
+                        // Jika ditemukan di credit (keluar uang) dan lebih besar dari 0, maka harus dibayar
+                        elseif ($credit > 0) {
+                            $payment_label = "TOTAL HARUS DIBAYAR";
+                            $payment_amount = $credit;
+                            break;
+                        }
+                    }
+                }
+            }
+            ?>
+            <?php echo $payment_label; ?>: Rp. <?php echo number_format($payment_amount, 0, ',', '.'); ?>
         </div>
     </div>
 
-    <!-- Notes - jika ada remark di detail pertama -->
+    <!-- Notes -->
     <?php if (isset($rpa_details[0]->remark) && $rpa_details[0]->remark): ?>
     <div class="note-section">
         <strong>Note:</strong> <?php echo $rpa_details[0]->remark; ?>
@@ -301,14 +383,13 @@
 
     <!-- Signature Section -->
     <div class="signature-section">
+        <!-- Drafter -->
         <div class="signature-box">
             <div class="signature-title">Drafter</div>
-            <?php if ($rpa->created_by_signature): ?>
+            <?php if (isset($drafter_signature) && $drafter_signature): ?>
                 <?php
-                // Gunakan FCPATH untuk absolute path
-                $image_path = FCPATH . $rpa->created_by_signature;
+                $image_path = FCPATH . $drafter_signature;
                 if (file_exists($image_path)) {
-                    // Convert to base64 for better compatibility
                     $image_data = base64_encode(file_get_contents($image_path));
                     $image_ext = pathinfo($image_path, PATHINFO_EXTENSION);
                     $mime_type = 'image/' . ($image_ext == 'jpg' ? 'jpeg' : $image_ext);
@@ -320,10 +401,11 @@
             <?php else: ?>
                 <div style="height: 50px;"></div>
             <?php endif; ?>
-            <div class="signature-name"><?php echo $rpa->created_by_name ?: '__________'; ?></div>
+            <div class="signature-name"><?php echo $drafter_name ?: '__________'; ?></div>
             <div class="signature-date"><?php echo date('d/m/Y', strtotime($rpa->request_date)); ?></div>
         </div>
         
+        <!-- PIC -->
         <div class="signature-box">
             <div class="signature-title">PIC</div>
             <div style="height: 50px;"></div>
@@ -331,6 +413,7 @@
             <div class="signature-date">__ / __ / __</div>
         </div>
         
+        <!-- Confirm -->
         <div class="signature-box">
             <div class="signature-title">Confirm</div>
             <div style="height: 50px;"></div>
@@ -338,9 +421,10 @@
             <div class="signature-date">__ / __ / __</div>
         </div>
         
+        <!-- Approval -->
         <div class="signature-box">
             <div class="signature-title">Approval</div>
-            <?php if ($rpa->approved_by_signature && strtolower($rpa->status) == 'approved'): ?>
+            <?php if (isset($rpa->approved_by_signature) && $rpa->approved_by_signature && strtolower($rpa->status) == 'approved'): ?>
                 <?php
                 $image_path = FCPATH . $rpa->approved_by_signature;
                 if (file_exists($image_path)) {

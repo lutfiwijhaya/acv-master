@@ -99,14 +99,21 @@ class Rpa extends CI_Controller {
     public function save() 
     {
         if ($this->input->method() === "post") {
+            // Get user ID from session
+            $user_id = $this->session->userdata('user_id'); // sesuaikan dengan session Anda
+            
             $data = [
                 'invoice_no'    => $this->input->post('invoice_no'),
                 'request_date'  => $this->input->post('request_date'),
-                'bill_date'  => $this->input->post('bill_date'),
+                'bill_date'     => $this->input->post('bill_date'),
                 'supplier_id'   => $this->input->post('supplier_id'),
-                'charge_code'   => $this->input->post('reference_no')
+                'charge_code'   => $this->input->post('reference_no'),
+                'biaya_bank'    => $this->input->post('biaya_bank'),  // masuk ke tabel rpa
+                'created_by'    => $user_id
             ];
+            
             $details = json_decode($this->input->post('details'), true);
+            
             $this->Rpa_model->insert($data, $details);
             echo json_encode(['message' => 'Proposal Payment saved successfully']);
         } else {
@@ -114,17 +121,25 @@ class Rpa extends CI_Controller {
         }
     }
 
+
     public function update($id)
     {
         if ($this->input->method() === "post") {
+            // Get user ID from session
+            $user_id = $this->session->userdata('user_id'); // sesuaikan dengan session Anda
+            
             $data = [
                 'invoice_no'    => $this->input->post('invoice_no'),
                 'request_date'  => $this->input->post('request_date'),
-                'bill_date'  => $this->input->post('bill_date'),
-                'supplier_id'   => $this->input->post('supplier_id')
+                'bill_date'     => $this->input->post('bill_date'),
+                'supplier_id'   => $this->input->post('supplier_id'),
+                'charge_code'   => $this->input->post('reference_no'),
+                'biaya_bank'    => $this->input->post('biaya_bank'),  // masuk ke tabel rpa
+                'updated_by'    => $user_id
             ];
+            
             $details = json_decode($this->input->post('details'), true);
-
+            
             $this->Rpa_model->update($id, $data, $details);
             echo json_encode(['message' => 'Proposal Payment updated successfully']);
         } else {

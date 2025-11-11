@@ -196,6 +196,30 @@
         .clearfix {
             clear: both;
         }
+        
+        /* Prevent page breaks inside critical sections */
+        .transfer-info {
+            page-break-inside: avoid;
+        }
+        
+        .signature-section {
+            page-break-inside: avoid;
+        }
+        
+        .amount-box {
+            page-break-inside: avoid;
+        }
+        
+        /* Force page break before transfer info if needed */
+        .transfer-info-wrapper {
+            page-break-before: auto;
+        }
+        
+        /* Keep signature section together */
+        .signature-area {
+            page-break-inside: avoid;
+            page-break-before: auto;
+        }
     </style>
 </head>
 <body>
@@ -312,65 +336,67 @@
     </table>
 
     <!-- Transfer Information -->
-    <div class="transfer-info">
-        <div class="transfer-title">Please, Transfer to:</div>
-        <div class="info-row">
-            <span class="info-label">Penerima:</span>
-            <span class="info-value"><?php echo $rpa->supplier_name ?: '-'; ?></span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Account Name:</span>
-            <span class="info-value"><?php echo $rpa->rek_bank ?: '-'; ?></span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Bank No:</span>
-            <span class="info-value"><?php echo $rpa->bank_account ?: '-'; ?></span>
-        </div>
-        <?php if (isset($rpa->supplier_address) && $rpa->supplier_address): ?>
-        <div class="info-row">
-            <span class="info-label">Address:</span>
-            <span class="info-value"><?php echo $rpa->supplier_address; ?></span>
-        </div>
-        <?php endif; ?>
-        <?php 
-        if($rpa->biaya_bank !== null && $rpa->biaya_bank !== 0):?>
-        <div class="info-row">
-            <span class="info-label">Biaya Bank:</span>
-            <span class="info-value">Rp. <?php echo number_format($rpa->biaya_bank, 0, ',', '.'); ?></span>
-        </div>
-        <?php endif; ?>
-        
-        <div class="amount-box">
-            <?php
-            // Default label untuk pembayaran
-            $payment_label = "TOTAL HARUS DIBAYAR";
-            $payment_amount = $total_to_be_paid;
-        
-            // Loop melalui detail RPA untuk mengecek kode COA
-            if (!empty($rpa_details)) {
-                foreach ($rpa_details as $detail) {
-                    // Cek jika coa_code diawali dengan "10"
-                    if (isset($detail->coa_code) && substr($detail->coa_code, 0, 2) === '10') {
-                        $debit = floatval($detail->debit_amount ?? 0);
-                        $credit = floatval($detail->credit_amount ?? 0);
-        
-                        // Jika ditemukan di debit (masuk uang) dan lebih besar dari 0, maka harus kembali/refund
-                        if ($debit > 0) {
-                            $payment_label = "TOTAL HARUS KEMBALI";
-                            $payment_amount = $debit;
-                            break;
-                        }
-                        // Jika ditemukan di credit (keluar uang) dan lebih besar dari 0, maka harus dibayar
-                        elseif ($credit > 0) {
-                            $payment_label = "TOTAL HARUS DIBAYAR";
-                            $payment_amount = $credit;
-                            break;
+    <div class="transfer-info-wrapper">
+        <div class="transfer-info">
+            <div class="transfer-title">Please, Transfer to:</div>
+            <div class="info-row">
+                <span class="info-label">Penerima:</span>
+                <span class="info-value"><?php echo $rpa->supplier_name ?: '-'; ?></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Account Name:</span>
+                <span class="info-value"><?php echo $rpa->rek_bank ?: '-'; ?></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Bank No:</span>
+                <span class="info-value"><?php echo $rpa->bank_account ?: '-'; ?></span>
+            </div>
+            <?php if (isset($rpa->supplier_address) && $rpa->supplier_address): ?>
+            <div class="info-row">
+                <span class="info-label">Address:</span>
+                <span class="info-value"><?php echo $rpa->supplier_address; ?></span>
+            </div>
+            <?php endif; ?>
+            <?php 
+            if($rpa->biaya_bank !== null && $rpa->biaya_bank !== 0):?>
+            <div class="info-row">
+                <span class="info-label">Biaya Bank:</span>
+                <span class="info-value">Rp. <?php echo number_format($rpa->biaya_bank, 0, ',', '.'); ?></span>
+            </div>
+            <?php endif; ?>
+            
+            <div class="amount-box">
+                <?php
+                // Default label untuk pembayaran
+                $payment_label = "TOTAL HARUS DIBAYAR";
+                $payment_amount = $total_to_be_paid;
+            
+                // Loop melalui detail RPA untuk mengecek kode COA
+                if (!empty($rpa_details)) {
+                    foreach ($rpa_details as $detail) {
+                        // Cek jika coa_code diawali dengan "10"
+                        if (isset($detail->coa_code) && substr($detail->coa_code, 0, 2) === '10') {
+                            $debit = floatval($detail->debit_amount ?? 0);
+                            $credit = floatval($detail->credit_amount ?? 0);
+            
+                            // Jika ditemukan di debit (masuk uang) dan lebih besar dari 0, maka harus kembali/refund
+                            if ($debit > 0) {
+                                $payment_label = "TOTAL HARUS KEMBALI";
+                                $payment_amount = $debit;
+                                break;
+                            }
+                            // Jika ditemukan di credit (keluar uang) dan lebih besar dari 0, maka harus dibayar
+                            elseif ($credit > 0) {
+                                $payment_label = "TOTAL HARUS DIBAYAR";
+                                $payment_amount = $credit;
+                                break;
+                            }
                         }
                     }
                 }
-            }
-            ?>
-            <?php echo $payment_label; ?>: Rp. <?php echo number_format($payment_amount, 0, ',', '.'); ?>
+                ?>
+                <?php echo $payment_label; ?>: Rp. <?php echo number_format($payment_amount, 0, ',', '.'); ?>
+            </div>
         </div>
     </div>
 
@@ -382,66 +408,68 @@
     <?php endif; ?>
 
     <!-- Signature Section -->
-    <div class="signature-section">
-        <!-- Drafter -->
-        <div class="signature-box">
-            <div class="signature-title">Drafter</div>
-            <?php if (isset($drafter_signature) && $drafter_signature): ?>
-                <?php
-                $image_path = FCPATH . $drafter_signature;
-                if (file_exists($image_path)) {
-                    $image_data = base64_encode(file_get_contents($image_path));
-                    $image_ext = pathinfo($image_path, PATHINFO_EXTENSION);
-                    $mime_type = 'image/' . ($image_ext == 'jpg' ? 'jpeg' : $image_ext);
-                    ?>
-                    <img src="data:<?php echo $mime_type; ?>;base64,<?php echo $image_data; ?>" class="signature-image" alt="Signature">
-                <?php } else { ?>
+    <div class="signature-area">
+        <div class="signature-section">
+            <!-- Drafter -->
+            <div class="signature-box">
+                <div class="signature-title">Drafter</div>
+                <?php if (isset($drafter_signature) && $drafter_signature): ?>
+                    <?php
+                    $image_path = FCPATH . $drafter_signature;
+                    if (file_exists($image_path)) {
+                        $image_data = base64_encode(file_get_contents($image_path));
+                        $image_ext = pathinfo($image_path, PATHINFO_EXTENSION);
+                        $mime_type = 'image/' . ($image_ext == 'jpg' ? 'jpeg' : $image_ext);
+                        ?>
+                        <img src="data:<?php echo $mime_type; ?>;base64,<?php echo $image_data; ?>" class="signature-image" alt="Signature">
+                    <?php } else { ?>
+                        <div style="height: 50px;"></div>
+                    <?php } ?>
+                <?php else: ?>
                     <div style="height: 50px;"></div>
-                <?php } ?>
-            <?php else: ?>
+                <?php endif; ?>
+                <div class="signature-name"><?php echo $drafter_name ?: '__________'; ?></div>
+                <div class="signature-date"><?php echo date('d/m/Y', strtotime($rpa->request_date)); ?></div>
+            </div>
+            
+            <!-- PIC -->
+            <div class="signature-box">
+                <div class="signature-title">PIC</div>
                 <div style="height: 50px;"></div>
-            <?php endif; ?>
-            <div class="signature-name"><?php echo $drafter_name ?: '__________'; ?></div>
-            <div class="signature-date"><?php echo date('d/m/Y', strtotime($rpa->request_date)); ?></div>
-        </div>
-        
-        <!-- PIC -->
-        <div class="signature-box">
-            <div class="signature-title">PIC</div>
-            <div style="height: 50px;"></div>
-            <div class="signature-name">__________</div>
-            <div class="signature-date">__ / __ / __</div>
-        </div>
-        
-        <!-- Confirm -->
-        <div class="signature-box">
-            <div class="signature-title">Confirm</div>
-            <div style="height: 50px;"></div>
-            <div class="signature-name">__________</div>
-            <div class="signature-date">__ / __ / __</div>
-        </div>
-        
-        <!-- Approval -->
-        <div class="signature-box">
-            <div class="signature-title">Approval</div>
-            <?php if (isset($rpa->approved_by_signature) && $rpa->approved_by_signature && strtolower($rpa->status) == 'approved'): ?>
-                <?php
-                $image_path = FCPATH . $rpa->approved_by_signature;
-                if (file_exists($image_path)) {
-                    $image_data = base64_encode(file_get_contents($image_path));
-                    $image_ext = pathinfo($image_path, PATHINFO_EXTENSION);
-                    $mime_type = 'image/' . ($image_ext == 'jpg' ? 'jpeg' : $image_ext);
-                    ?>
-                    <img src="data:<?php echo $mime_type; ?>;base64,<?php echo $image_data; ?>" class="signature-image" alt="Signature">
-                <?php } else { ?>
+                <div class="signature-name">__________</div>
+                <div class="signature-date">__ / __ / __</div>
+            </div>
+            
+            <!-- Confirm -->
+            <div class="signature-box">
+                <div class="signature-title">Confirm</div>
+                <div style="height: 50px;"></div>
+                <div class="signature-name">__________</div>
+                <div class="signature-date">__ / __ / __</div>
+            </div>
+            
+            <!-- Approval -->
+            <div class="signature-box">
+                <div class="signature-title">Approval</div>
+                <?php if (isset($rpa->approved_by_signature) && $rpa->approved_by_signature && strtolower($rpa->status) == 'approved'): ?>
+                    <?php
+                    $image_path = FCPATH . $rpa->approved_by_signature;
+                    if (file_exists($image_path)) {
+                        $image_data = base64_encode(file_get_contents($image_path));
+                        $image_ext = pathinfo($image_path, PATHINFO_EXTENSION);
+                        $mime_type = 'image/' . ($image_ext == 'jpg' ? 'jpeg' : $image_ext);
+                        ?>
+                        <img src="data:<?php echo $mime_type; ?>;base64,<?php echo $image_data; ?>" class="signature-image" alt="Signature">
+                    <?php } else { ?>
+                        <div style="height: 50px;"></div>
+                    <?php } ?>
+                <?php else: ?>
                     <div style="height: 50px;"></div>
-                <?php } ?>
-            <?php else: ?>
-                <div style="height: 50px;"></div>
-            <?php endif; ?>
-            <div class="signature-name"><?php echo $rpa->approved_by_name ?: '__________'; ?></div>
-            <div class="signature-date">
-                <?php echo $rpa->approval_date ? date('d/m/Y', strtotime($rpa->approval_date)) : '__ / __ / __'; ?>
+                <?php endif; ?>
+                <div class="signature-name"><?php echo $rpa->approved_by_name ?: '__________'; ?></div>
+                <div class="signature-date">
+                    <?php echo $rpa->approval_date ? date('d/m/Y', strtotime($rpa->approval_date)) : '__ / __ / __'; ?>
+                </div>
             </div>
         </div>
     </div>

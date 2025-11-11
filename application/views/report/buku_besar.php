@@ -127,10 +127,34 @@
                 },
                 dataType: "json",
                 success: function(data) {
+                    // Calculate totals for footer
+                    var totalDebit = 0;
+                    var totalCredit = 0;
+                    var totalSaldo = 0;
+
+                    if (data.rows && data.rows.length > 0) {
+                        data.rows.forEach(function(row) {
+                            totalDebit += parseFloat(row.total_debit || 0);
+                            totalCredit += parseFloat(row.total_credit || 0);
+                            totalSaldo += parseFloat(row.saldo || 0);
+                        });
+                    }
+
+                    // Set footer data
+                    var footerData = [{
+                        journal_date: '',
+                        coa_code: '',
+                        description: '<strong>TOTAL</strong>',
+                        reference: '',
+                        total_debit: totalDebit,
+                        total_credit: totalCredit,
+                        saldo: totalSaldo
+                    }];
+
                     success({
                         total: data.total,
                         rows: data.rows,
-                        footer: data.footer
+                        footer: footerData
                     });
                 },
                 error: function() {

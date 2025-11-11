@@ -187,13 +187,59 @@ class Backend_model extends CI_Model
             $this->db->group_end();
         }
 
+        // Adding the JOIN with coa table
+        $this->db->select('accounting_bank.*, coa.name as coa_name');  // Selecting all columns from accounting_bank and coa.name as coa_name
+        $this->db->join('coa', 'accounting_bank.coa_id = coa.id', 'left');  // Left join with coa table
+
         $this->db->order_by($sort, $order);
         $this->db->limit($rows, $offset);
         $query = $this->db->get('accounting_bank');
 
         $item = $query->result_array();
         $result = array_merge($result, ['rows' => $item]);
+
         return $result;
+    }
+
+
+    public function insert_bank($table, $data)
+    {
+        $this->cache->file->clean();
+        $this->db->trans_start();
+        $this->db->insert($table, $data);
+        $insert_id = $this->db->insert_id();
+        $this->db->trans_complete();
+
+        return $this->db->trans_status() ? $insert_id : false;
+    }
+
+    public function update_bank($table, $data, $id)
+    {
+        $this->cache->file->clean();
+
+        $this->db->trans_start();
+        $this->db->where('id', $id);
+        $this->db->update($table, $data);
+        $this->db->trans_complete();
+
+        if (!$this->db->trans_status()) {
+            log_message('error', 'Update failed on ' . $table . ' for ID: ' . $id);
+            return false;
+        }
+
+        log_message('debug', 'Executed SQL: ' . $this->db->last_query());
+        return true;
+    }
+
+
+    public function delete_bank($table, $where)
+    {
+        $this->cache->file->clean();
+        $this->db->trans_start();
+        $this->db->where($where)->delete($table);
+        $this->db->trans_complete();
+
+        return $this->db->trans_status();
     }
 
 
@@ -381,6 +427,99 @@ class Backend_model extends CI_Model
     }
 
     function getStockwarehouse($idwarehouse)
+    {
+        $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+        $rows = isset($_POST['rows']) ? intval($_POST['rows']) : 20;
+        $sort = isset($_POST['sort']) ? strval($_POST['sort']) : 'wh_items.id';
+        $order = isset($_POST['order']) ? strval($_POST['order']) : 'ASC';
+        $search = isset($_POST['search_data']) ? strval($_POST['search_data']) : '';
+        $filter_qty = isset($_POST['filter_qty']) ? intval($_POST['filter_qty']) : 0;
+        $offset = ($page - 1) * $rows;
+        $result = array();
+
+        // Query to get total number of items
+        $this->db->select('COUNT(DISTINCT wh_items.id) AS total');
+        $this->db->from('wh_items');
+        $this->db->join('wh_items_stock', 'wh_items.id = wh_items_stock.item_id', 'left');
+        $this->db->where('wh_items.is_deleted', '0');
+        if ($filter_qty) {
+            $this->db->where('wh_items_stock.warehouse_id', $idwarehouse);
+            $this->db->where('wh_items_stock.quantity >', 0);
+        }
+
+        if (!empty($search)) {
+            $this->db->group_start();
+            $this->db->like('wh_items.category', $search, 'both');
+            $this->db->or_like('wh_items.level_1', $search, 'both');
+            $this->db->or_like('wh_items.level_2', $search, 'both');
+            $this->db->or_like('wh_items.level_3', $search, 'both');
+            $this->db->or_like('wh_items.level_4', $search, 'both');
+            $this->db->or_like('wh_items.kode_barang', $search, 'both');
+            $this->db->or_like('wh_items.remark', $search, 'both');
+            $this->db->group_end();
+        }
+
+        $query = $this->db->get();
+        $result['total'] = $query->row()->total;
+
+        // Query to get actual item data with warehouse-specific quantity
+        $this->db->select("
+        wh_items.id,
+        wh_items.kode_barang,
+        wh_items.category,
+        wh_items.inisial_kuantitas,
+        wh_items.Level_1,
+        wh_items.level_2,
+        wh_items.level_3,
+        wh_items.level_4,
+        wh_items.path_foto,
+        wh_items.remark,
+        COALESCE(SUM(CASE WHEN wh_items_stock.warehouse_id = {$idwarehouse} THEN wh_items_stock.quantity ELSE 0 END), 0) AS total_quantity
+    ", false); // false agar tidak di-escape otomatis
+
+        $this->db->from('wh_items');
+        $this->db->join('wh_items_stock', 'wh_items.id = wh_items_stock.item_id', 'left');
+        $this->db->where('wh_items.is_deleted', '0');
+        if ($filter_qty) {
+            $this->db->where('wh_items_stock.warehouse_id', $idwarehouse);
+            $this->db->where('wh_items_stock.quantity >', 0);
+        }
+
+        if (!empty($search)) {
+            $this->db->group_start();
+            $this->db->like('wh_items.category', $search, 'both');
+            $this->db->or_like('wh_items.level_1', $search, 'both');
+            $this->db->or_like('wh_items.level_2', $search, 'both');
+            $this->db->or_like('wh_items.level_3', $search, 'both');
+            $this->db->or_like('wh_items.level_4', $search, 'both');
+            $this->db->or_like('wh_items.kode_barang', $search, 'both');
+            $this->db->or_like('wh_items.remark', $search, 'both');
+            $this->db->group_end();
+        }
+
+        $this->db->group_by([
+            'wh_items.id',
+            'wh_items.kode_barang',
+            'wh_items.category',
+            'wh_items.inisial_kuantitas',
+            'wh_items.Level_1',
+            'wh_items.level_2',
+            'wh_items.level_3',
+            'wh_items.level_4',
+            'wh_items.path_foto',
+            'wh_items.remark'
+        ]);
+        $this->db->order_by($sort, $order);
+        $this->db->limit($rows, $offset);
+
+        $query = $this->db->get();
+        $result['rows'] = $query->result_array();
+
+        return $result;
+    }
+
+
+    function getStockwarehousecategory($idwarehouse,$category)
     {
         $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
         $rows = isset($_POST['rows']) ? intval($_POST['rows']) : 20;
@@ -2109,8 +2248,9 @@ class Backend_model extends CI_Model
 
     public function getAllBanks()
     {
-        return $this->db->select('id, name, account_bank, balance') // Pastikan ID Bank diambil
-            ->from('accounting_bank') // Sesuaikan dengan nama tabel di database
+        return $this->db->select('id, name, account_bank, balance','coa.name as coa_name') // Pastikan ID Bank diambil
+            ->from('accounting_bank') // Sesuaikan dengan nama tabel di database 
+            ->join('coa' , 'accounting_bank.coa_id = coa.id', 'left') // Gabungkan dengan tabel COA
             ->get()
             ->result_array();
     }

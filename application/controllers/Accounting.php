@@ -330,13 +330,6 @@ class Accounting extends CI_Controller
         echo json_encode(["rows" => $banks]);
     }
 
-    
-
-
-
-
-    
-
     public function getBankList()
     {
         $this->output->set_content_type('application/json');
@@ -349,6 +342,58 @@ class Accounting extends CI_Controller
         }
     }
 
+    public function saveBank()
+    {
+        $bank_name = $this->input->post('name', TRUE);
+        $account_number = $this->input->post('account_bank', TRUE);
+        $balance = $this->input->post('amount', TRUE);
+        $coa = $this->input->post('coa_id', TRUE);
+
+        $data = [
+            'name' => $bank_name,
+            'account_bank' => $account_number,
+            'balance' => $balance,
+            'coa_id' => $coa
+        ];
+
+        $inserted = $this->backend_model->insert_bank('accounting_bank', $data);
+
+        if ($inserted) {
+            echo json_encode(['status' => 'success', 'message' => 'Bank created successfully']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to create bank']);
+        }
+    }
+
+
+    public function updateBank()
+    {
+        $id = $this->input->post('id');
+        $data = [
+            'name' => $this->input->post('name'),
+            'account_bank' => $this->input->post('account_bank'),
+            'balance' => (int) $this->input->post('amount'),
+            'coa_id' => $this->input->post('coa_id')
+        ];
+        $updated = $this->backend_model->update_bank('accounting_bank', $data,$id);
+        if ($updated) {
+            echo json_encode(['status' => 'success', 'message' => 'Bank updated successfully']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to update bank']);
+        }
+    }
+
+    public function deleteBank()
+    {
+        $id = $this->input->post('id');
+        $deleted = $this->backend_model->delete_bank('accounting_bank', ['id' => $id]);
+
+        if ($deleted) {
+            echo json_encode(['status' => 'success', 'message' => 'Bank deleted successfully']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to delete bank']);
+        }
+    }
     
 
-}
+} 

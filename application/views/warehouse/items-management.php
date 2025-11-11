@@ -35,20 +35,27 @@
 
 					<div id="toolbar" style="padding: 10px">
 						<div class="row ml-1">
-							<div class="col-sm-6">
+							<!-- <div class="col-sm-6">
 								<a href="javascript:void(0);" class="easyui-linkbutton" iconCls="icon-add" plain="false" onclick="newForm()">Add</a>
 
 								<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-edit" plain="false" onclick="editForm()">Edit</a>
-								<!-- <a href="javascript:void(0)" class="easyui-linkbutton" plain="false" onclick="hakakses()"><i class="fas fa-users-cog"></i> Hak Akses</a> -->
+								<a href="javascript:void(0)" class="easyui-linkbutton" plain="false" onclick="hakakses()"><i class="fas fa-users-cog"></i> Hak Akses</a>
 								<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-remove" plain="false" onclick="delete_item()">Delete</a>
 								<a href="javascript:void(0);" class="easyui-linkbutton" iconCls="icon-add" plain="false" onclick="adddist()">Distribute</a>
 
-							</div>
+							</div> -->
+
+							<div class="col-md-6">
+							<a href="javascript:void(0);" class="fancy-link" onclick="newForm()">Add</a>
+							<a href="javascript:void(0);" class="fancy-link" onclick="editForm()">Edit</a>
+							<a href="javascript:void(0)" class="fancy-link" onclick="delete_item()">Delete</a>
+						</div>
 
 							<div class="col-sm-6 pull-right">
 								<input id="search" placeholder="Please Enter Search a Level" style="width:60%;" align="right">
 								<a href="javascript:void(0);" id="btn_serach" class="easyui-linkbutton" iconCls="icon-search" plain="false" onclick="doSearch()">Search</a>
 							</div>
+							
 						</div>
 					</div>
 				</div>
@@ -107,8 +114,8 @@
 				</div>
 			</form>
 			<div id="dialog-buttons">
-				<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-ok" onclick="submitForm()">Simpan</a>
-				<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:jQuery('#dialog-form').dialog('close')">Batal</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton"  onclick="submitForm()">Simpan</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton"  onclick="javascript:jQuery('#dialog-form').dialog('close')">Batal</a>
 			</div>
 		</div>
 

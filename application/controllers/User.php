@@ -60,74 +60,141 @@ class User extends CI_Controller
 
     public function getUsers()
     {
-        $page   = $this->input->post('page') ? intval($this->input->post('page')) : 1;
-        $rows   = $this->input->post('rows') ? intval($this->input->post('rows')) : 20;
-        $sort   = $this->input->post('sort') ?: 'tbl_user._id';
-        $order  = $this->input->post('order') ?: 'ASC';
-        $search = $this->input->post('search_data'); // konsisten pakai search_data
+        $page = $this->input->post('page') ?? 1;
+        $rows = $this->input->post('rows') ?? 10;
+        $categoryId = $this->input->post('category_id');
+
         $offset = ($page - 1) * $rows;
 
-        $result = $this->backend_model->getUsers($rows, $offset, $sort, $order, $search);
+        // total count
+        $this->db->where('is_aktif', '1');
+        $this->db->where('deleted', '0');
+        $total = $this->db->count_all_results('tbl_user');
 
-        $this->output
+        // ambil user
+        $this->db->select('u._id, u.nama, p.posisi, u.email');
+        $this->db->from('tbl_user u');
+        $this->db->join('tbl_posisi p', 'u.posisi = p._id', 'left');
+        $this->db->where('u.is_aktif', '1');
+        $this->db->where('u.deleted', '0');
+        $this->db->order_by('u.nama', 'ASC');
+        $this->db->limit($rows, $offset);
+        $users = $this->db->get()->result_array();
+
+        // ambil akses user sesuai kategori (jika ada)
+        $accessMap = [];
+        if ($categoryId) {
+            $this->db->select('um.id_user, um.id_menu, um.access_type');
+            $this->db->from('tbl_user_menu um');
+            $this->db->join('tbl_menus m', 'm._id = um.id_menu');
+            $this->db->where('m.is_main', $categoryId);
+            $access = $this->db->get()->result_array();
+
+            foreach ($access as $a) {
+                $accessMap[$a['id_user']][$a['id_menu']] = $a['access_type'];
+            }
+        }
+
+        // inject access ke setiap user
+        foreach ($users as &$u) {
+            $u['access'] = $accessMap[$u['_id']] ?? [];
+        }
+
+        $result = [
+            "total" => $total,
+            "rows"  => $users
+        ];
+
+        return $this->output
             ->set_content_type('application/json')
             ->set_output(json_encode($result));
     }
 
-    public function getMenus()
+
+
+   public function getMenus()
     {
-        $segment = $this->input->post('segment') ?: '';
-        $segment = preg_replace('/[^a-zA-Z0-9]+/', ' ', $segment);
-        $segment = trim($segment);
-        if (!$segment) {
-            show_error("segment wajib dikirim", 400);
-        }
+        $segment = $this->input->post('segment') ?? 'root';
 
-        // === Ambil parent sesuai segment ===
-        $this->db->select('_id,title');
+        // Ambil semua menu (jangan difilter langsung)
+        $this->db->select('_id, title, is_main');
         $this->db->from('tbl_menus');
-        $this->db->where('is_main', 0);
-        $this->db->like('title', $segment, 'both');
-        $parentQuery = $this->db->get();
-        $parents     = $parentQuery->result_array();
+        $this->db->where('is_aktif', '1');
+        $menus = $this->db->get()->result_array();
 
-        if (empty($parents)) {
-            return $this->output
-                ->set_content_type('application/json')
-                ->set_output(json_encode([]));
+        // Ambil semua akses user_menu
+        $this->db->select('id_user, id_menu, access_type');
+        $this->db->from('tbl_user_menu');
+        $allAccess = $this->db->get()->result_array();
+
+        $accessMap = [];
+        foreach ($allAccess as $acc) {
+            $accessMap[$acc['id_menu']][$acc['id_user']] = $acc['access_type'];
         }
 
-        // recursive builder
-        $buildTree = function ($parentId) use (&$buildTree) {
-            $this->db->select('_id,title');
-            $this->db->from('tbl_menus');
-            $this->db->where('is_main', $parentId);
-            $children = $this->db->get()->result_array();
-
+        // recursive build
+        $buildTree = function($parentId) use ($menus, $accessMap, &$buildTree) {
             $result = [];
-            foreach ($children as $child) {
-                $result[] = [
-                    "id"   => $child['_id'],
-                    "text" => $child['title'],
-                    "children" => $buildTree($child['_id'])
-                ];
+            foreach ($menus as $menu) {
+                if ($menu['is_main'] == $parentId) {
+                    $menuId = $menu['_id'];
+                    $userAccess = $accessMap[$menuId] ?? [];
+                    $result[] = [
+                        "id" => $menuId,
+                        "text" => $menu['title'],
+                        "user_access" => $userAccess,
+                        "children" => $buildTree($menuId)
+                    ];
+                }
             }
             return $result;
         };
 
-        $tree = [];
-        foreach ($parents as $p) {
-            $tree[] = [
-                "id"   => $p['_id'],
-                "text" => $p['title'],
-                "children" => $buildTree($p['_id'])
-            ];
+        // === Beda behavior sesuai segment ===
+        if ($segment === 'root') {
+            // ambil semua parent utama
+            $tree = $buildTree(0);
+        } else {
+            // ambil subtree dari segment tertentu
+            $tree = $buildTree($segment);
         }
 
         return $this->output
             ->set_content_type('application/json')
             ->set_output(json_encode($tree));
     }
+
+
+    public function toggleApproval() 
+    {
+        $id = $this->input->post('id');
+        $status = $this->input->post('status');
+        
+        // Load model User jika belum
+        $this->load->model('User_model');
+        
+        // Update is_approval
+        $data = array(
+            'is_approval' => $status
+        );
+        
+        $this->db->where('_id', $id);
+        $update = $this->db->update('tbl_user', $data);
+        
+        if ($update) {
+            echo json_encode(array(
+                'success' => true,
+                'message' => 'Status approval berhasil diupdate'
+            ));
+        } else {
+            echo json_encode(array(
+                'success' => false,
+                'errorMsg' => 'Gagal mengupdate status approval'
+            ));
+        }
+    }
+
+
 
     public function getMenusAll()
     {
